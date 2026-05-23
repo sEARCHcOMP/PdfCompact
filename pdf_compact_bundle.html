@@ -3828,8 +3828,8 @@
         </svg>
       </div>
       <div class="drop-text">画像をドロップ、またはクリックして選択</div>
-      <div class="drop-hint">PNG · JPG · HEIC · BMP · TIFF · PDF 対応 · 複数OK</div>
-      <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,application/pdf,.pdf" multiple>
+      <div class="drop-hint">PNG · JPG · HEIC · BMP · TIFF · AVIF · PDF 対応 · 複数OK</div>
+      <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,image/avif,.avif,application/pdf,.pdf" multiple>
     </div>
 
     <div class="panel">
@@ -3973,7 +3973,7 @@
       <div class="hero-headline">
       <h1>フォーマット<br><em>変換ツール。</em></h1>
       <p class="hero-sub">
-        JPG · PNG · HEIC · BMP · TIFF · PDF を<br>
+        JPG · PNG · HEIC · BMP · TIFF · AVIF · PDF を<br>
         別のフォーマットに変換。1枚ずつ個別DL、またはZIPでまとめて。<br>
         <a href="javascript:void(0)" onclick="openGuide()" style="color:var(--accent); text-decoration:none; font-weight:600; white-space:nowrap; cursor:pointer;">使い方ガイド →</a>
       </p>
@@ -4004,8 +4004,8 @@
         </svg>
       </div>
       <div class="drop-text">変換するファイルをドロップ</div>
-      <div class="drop-hint">JPG · PNG · HEIC · BMP · TIFF · PDF · 複数OK</div>
-      <input type="file" id="convFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,application/pdf,.pdf" multiple>
+      <div class="drop-hint">JPG · PNG · HEIC · BMP · TIFF · AVIF · PDF · 複数OK</div>
+      <input type="file" id="convFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,image/avif,.avif,application/pdf,.pdf" multiple>
     </div>
 
     <div class="panel">
@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.0.2';
+  const APP_VERSION = '3.1.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8718,11 +8718,11 @@
       return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     }
     function isValidImage(file) {
-      const ok = ['image/png', 'image/jpeg', 'image/jpg'];
+      const ok = ['image/png', 'image/jpeg', 'image/jpg', 'image/avif'];
       if (ok.includes(file.type)) return true;
       if (isHeic(file) || isTiff(file) || isBmp(file)) return true;
       const ext = file.name.toLowerCase().split('.').pop();
-      return ['png', 'jpg', 'jpeg', 'heic', 'heif', 'tif', 'tiff', 'bmp'].includes(ext);
+      return ['png', 'jpg', 'jpeg', 'heic', 'heif', 'tif', 'tiff', 'bmp', 'avif'].includes(ext);
     }
     function isValidInput(file) {
       return isValidImage(file) || isPdf(file);
@@ -8811,7 +8811,7 @@
     async function addFiles(fileList) {
       const arr = [...fileList].filter(isValidInput);
       if (arr.length === 0) {
-        setStatus('⚠ PNG / JPG / HEIC / BMP / TIFF / PDF のみ対応しています', 'error');
+        setStatus('⚠ PNG / JPG / HEIC / BMP / TIFF / AVIF / PDF のみ対応しています', 'error');
         return;
       }
       setStatus('');
@@ -9365,9 +9365,9 @@
     }
     function isValidInput(f) {
       const e = getExt(f);
-      return ['png', 'jpg', 'jpeg', 'heic', 'heif', 'tif', 'tiff', 'bmp', 'pdf'].includes(e)
+      return ['png', 'jpg', 'jpeg', 'heic', 'heif', 'tif', 'tiff', 'bmp', 'avif', 'pdf'].includes(e)
         || isPdf(f) || isHeic(f) || isTiff(f) || isBmp(f)
-        || ['image/png', 'image/jpeg', 'image/jpg'].includes(f.type);
+        || ['image/png', 'image/jpeg', 'image/jpg', 'image/avif'].includes(f.type);
     }
 
     function setStatus(text, type) {
@@ -9478,7 +9478,7 @@
     async function addFiles(fileList) {
       const arr = [...fileList].filter(isValidInput);
       if (arr.length === 0) {
-        setStatus('⚠ PNG / JPG / HEIC / BMP / TIFF / PDF のみ対応しています', 'error');
+        setStatus('⚠ PNG / JPG / HEIC / BMP / TIFF / AVIF / PDF のみ対応しています', 'error');
         return;
       }
       setStatus('');

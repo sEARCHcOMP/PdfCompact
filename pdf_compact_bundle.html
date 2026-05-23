@@ -1205,8 +1205,9 @@
     animation: modeFadeIn 0.3s ease;
   }
   @keyframes modeFadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    /* transform は外す: sticky 用 containing block を作って張り付かなくなる原因 */
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* Override: remove hero-top default margin since it's now shared */
@@ -2212,12 +2213,32 @@
     color: var(--warn);
     border-color: var(--warn);
   }
+  /* sticky の有効範囲を広げるため、editor の親 panel を非 positioned に
+     (デフォルト .panel は position: relative で containing block を作るが、
+      それだと sticky 範囲が panel 高さに制限される) */
+  #imgPlaceEditorPanel { position: static; }
+  /* PDF読込後 (.imgplace-editing クラスが付く) は、上の hero+アップロードパネルを隠して
+     editor が viewport 上部に来るようにする。これで少しスクロールしても左右ペインが
+     画面外に消えへん */
+  #modeImgPlace.imgplace-editing > .hero,
+  #modeImgPlace.imgplace-editing > .panel:not(#imgPlaceEditorPanel) {
+    display: none;
+  }
+
   #modeImgPlace .imgplace-editor {
     display: grid;
-    grid-template-columns: 180px 1fr 280px;
-    gap: 16px;
+    /* 5列構成: 左ライブラリ / スプリッター / 中央canvas / スプリッター / 右サイドバー
+       デフォルトは clamp() で画面幅に追従、ユーザーがドラッグ → JS が --imgplace-* を上書き
+       左: 120-180-220px (画面幅14%目安)
+       右: 200-300-380px (画面幅24%目安、画像ライブラリ広めに)
+       中央: 1fr で残り全部 */
+    grid-template-columns: var(--imgplace-left, clamp(120px, 14vw, 220px)) 6px 1fr 6px var(--imgplace-right, clamp(200px, 24vw, 380px));
+    gap: 6px;
     margin-top: 16px;
     min-height: 600px;
+    /* 画像40個など大量読み込みで縦に伸びすぎないよう viewport 内に収める。
+       これで左ライブラリと右ライブラリのスクロールが独立、中央 canvas は位置固定 */
+    max-height: calc(100vh - 180px);
     /* container (max-width:960px) をブレイクアウトしてウィンドウ幅いっぱいまで広げる
        50% は親の中央（=container中央）、50vw はビューポート中央。
        margin-left: 50% - 50vw でビューポート左端まで移動、+16px で内側に余白 */
@@ -2226,18 +2247,153 @@
     margin-left: calc(50% - 50vw + 16px);
     margin-right: calc(50% - 50vw + 16px);
   }
+  /* 左右ペインを position: fixed で完全に viewport 固定。
+     editor + canvas-wrap は通常の max-height 制限のまま (canvas 内部スクロールで縦長PDF対応)。
+     grid の列幅 (--imgplace-left/right) を継承して幅維持、grid の 1列目/5列目は空のまま予約。
+     splitter は grid 内に残るので変わらず動作。 */
+  #modeImgPlace.imgplace-editing .imgplace-pages {
+    position: fixed !important;
+    top: 50px;
+    left: 16px;
+    width: var(--imgplace-left, clamp(120px, 14vw, 220px));
+    /* viewport の縦をなるべく使う。下は action-bar の余白 (140px) 分残す */
+    max-height: calc(100vh - 70px) !important;
+    z-index: 4;
+  }
+  #modeImgPlace.imgplace-editing .imgplace-sidebar {
+    position: fixed !important;
+    top: 50px;
+    right: 16px;
+    width: var(--imgplace-right, clamp(200px, 24vw, 380px));
+    max-height: calc(100vh - 70px) !important;
+    z-index: 4;
+  }
+  /* 編集中は editorPanel の白枠を消してすっきり (canvas だけ綺麗に見える) */
+  #modeImgPlace.imgplace-editing #imgPlaceEditorPanel {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    margin-bottom: 0;
+  }
+  /* 編集中は「02 画像を配置」見出しを隠す (上の無駄な余白カット) */
+  #modeImgPlace.imgplace-editing #imgPlaceEditorPanel > .step-head {
+    display: none;
+  }
+  /* fixed の panes は grid セル占有しない → auto-placement が崩れて
+     splitter と canvas-wrap が間違った列に行く。明示的に列を固定。
+     col 1: (左ペイン 予約)
+     col 2: splitter-left (6px)
+     col 3: canvas-wrap (1fr)
+     col 4: splitter-right (6px)
+     col 5: (右ペイン 予約) */
+  #modeImgPlace.imgplace-editing #imgPlaceSplitterLeft  { grid-column: 2 / span 1; }
+  #modeImgPlace.imgplace-editing #imgPlaceCanvasWrap    { grid-column: 3 / span 1; }
+  #modeImgPlace.imgplace-editing #imgPlaceSplitterRight { grid-column: 4 / span 1; }
+  /* 列幅調整用スプリッター(ドラッグで左右移動) */
+  #modeImgPlace .imgplace-splitter {
+    background: var(--line);
+    cursor: col-resize;
+    position: relative;
+    user-select: none;
+    border-radius: 3px;
+    transition: background 0.15s ease;
+    touch-action: none;
+  }
+  #modeImgPlace .imgplace-splitter:hover {
+    background: var(--accent-glow);
+  }
+  #modeImgPlace .imgplace-splitter.dragging {
+    background: var(--accent);
+  }
+  /* 中央のグリップマーク (視認性) */
+  #modeImgPlace .imgplace-splitter::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 28px;
+    background: var(--ink-faint);
+    border-radius: 1px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  #modeImgPlace .imgplace-splitter:hover::before {
+    background: var(--accent);
+    opacity: 1;
+  }
+  /* 太めの当たり判定 (細い線でも掴みやすく) */
+  #modeImgPlace .imgplace-splitter::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -5px; right: -5px;
+  }
   #modeImgPlace .imgplace-pages {
     background: var(--surface-2);
     border: 1px solid var(--line);
     border-radius: var(--r-md);
     padding: 8px;
-    overflow-y: auto;
-    max-height: 720px;
+    /* 親 editor grid に高さを任せる (max-height: calc(100vh - 180px)) */
+    min-height: 0;
+    /* タイトル(上) + スクロールリスト(下) の縦並び */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* タイトルはスクロール外 */
+  }
+  #modeImgPlace .imgplace-pages-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+  #modeImgPlace .imgplace-pages-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: scroll; /* 常時スクロールバー */
+    padding-right: 2px;
   }
   #modeImgPlace .imgplace-pages .page-thumb-wrap {
     margin-bottom: 10px;
     cursor: pointer;
     user-select: none;
+    position: relative;
+  }
+  /* ページ削除 × ボタン (サムネホバー時のみ表示) */
+  #modeImgPlace .imgplace-pages .page-thumb-delete {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    background: #ff3300;
+    color: white;
+    border: 1.5px solid white;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 3;
+    user-select: none;
+    padding: 0;
+  }
+  #modeImgPlace .imgplace-pages .page-thumb-wrap:hover .page-thumb-delete {
+    display: flex;
+  }
+  #modeImgPlace .imgplace-pages .page-thumb-delete:hover {
+    background: #c00;
+    transform: scale(1.1);
   }
   #modeImgPlace .imgplace-pages .page-thumb-wrap:last-child {
     margin-bottom: 0;
@@ -2257,6 +2413,27 @@
   #modeImgPlace .imgplace-pages .page-thumb-wrap.active canvas.page-thumb {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  /* ベース PDF ページ複数選択 ハイライト (active と被ったらどっちも表示) */
+  #modeImgPlace .imgplace-pages .page-thumb-wrap.page-multi-selected canvas.page-thumb {
+    border-color: #ff7a1a;
+    box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.3);
+  }
+  #modeImgPlace .imgplace-pages .page-thumb-wrap.page-multi-selected.active canvas.page-thumb {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 0 0 6px rgba(255, 122, 26, 0.3);
+  }
+  /* ページラバーバンド (リスト空きエリアからドラッグで複数選択) */
+  #modeImgPlace .imgplace-pages-list {
+    position: relative;
+  }
+  #modeImgPlace .imgplace-pages-rubberband {
+    position: absolute;
+    border: 1.5px dashed #ff7a1a;
+    background: rgba(255, 122, 26, 0.15);
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 2px;
   }
   #modeImgPlace .imgplace-pages .page-thumb-label {
     font-size: 11px;
@@ -2299,6 +2476,27 @@
   #modeImgPlace .imgplace-canvas-frame.drag-target {
     outline: 3px solid var(--accent);
     outline-offset: 2px;
+  }
+  /* PDF ファイルを editor 上にドラッグ中: canvas-wrap (PDF枠外) をオレンジに */
+  #modeImgPlace .imgplace-editor.imgplace-pdf-dragover .imgplace-canvas-wrap {
+    background: rgba(255, 122, 26, 0.22);
+    transition: background 0.15s ease;
+  }
+  /* PDF ファイルを editor 上にドラッグ中: 中央に文字テロップ */
+  #modeImgPlace .imgplace-editor.imgplace-pdf-dragover::after {
+    content: '📄 ドロップで末尾にページ追加';
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ff7a1a;
+    color: white;
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(255,122,26,0.4);
+    pointer-events: none;
+    z-index: 100;
   }
   #modeImgPlace #imgPlaceCanvas {
     background: white;
@@ -2355,6 +2553,50 @@
     background: #ff7a1a;
     color: white;
     border-color: #ff7a1a;
+  }
+  /* 1/3 制限ボタン ON 状態 (青系、画像配置サイズ上限) */
+  #imgPlaceSizeCapBtn[data-active="on"] {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  /* 右サイドバー上下スプリッター (props ↔ library) */
+  #modeImgPlace .imgplace-sidebar-splitter {
+    flex: 0 0 6px;
+    background: var(--line);
+    cursor: row-resize;
+    border-radius: 3px;
+    position: relative;
+    user-select: none;
+    touch-action: none;
+    transition: background 0.15s ease;
+  }
+  #modeImgPlace .imgplace-sidebar-splitter:hover {
+    background: var(--accent-glow);
+  }
+  #modeImgPlace .imgplace-sidebar-splitter.dragging {
+    background: var(--accent);
+  }
+  #modeImgPlace .imgplace-sidebar-splitter::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px; height: 2px;
+    background: var(--ink-faint);
+    border-radius: 1px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  #modeImgPlace .imgplace-sidebar-splitter:hover::before {
+    background: var(--accent);
+    opacity: 1;
+  }
+  #modeImgPlace .imgplace-sidebar-splitter::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: -5px; bottom: -5px;
   }
   /* カスタムセル レイヤー（描画 + 表示） */
   #modeImgPlace .imgplace-custom-cell-layer {
@@ -2847,12 +3089,21 @@
     flex-direction: column;
     gap: 12px;
     min-width: 0;
+    /* editor grid 高さに収める (画像40個でも縦伸びさせない) */
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
   }
   #modeImgPlace .imgplace-props {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--r-md);
     padding: 12px;
+    /* スプリッターで高さ可変。--imgplace-props-h があれば fixed height、無ければ natural */
+    flex: 0 0 var(--imgplace-props-h, auto);
+    min-height: 60px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   #modeImgPlace .imgplace-props-title,
   #modeImgPlace .imgplace-library-title {
@@ -3030,15 +3281,29 @@
   #modeImgPlace .imgplace-library--empty .imgplace-lib-list {
     display: none;
   }
+  /* ライブラリラバーバンド (空きエリアからドラッグで複数選択) */
+  #modeImgPlace .imgplace-lib-rubberband {
+    position: absolute;
+    border: 1.5px dashed var(--accent);
+    background: var(--accent-glow);
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 2px;
+  }
   #modeImgPlace .imgplace-lib-list {
+    position: relative; /* ラバーバンド絶対配置の基準 */
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* auto-fill: ライブラリ幅に合わせて列数自動増減
+       minmax(96px, 1fr): 1サムネ最小 96px、余ったら均等に広げる
+       右ペインを広くドラッグすれば 2列→3列→4列... と増える */
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     gap: 8px;
-    overflow-y: auto;
     /* 親 .imgplace-library が flex:1 + min-height:0 なので flex:1 でビューポート追従 */
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     padding-right: 2px;
+    /* 常時スクロールバー表示 (editor が fixed 化されてるので overscroll 伝播は元々無し) */
+    overflow-y: scroll;
   }
   #modeImgPlace .imgplace-lib-item {
     position: relative;
@@ -3053,6 +3318,79 @@
   #modeImgPlace .imgplace-lib-item:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
+  }
+  /* 複数選択中のアイテム: 青枠 + ぼんやり背景 */
+  #modeImgPlace .imgplace-lib-item.lib-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+    background: var(--accent-soft);
+  }
+  /* 選択順序の番号バッジ (順次配置モード用ヒント) */
+  #modeImgPlace .imgplace-lib-item.lib-selected::before {
+    content: attr(data-sel-order);
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 6px;
+    border-radius: 8px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  /* 順次配置モード中: canvas にクロスヘアカーソル + 中央テロップ */
+  #modeImgPlace.imgplace-place-queue-mode .imgplace-canvas-frame {
+    cursor: crosshair;
+    outline: 3px dashed var(--accent);
+    outline-offset: 2px;
+  }
+  /* 順次配置 カーソル追従プレビュー (次に置かれる画像のサムネ + ファイル名) */
+  .imgplace-queue-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    background: rgba(10, 12, 18, 0.92);
+    color: white;
+    padding: 6px 10px 6px 6px;
+    border-radius: 8px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    font-size: 12px;
+    max-width: 320px;
+    transition: opacity 0.1s ease;
+  }
+  .imgplace-queue-preview.visible { display: flex; }
+  .imgplace-queue-preview img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    background: white;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .imgplace-queue-preview .qp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .imgplace-queue-preview .qp-name {
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+  }
+  .imgplace-queue-preview .qp-meta {
+    font-size: 11px;
+    opacity: 0.85;
+    font-family: 'JetBrains Mono', monospace;
   }
   #modeImgPlace .imgplace-lib-item:active {
     cursor: grabbing;
@@ -3132,6 +3470,10 @@
       margin-left: 0;
       margin-right: 0;
     }
+    /* モバイルではスプリッター非表示 (縦並びなので意味なし) */
+    #modeImgPlace .imgplace-splitter {
+      display: none;
+    }
     #modeImgPlace .imgplace-pages {
       max-height: 180px;
       display: flex;
@@ -3167,6 +3509,15 @@
 </style>
 </head>
 <body>
+<!-- 順次配置モード中、カーソル追従で「次に置かれる画像」プレビュー -->
+<div class="imgplace-queue-preview" id="imgPlaceQueuePreview" aria-hidden="true">
+  <img id="imgPlaceQueuePreviewImg" alt="">
+  <div class="qp-info">
+    <div class="qp-name" id="imgPlaceQueuePreviewName"></div>
+    <div class="qp-meta" id="imgPlaceQueuePreviewMeta"></div>
+  </div>
+</div>
+
 <!-- 新バージョン通知バナー (起動時チェック → 新版あれば右上に表示) -->
 <div id="updateBanner" class="update-banner" style="display:none;" role="alert">
   <div class="update-banner-content">
@@ -3955,7 +4306,11 @@
         <h2 class="step-title">画像を配置</h2>
       </div>
       <div class="imgplace-editor">
-        <aside class="imgplace-pages" id="imgPlacePageList" aria-label="ページ一覧"></aside>
+        <aside class="imgplace-pages" id="imgPlacePagesPanel" aria-label="ベースPDFページ一覧">
+          <div class="imgplace-pages-title">ベースPDF</div>
+          <div class="imgplace-pages-list" id="imgPlacePageList"></div>
+        </aside>
+        <div class="imgplace-splitter" id="imgPlaceSplitterLeft" data-side="left" title="ドラッグで左ペイン幅調整" role="separator" aria-orientation="vertical"></div>
         <div class="imgplace-canvas-wrap" id="imgPlaceCanvasWrap">
           <div class="imgplace-canvas-frame" id="imgPlaceCanvasFrame">
             <canvas id="imgPlaceCanvas"></canvas>
@@ -3969,12 +4324,14 @@
             <svg class="imgplace-align-guides" id="imgPlaceAlignGuides" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
           </div>
         </div>
+        <div class="imgplace-splitter" id="imgPlaceSplitterRight" data-side="right" title="ドラッグで右ペイン幅調整" role="separator" aria-orientation="vertical"></div>
         <aside class="imgplace-sidebar" aria-label="プロパティと画像ライブラリ">
           <div class="imgplace-props" id="imgPlaceProps">
             <div class="imgplace-props-title">プロパティ</div>
             <div class="imgplace-props-empty" id="imgPlacePropsEmpty">画像を選択してください</div>
             <!-- B-Gamma でX/Y/W/H + AR固定 + キャプションフィールドを実装 -->
           </div>
+          <div class="imgplace-sidebar-splitter" id="imgPlaceSidebarSplitter" title="ドラッグで上下幅調整" role="separator" aria-orientation="horizontal"></div>
           <div class="imgplace-library">
             <div class="imgplace-library-title">画像ライブラリ</div>
             <div class="dropzone imgplace-lib-dropzone" id="imgPlaceLibDropzone">
@@ -4022,6 +4379,10 @@
         </button>
         <button class="btn btn-ghost" id="imgPlaceLineDetectBtn" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off">📐 罫線スナップ OFF</button>
         <button class="btn btn-ghost" id="imgPlaceCustomCellBtn" title="ON中はドラッグで自分用のセルを追加 / クリックで削除" data-active="off">✏️ カスタムセル OFF</button>
+        <button class="btn btn-ghost" id="imgPlaceSizeCapBtn" title="配置時に画像サイズをページの1/3まで自動圧縮（OFFで原寸換算）" data-active="on">📏 1/3制限 ON</button>
+        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">🎯 順次配置</button>
+        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">📄+ PDF追加</button>
+        <input type="file" id="imgPlaceAddPdfInput" accept="application/pdf" style="display:none;">
         <button class="btn btn-ghost" id="imgPlaceClearBtn">クリア</button>
         <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">💾 プロジェクト保存</button>
         <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">📄 PDFとして出力</button>
@@ -7037,6 +7398,72 @@
     </div>
   </section>
 
+  <section id="changelog">
+    <div class="section-head">
+      <div class="section-num">CHANGELOG</div>
+      <h2 class="section-title">更新履歴</h2>
+      <p class="section-lead">主な機能追加・改善の記録。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary class="faq-summary">v3.0.0 (2026-05-23) — メジャーアップデート: UI再設計</summary>
+        <div class="faq-body">
+          <p><strong>「PDFに画像配置」モードのレイアウト全面刷新。</strong>大量画像・複数ページの編集が劇的に快適に。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>左右ペイン固定 + 中央canvas通常スクロール</strong> — どこをスクロールしても操作パネルは見えたまま</li>
+            <li><strong>左右の列幅をドラッグで可変</strong> — スプリッターで自由幅、設定は記憶</li>
+            <li><strong>右ライブラリは画面幅に応じて列数自動増減</strong> — 広げれば 2→3→4列に</li>
+            <li><strong>右ペイン内も上下スプリッター</strong> — プロパティ/ライブラリの比率調整可</li>
+            <li><strong>左サムネに配置画像をプレビュー反映</strong> — 全ページ俯瞰しやすく</li>
+            <li><strong>左ペイン「ベースPDF」タイトル</strong> + ベースPDFページの複数選択 (Ctrl/Shift/ラバーバンド) + 一括削除</li>
+            <li><strong>PDFを追加でドロップ可能</strong> — 末尾ページとして連結マージ</li>
+            <li><strong>ページ削除 × ボタン</strong> — サムネホバーで出現、配置画像も同時に整理</li>
+            <li><strong>画像ライブラリも複数選択</strong> (Ctrl/Shift/ラバーバンド)</li>
+            <li><strong>選択した複数画像を一括ドラッグ配置</strong> — オフセット並べ</li>
+            <li><strong>順次配置モード(🎯)</strong> — クリックで1枚ずつ順番配置 + 次に置く画像のサムネ+ファイル名がカーソル追従</li>
+            <li><strong>配置画像も複数選択 → 画面下ゴミ箱で一括削除</strong></li>
+            <li><strong>画像ドロップゾーン上でホイール</strong>でライブラリ内スクロール</li>
+            <li><strong>PDFドロップ時に枠外オレンジ表示</strong></li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v2.x シリーズ — 罫線スナップ &amp; カスタムセル</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>罫線スナップ</strong> — JWWで作った枠線(直線/矩形)を自動検出してスナップ対象に</li>
+            <li><strong>矩形セル中心スナップ</strong> — 4辺で囲まれた領域を検出、中心に XY 同時吸い付き</li>
+            <li><strong>セル外枠ハイライト</strong> — スナップ中はそのセルが緑枠で光る</li>
+            <li><strong>カスタムセル機能</strong> — 自分で矩形をドラッグ描画 → スナップ対象に追加</li>
+            <li><strong>カスタムセル編集</strong> — 4隅ハンドルでリサイズ / 本体ドラッグで移動 / × で削除 / + で複製</li>
+            <li><strong>平行アライメントガイド</strong> — 他セルと整列時に橙色ガイド線</li>
+            <li><strong>Shift+ドラッグで水平/垂直拘束</strong></li>
+            <li><strong>画像配置サイズ 1/3 制限トグル</strong> — 配置時にページ1/3まで自動圧縮 (📏)</li>
+            <li><strong>起動時自動アップデートチェック</strong> + .exe / .vbs ランチャー(ZIP配布)</li>
+            <li><strong>プロジェクト保存に「名前を付けて保存」ダイアログ</strong></li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v1.x シリーズ — 基本機能 (Phase 1)</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>PDFに画像を配置する基本機能</li>
+            <li>ドラッグ&ドロップ配置 / ダブルクリックで中央配置</li>
+            <li>8ハンドルリサイズ / アスペクト比固定 / Shift で一時解除</li>
+            <li>移動 / マルチ選択(Ctrl+クリック / ラバーバンド) / マルチドラッグ</li>
+            <li>整列4種(横並び等間隔 / 上端 / 下端 / 縦中央)+ サイズ統一</li>
+            <li>他画像エッジ・中心線・ページ中央へのスナップ + ガイド線表示</li>
+            <li>複数キャプション(上下位置 / 揃え / サイズ / 太字 / フォント切替)</li>
+            <li><code>.lpw</code> プロジェクト保存/読込 + IndexedDB autosave + SHA256 ベース復元</li>
+            <li>PDF出力(pdf-lib焼き込み、ベクター品質保持)</li>
+            <li>HEIC / TIFF 含む 画像読込対応(EXIF orientation 自動補正)</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
   <section class="final-cta">
     <h2>さあ、使ってみよう</h2>
     <p>準備ができたら、ツールを開いてファイルを入れてみてください。</p>
@@ -7077,7 +7504,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '2.2.0';
+  const APP_VERSION = '3.0.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -10104,6 +10531,15 @@
     let plSeq = 0;
     // ライブラリからのドラッグ中の画像ID
     let draggingLibImageId = null;
+    // ライブラリ複数選択 (選択順序を保持するため Array)
+    let libSelectedIds = [];
+    let libLastClickedId = null; // shift範囲選択の基点
+    // ベース PDF ページの複数選択 (一括削除用)
+    let pageSelectedIndices = new Set();
+    let pageLastClickedIndex = null;
+    // 順次配置モード: 選択した順に Canvas クリックで配置
+    let placeQueue = [];
+    let placeQueueMode = false;
     // 移動/リサイズ中のドラッグ状態
     // 形: { mode:'move'|'resize', corner?:'nw'|'ne'|'sw'|'se', placementId, startMouseXMm, startMouseYMm, original:{xMm,yMm,widthMm,heightMm} }
     let dragState = null;
@@ -10153,6 +10589,7 @@
     const clearBtn = document.getElementById('imgPlaceClearBtn');
     const editorPanel = document.getElementById('imgPlaceEditorPanel');
     const pageList = document.getElementById('imgPlacePageList');
+    const pagesPanel = document.getElementById('imgPlacePagesPanel');
     const canvas = document.getElementById('imgPlaceCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
     const canvasFrame = document.getElementById('imgPlaceCanvasFrame');
@@ -10182,6 +10619,12 @@
     // ユーザー手動定義のカスタムセル: { pageIndex: [{xMm, yMm, widthMm, heightMm}, ...] }
     let customCellsByPage = {};
     let customCellModeOn = false;
+    // 画像配置時のサイズ上限 (ページ 1/3) を効かせるか。localStorage 永続化、デフォルト ON
+    let sizeCapEnabled = true;
+    try {
+      const saved = localStorage.getItem('imgPlaceSizeCap');
+      if (saved === 'off') sizeCapEnabled = false;
+    } catch (_e) {}
     // スナップ中のセル (緑外枠ハイライト用)
     let activeSnapCell = null;
     // カスタムセル描画中の state
@@ -10253,6 +10696,9 @@
       if (editorPanel) editorPanel.style.display = 'none';
       if (filenameBar) filenameBar.style.display = 'none';
       if (actionBar) actionBar.style.display = 'none';
+      // 編集モード OFF: hero+upload panel 再表示
+      const modeImgPlaceEl = document.getElementById('modeImgPlace');
+      if (modeImgPlaceEl) modeImgPlaceEl.classList.remove('imgplace-editing');
       hideTrash();
       const modePanel = document.getElementById('modeImgPlace');
       if (modePanel) modePanel.classList.remove('imgplace-dragging');
@@ -10272,6 +10718,14 @@
       activeSnapCell = null;
       updateActiveSnapCellOverlay();
       clearAlignmentGuides();
+      // ライブラリ複数選択 + 順次配置モードもリセット
+      libSelectedIds = [];
+      libLastClickedId = null;
+      if (placeQueueMode) stopPlaceQueueMode();
+      updatePlaceQueueBtn();
+      // ベースPDFページ複数選択もリセット
+      pageSelectedIndices.clear();
+      pageLastClickedIndex = null;
       const customCellLayer = document.getElementById('imgPlaceCustomCellLayer');
       if (customCellLayer) customCellLayer.innerHTML = '';
       const customCellBtn = document.getElementById('imgPlaceCustomCellBtn');
@@ -10284,7 +10738,7 @@
       setStatus('');
     }
 
-    // ----- ベースPDF読込 -----
+    // ----- ベースPDF読込 (初回は新規読込、2回目以降は末尾に追加) -----
     async function loadBasePdf(file) {
       if (!file) return;
       if (file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
@@ -10295,11 +10749,27 @@
         setStatus('PDFサイズが50MBを超えています（' + (file.size / 1024 / 1024).toFixed(1) + 'MB）', 'error');
         return;
       }
-      setStatus('読み込み中…');
+      const isAppend = !!basePdfBytes;
+      setStatus(isAppend ? '末尾にページ追加中…' : '読み込み中…');
       try {
-        basePdfBytes = await file.arrayBuffer();
+        const newBytes = await file.arrayBuffer();
+        let addedPageCount = 0;
+        if (isAppend) {
+          // pdf-lib で 既存PDF に新PDF のページを末尾追加
+          const PDFLib = window.PDFLib;
+          if (!PDFLib || !PDFLib.PDFDocument) throw new Error('pdf-lib が利用不可');
+          const existingDoc = await PDFLib.PDFDocument.load(basePdfBytes);
+          const newDoc = await PDFLib.PDFDocument.load(newBytes);
+          const copiedPages = await existingDoc.copyPages(newDoc, newDoc.getPageIndices());
+          addedPageCount = copiedPages.length;
+          for (const pg of copiedPages) existingDoc.addPage(pg);
+          basePdfBytes = (await existingDoc.save()).buffer;
+        } else {
+          basePdfBytes = newBytes;
+        }
         // pdf.js は ArrayBuffer を内部で消費するためスライスして渡す
         pdfjsDoc = await pdfjsLib.getDocument({ data: basePdfBytes.slice(0) }).promise;
+        const oldPageCount = pageCount;
         pageCount = pdfjsDoc.numPages;
         pageSizesMm = [];
 
@@ -10312,29 +10782,110 @@
           });
         }
 
-        currentPageIndex = 0;
-        editorPanel.style.display = '';
-        filenameBar.style.display = '';
-        actionBar.style.display = '';
+        if (!isAppend) {
+          currentPageIndex = 0;
+          editorPanel.style.display = '';
+          filenameBar.style.display = '';
+          actionBar.style.display = '';
+          // 編集モード ON: hero+upload panel を CSS で隠して editor が viewport 上部に
+          const modeImgPlaceEl = document.getElementById('modeImgPlace');
+          if (modeImgPlaceEl) modeImgPlaceEl.classList.add('imgplace-editing');
+        }
         // autosave 状態を準備（base64 キャッシュは初回 serialize 時に作る）
         cachedBasePdfBase64 = null;
-        autosaveBaseFilename = file.name || 'base.pdf';
+        if (!isAppend) autosaveBaseFilename = file.name || 'base.pdf';
         autosaveBaseSha = await sha256Hex(basePdfBytes);
         renderLibrary(); // 初期表示時に「画像なし」状態クラスを反映
         await renderThumbnails();
         await renderCurrentPage();
-        updateMeta(file.name);
-        setStatus(file.name + ' を読み込みました（' + pageCount + 'ページ）');
-        // エディタが見える位置まで自動スクロール
-        requestAnimationFrame(() => {
-          editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-        // 同一 SHA の autosave があれば復元を提案（非同期、PDFロード後に遅延実行）
-        const shaForRestore = autosaveBaseSha;
-        setTimeout(() => { checkAndOfferRestore(shaForRestore); }, 100);
+        updateMeta(autosaveBaseFilename);
+        if (isAppend) {
+          setStatus('「' + file.name + '」の ' + addedPageCount + ' ページを末尾に追加 (合計 ' + pageCount + ' ページ)');
+          // 追加後の最初のページにジャンプ
+          if (oldPageCount < pageCount) {
+            currentPageIndex = oldPageCount;
+            await renderCurrentPage();
+            // サムネ active 更新
+            pageList.querySelectorAll('.page-thumb-wrap').forEach((el, idx) => {
+              el.classList.toggle('active', idx === currentPageIndex);
+            });
+          }
+          scheduleAutosave();
+        } else {
+          setStatus(file.name + ' を読み込みました（' + pageCount + 'ページ）');
+        }
+        // 初回ロードのみ: スクロール + 復元提案
+        if (!isAppend) {
+          requestAnimationFrame(() => {
+            editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          const shaForRestore = autosaveBaseSha;
+          setTimeout(() => { checkAndOfferRestore(shaForRestore); }, 100);
+        }
       } catch (err) {
         console.error('[imgPlace] PDF読込失敗:', err);
         setStatus('PDF読込に失敗しました: ' + (err && err.message ? err.message : err), 'error');
+      }
+    }
+
+    // ----- ページ削除 (pdf-lib で removePage → placements/customCells インデックス再マップ) -----
+    async function deletePage(pageIndex) {
+      if (!basePdfBytes) {
+        setStatus('PDFが読み込まれていません', 'error');
+        return;
+      }
+      if (pageCount <= 1) {
+        setStatus('最後の1ページは削除できません', 'error');
+        return;
+      }
+      const placementsOnThis = placements.filter(p => p.pageIndex === pageIndex).length;
+      const cellsOnThis = (customCellsByPage[pageIndex] || []).length;
+      let msg = 'ページ ' + (pageIndex + 1) + ' を削除しますか?';
+      if (placementsOnThis || cellsOnThis) {
+        msg += '\n(配置画像 ' + placementsOnThis + ' 枚 / カスタムセル ' + cellsOnThis + ' 個 もまとめて削除)';
+      }
+      if (!confirm(msg)) return;
+      try {
+        const PDFLib = window.PDFLib;
+        if (!PDFLib || !PDFLib.PDFDocument) throw new Error('pdf-lib 未読込');
+        const doc = await PDFLib.PDFDocument.load(basePdfBytes);
+        doc.removePage(pageIndex);
+        basePdfBytes = (await doc.save()).buffer;
+        pdfjsDoc = await pdfjsLib.getDocument({ data: basePdfBytes.slice(0) }).promise;
+        pageCount = pdfjsDoc.numPages;
+        pageSizesMm.splice(pageIndex, 1);
+
+        // 配置画像: 削除ページ上のものは破棄、それ以降のページはインデックス -1
+        placements = placements
+          .filter(p => p.pageIndex !== pageIndex)
+          .map(p => p.pageIndex > pageIndex ? Object.assign({}, p, { pageIndex: p.pageIndex - 1 }) : p);
+
+        // カスタムセル: 削除ページのキーを除外、それ以降のキーを -1 シフト
+        const newCells = {};
+        for (const k of Object.keys(customCellsByPage)) {
+          const ki = parseInt(k, 10);
+          if (ki === pageIndex) continue;
+          newCells[ki > pageIndex ? ki - 1 : ki] = customCellsByPage[k];
+        }
+        customCellsByPage = newCells;
+
+        // currentPageIndex 調整
+        if (currentPageIndex === pageIndex) {
+          currentPageIndex = Math.min(pageIndex, pageCount - 1);
+        } else if (currentPageIndex > pageIndex) {
+          currentPageIndex -= 1;
+        }
+
+        clearSelection();
+        cachedBasePdfBase64 = null;
+        autosaveBaseSha = await sha256Hex(basePdfBytes);
+        await renderThumbnails();
+        await renderCurrentPage();
+        setStatus('ページ ' + (pageIndex + 1) + ' を削除 (残り ' + pageCount + ' ページ)');
+        scheduleAutosave();
+      } catch (err) {
+        console.error('[imgPlace] ページ削除失敗:', err);
+        setStatus('ページ削除失敗: ' + (err.message || err), 'error');
       }
     }
 
@@ -11521,10 +12072,13 @@
 
     // ----- 配置削除（複数選択対応） -----
     function deletePlacement(id) {
+      const target = placements.find(p => p.id === id);
+      const affectedPage = target ? target.pageIndex : currentPageIndex;
       placements = placements.filter(p => p.id !== id);
       removeFromSelection(id);
       renderPlacements();
       renderLibrary(); // バッジ数更新
+      queueThumbUpdate(affectedPage);
     }
     function deleteSelected() {
       if (selectedPlacementIds.size === 0) return;
@@ -12343,7 +12897,11 @@
       pageList.innerHTML = '';
       for (let i = 0; i < pageCount; i++) {
         const wrap = document.createElement('div');
-        wrap.className = 'page-thumb-wrap' + (i === currentPageIndex ? ' active' : '');
+        let cls = 'page-thumb-wrap';
+        if (i === currentPageIndex) cls += ' active';
+        if (pageSelectedIndices.has(i)) cls += ' page-multi-selected';
+        wrap.className = cls;
+        wrap.dataset.pageIndex = i;
         wrap.setAttribute('role', 'button');
         wrap.setAttribute('tabindex', '0');
         wrap.setAttribute('aria-label', 'ページ ' + (i + 1));
@@ -12354,6 +12912,34 @@
         const label = document.createElement('div');
         label.className = 'page-thumb-label';
         label.textContent = 'P.' + (i + 1);
+
+        // × 削除ボタン (1ページしか無い時は出さない)
+        if (pageCount > 1) {
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'page-thumb-delete';
+          delBtn.textContent = '×';
+          const pageIdx = i; // closure
+          // ボタンのタイトル: マルチ選択中なら一括件数を表示
+          const updateDelTitle = () => {
+            if (pageSelectedIndices.size > 1 && pageSelectedIndices.has(pageIdx)) {
+              delBtn.title = '選択中の ' + pageSelectedIndices.size + ' ページを一括削除';
+            } else {
+              delBtn.title = 'このページを削除';
+            }
+          };
+          updateDelTitle();
+          delBtn.setAttribute('aria-label', 'ページ ' + (i + 1) + ' を削除');
+          delBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            if (pageSelectedIndices.size > 1 && pageSelectedIndices.has(pageIdx)) {
+              await deleteMultiplePages(Array.from(pageSelectedIndices));
+            } else {
+              await deletePage(pageIdx);
+            }
+          });
+          wrap.appendChild(delBtn);
+        }
 
         wrap.appendChild(thumbCanvas);
         wrap.appendChild(label);
@@ -12369,22 +12955,270 @@
           console.warn('[imgPlace] サムネ描画失敗 P.' + (i + 1), err);
         }
 
-        const handleSelect = () => {
+        const handleSelect = (e) => {
+          const isCtrl = e && (e.ctrlKey || e.metaKey);
+          const isShift = e && e.shiftKey;
+          if (isCtrl) {
+            // トグル選択 (currentPageIndex は変えない)
+            if (pageSelectedIndices.has(i)) pageSelectedIndices.delete(i);
+            else pageSelectedIndices.add(i);
+            pageLastClickedIndex = i;
+            updatePageSelectionDom();
+            return;
+          }
+          if (isShift && pageLastClickedIndex !== null) {
+            // 範囲選択
+            const lo = Math.min(pageLastClickedIndex, i);
+            const hi = Math.max(pageLastClickedIndex, i);
+            for (let k = lo; k <= hi; k++) pageSelectedIndices.add(k);
+            updatePageSelectionDom();
+            return;
+          }
+          // 通常: 選択クリア → currentPage 切替
+          pageSelectedIndices.clear();
+          pageLastClickedIndex = i;
+          updatePageSelectionDom();
           if (i === currentPageIndex) return;
           currentPageIndex = i;
           pageList.querySelectorAll('.page-thumb-wrap').forEach((el, idx) => {
             el.classList.toggle('active', idx === currentPageIndex);
           });
           renderCurrentPage();
+          // 順次配置モード中ならステータス再表示
+          if (placeQueueMode && placeQueue.length > 0) {
+            setStatus('順次配置: P.' + (currentPageIndex + 1) + ' クリックで次を配置 (残り ' + placeQueue.length + ' 枚 / Esc キャンセル)');
+          }
         };
         wrap.addEventListener('click', handleSelect);
         wrap.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleSelect();
+            handleSelect(e);
           }
         });
       }
+      // サムネ生成後、配置画像のオーバーレイも非同期で描画開始
+      schedulePlacementOverlayAll();
+    }
+
+    // ----- サムネに配置画像を反映 (PDFレイヤー上に placements を描き重ね) -----
+    // pre-load した HTMLImageElement のキャッシュ (imageId → HTMLImage)
+    const thumbImgCache = new Map();
+    function loadImageForThumb(imageId) {
+      if (thumbImgCache.has(imageId)) {
+        const cached = thumbImgCache.get(imageId);
+        if (cached.complete) return Promise.resolve(cached);
+      }
+      const img = imageLibrary.find(im => im.id === imageId);
+      if (!img || !img.dataUrl) return Promise.resolve(null);
+      return new Promise((resolve) => {
+        const el = new Image();
+        el.onload = () => { thumbImgCache.set(imageId, el); resolve(el); };
+        el.onerror = () => resolve(null);
+        el.src = img.dataUrl;
+      });
+    }
+    // 指定ページのサムネに、PDFレイヤー描画 → placements を上に drawImage
+    async function renderThumbWithPlacements(pageIndex) {
+      if (!pdfjsDoc || !pageList) return;
+      const wrap = pageList.querySelector('.page-thumb-wrap[data-page-index="' + pageIndex + '"]');
+      if (!wrap) return;
+      const canvas = wrap.querySelector('canvas.page-thumb');
+      if (!canvas) return;
+      try {
+        const page = await pdfjsDoc.getPage(pageIndex + 1);
+        const vp = page.getViewport({ scale: THUMB_SCALE });
+        canvas.width = Math.ceil(vp.width);
+        canvas.height = Math.ceil(vp.height);
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const pageSize = pageSizesMm[pageIndex];
+        if (!pageSize) return;
+        const scale = vp.width / pageSize.width;
+        const placementsOnPage = placements.filter(p => p.pageIndex === pageIndex);
+        for (const pl of placementsOnPage) {
+          const imgEl = await loadImageForThumb(pl.imageId);
+          if (!imgEl) continue;
+          const x = pl.xMm * scale;
+          const y = pl.yMm * scale;
+          const w = pl.widthMm * scale;
+          const h = pl.heightMm * scale;
+          try { ctx.drawImage(imgEl, x, y, w, h); } catch (_) {}
+        }
+      } catch (e) {
+        // pdf.js のレンダ競合等は無視 (次回更新で復帰)
+      }
+    }
+    // debounce 付きで複数ページ同時更新
+    let thumbUpdateQueue = new Set();
+    let thumbUpdateTimer = null;
+    function queueThumbUpdate(pageIndex) {
+      if (typeof pageIndex !== 'number' || pageIndex < 0 || pageIndex >= pageCount) return;
+      thumbUpdateQueue.add(pageIndex);
+      if (thumbUpdateTimer) clearTimeout(thumbUpdateTimer);
+      thumbUpdateTimer = setTimeout(async () => {
+        const list = Array.from(thumbUpdateQueue);
+        thumbUpdateQueue.clear();
+        thumbUpdateTimer = null;
+        for (const i of list) await renderThumbWithPlacements(i);
+      }, 350);
+    }
+    // 全ページサムネ更新 (renderThumbnails の最後に呼ばれる)
+    function schedulePlacementOverlayAll() {
+      // 既存サムネをまず PDFのみで素早く表示 → 後で placements を上書き描画
+      // 全ページ即時更新 (debounce 通さない)
+      (async () => {
+        for (let i = 0; i < pageCount; i++) {
+          // placements がある or current page のみ更新 (空ページは PDF だけで十分)
+          if (i === currentPageIndex || placements.some(p => p.pageIndex === i)) {
+            await renderThumbWithPlacements(i);
+          }
+        }
+      })();
+    }
+
+    // ----- ページ選択 DOM 更新 (再描画せずクラス切替だけ) -----
+    function updatePageSelectionDom() {
+      if (!pageList) return;
+      pageList.querySelectorAll('.page-thumb-wrap').forEach((el) => {
+        const idx = parseInt(el.dataset.pageIndex, 10);
+        el.classList.toggle('page-multi-selected', pageSelectedIndices.has(idx));
+      });
+    }
+
+    // ----- 複数ページ一括削除 -----
+    async function deleteMultiplePages(indices) {
+      if (!basePdfBytes || !indices || indices.length === 0) return;
+      if (indices.length >= pageCount) {
+        setStatus('全ページ選択中は一括削除できません (最低1ページ残す)', 'error');
+        return;
+      }
+      // 関連配置/セル件数を集計
+      const totalPlaces = placements.filter(p => indices.indexOf(p.pageIndex) !== -1).length;
+      const totalCells = indices.reduce((sum, idx) => sum + (customCellsByPage[idx] || []).length, 0);
+      let msg = indices.length + ' ページを一括削除しますか?';
+      if (totalPlaces || totalCells) {
+        msg += '\n(配置画像 ' + totalPlaces + ' 枚 / カスタムセル ' + totalCells + ' 個 もまとめて削除)';
+      }
+      if (!confirm(msg)) return;
+      try {
+        const PDFLib = window.PDFLib;
+        const doc = await PDFLib.PDFDocument.load(basePdfBytes);
+        // 高い index から削除しないと インデックスがずれる
+        const sortedDesc = indices.slice().sort((a, b) => b - a);
+        for (const idx of sortedDesc) doc.removePage(idx);
+        basePdfBytes = (await doc.save()).buffer;
+        pdfjsDoc = await pdfjsLib.getDocument({ data: basePdfBytes.slice(0) }).promise;
+        pageCount = pdfjsDoc.numPages;
+        // pageSizesMm を index 高い順に splice
+        for (const idx of sortedDesc) pageSizesMm.splice(idx, 1);
+        // 配置: 削除対象ページのものは破棄、それ以外は新インデックスにマップ
+        // 新インデックス = 旧インデックス - (自分より小さい削除index の数)
+        const sortedAsc = indices.slice().sort((a, b) => a - b);
+        const countDeletedBefore = (oldIdx) => sortedAsc.filter(d => d < oldIdx).length;
+        placements = placements
+          .filter(p => indices.indexOf(p.pageIndex) === -1)
+          .map(p => Object.assign({}, p, { pageIndex: p.pageIndex - countDeletedBefore(p.pageIndex) }));
+        // customCellsByPage 同様
+        const newCells = {};
+        for (const k of Object.keys(customCellsByPage)) {
+          const ki = parseInt(k, 10);
+          if (indices.indexOf(ki) !== -1) continue;
+          const newK = ki - countDeletedBefore(ki);
+          newCells[newK] = customCellsByPage[k];
+        }
+        customCellsByPage = newCells;
+        // currentPageIndex 調整
+        if (indices.indexOf(currentPageIndex) !== -1) {
+          // 削除されたページにいた場合、残ったページの中で一番近いものへ
+          currentPageIndex = Math.max(0, Math.min(currentPageIndex - countDeletedBefore(currentPageIndex), pageCount - 1));
+        } else {
+          currentPageIndex -= countDeletedBefore(currentPageIndex);
+        }
+        // 選択クリア
+        pageSelectedIndices.clear();
+        pageLastClickedIndex = null;
+        clearSelection();
+        cachedBasePdfBase64 = null;
+        autosaveBaseSha = await sha256Hex(basePdfBytes);
+        await renderThumbnails();
+        await renderCurrentPage();
+        setStatus(indices.length + ' ページを削除 (残り ' + pageCount + ' ページ)');
+        scheduleAutosave();
+      } catch (err) {
+        console.error('[imgPlace] 一括削除失敗:', err);
+        setStatus('一括削除失敗: ' + (err.message || err), 'error');
+      }
+    }
+
+    // ----- ページラバーバンド (リスト空きエリアからドラッグで複数選択) -----
+    let pagesRubberState = null;
+    if (pageList) {
+      pageList.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        // ターゲットが pageList 自身か、その直下のテキストノードクリックの場合
+        if (e.target !== pageList) return;
+        const rect = pageList.getBoundingClientRect();
+        const startX = e.clientX - rect.left + pageList.scrollLeft;
+        const startY = e.clientY - rect.top + pageList.scrollTop;
+        const band = document.createElement('div');
+        band.className = 'imgplace-pages-rubberband';
+        pageList.appendChild(band);
+        pagesRubberState = {
+          startX, startY, curX: startX, curY: startY,
+          band: band,
+          pointerId: e.pointerId,
+          additive: e.ctrlKey || e.metaKey || e.shiftKey,
+          baselineSet: new Set(pageSelectedIndices)
+        };
+        try { pageList.setPointerCapture(e.pointerId); } catch (_) {}
+        e.preventDefault();
+      });
+      pageList.addEventListener('pointermove', (e) => {
+        if (!pagesRubberState) return;
+        const rect = pageList.getBoundingClientRect();
+        pagesRubberState.curX = e.clientX - rect.left + pageList.scrollLeft;
+        pagesRubberState.curY = e.clientY - rect.top + pageList.scrollTop;
+        const s = pagesRubberState;
+        const xL = Math.min(s.startX, s.curX);
+        const yT = Math.min(s.startY, s.curY);
+        const xR = Math.max(s.startX, s.curX);
+        const yB = Math.max(s.startY, s.curY);
+        s.band.style.left = xL + 'px';
+        s.band.style.top = yT + 'px';
+        s.band.style.width = (xR - xL) + 'px';
+        s.band.style.height = (yB - yT) + 'px';
+        // 各ページサムネと交差判定
+        const r1 = {
+          left: rect.left + xL - pageList.scrollLeft,
+          top: rect.top + yT - pageList.scrollTop,
+          right: rect.left + xR - pageList.scrollLeft,
+          bottom: rect.top + yB - pageList.scrollTop
+        };
+        const newSel = s.additive ? new Set(s.baselineSet) : new Set();
+        pageList.querySelectorAll('.page-thumb-wrap').forEach(el => {
+          const ir = el.getBoundingClientRect();
+          const hit = !(ir.right < r1.left || ir.left > r1.right || ir.bottom < r1.top || ir.top > r1.bottom);
+          if (hit) {
+            const idx = parseInt(el.dataset.pageIndex, 10);
+            if (!isNaN(idx)) newSel.add(idx);
+          }
+        });
+        pageSelectedIndices = newSel;
+        updatePageSelectionDom();
+      });
+      const endPagesRubber = () => {
+        if (!pagesRubberState) return;
+        if (pagesRubberState.band && pagesRubberState.band.parentNode) {
+          pagesRubberState.band.parentNode.removeChild(pagesRubberState.band);
+        }
+        pagesRubberState = null;
+        if (pageSelectedIndices.size > 1) {
+          setStatus(pageSelectedIndices.size + ' ページ選択中 (× で一括削除 / Esc で解除)');
+        }
+      };
+      pageList.addEventListener('pointerup', endPagesRubber);
+      pageList.addEventListener('pointercancel', endPagesRubber);
     }
 
     // ----- ドロップゾーン -----
@@ -12644,15 +13478,42 @@
         });
         item.appendChild(removeBtn);
 
-        // ダブルクリックで現在ページ中央に配置
-        item.addEventListener('dblclick', () => placeAtCenter(img.id));
+        // 複数選択状態を反映
+        const selIdx = libSelectedIds.indexOf(img.id);
+        if (selIdx !== -1) {
+          item.classList.add('lib-selected');
+          item.dataset.selOrder = (selIdx + 1);
+        }
 
-        // ドラッグ開始 → キャンバスへD&D
+        // ダブルクリックで現在ページ中央に配置
+        item.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          placeAtCenter(img.id);
+        });
+
+        // クリックで選択 (Ctrl/Cmd = トグル、Shift = 範囲)
+        item.addEventListener('click', (e) => {
+          // × ボタンクリックは別 handler 経由 (stopPropagation 済)
+          handleLibClick(img.id, e);
+        });
+
+        // ドラッグ開始: 選択に入ってる場合は全選択をドラッグ、そうでなければ単独
         item.addEventListener('dragstart', (e) => {
-          draggingLibImageId = img.id;
-          if (e.dataTransfer) {
-            e.dataTransfer.setData('text/plain', 'imgplace-lib:' + img.id);
-            e.dataTransfer.effectAllowed = 'copy';
+          if (libSelectedIds.indexOf(img.id) === -1) {
+            // 単独ドラッグ: 選択は触らない (Ctrl 不要で配置できるように)
+            draggingLibImageId = img.id;
+            if (e.dataTransfer) {
+              e.dataTransfer.setData('text/plain', 'imgplace-lib:' + img.id);
+              e.dataTransfer.effectAllowed = 'copy';
+            }
+          } else {
+            // 複数ドラッグ
+            draggingLibImageId = '__multi__';
+            const ids = libSelectedIds.slice();
+            if (e.dataTransfer) {
+              e.dataTransfer.setData('text/plain', 'imgplace-lib-multi:' + ids.join(','));
+              e.dataTransfer.effectAllowed = 'copy';
+            }
           }
         });
         item.addEventListener('dragend', () => {
@@ -12662,8 +13523,130 @@
 
         libList.appendChild(item);
       }
+      // 順次配置モードボタン状態を更新
+      updatePlaceQueueBtn();
       // ライブラリ変化を autosave 対象として debounce 登録
       scheduleAutosave();
+    }
+
+    // クリック時の選択ロジック (Ctrl/Cmd トグル, Shift 範囲, plain は単独選択)
+    function handleLibClick(imageId, e) {
+      const isCtrl = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      if (isShift && libLastClickedId) {
+        // 範囲選択: lastClicked → imageId の間を全部選択 (既存選択は維持)
+        const ids = imageLibrary.map(im => im.id);
+        const a = ids.indexOf(libLastClickedId);
+        const b = ids.indexOf(imageId);
+        if (a !== -1 && b !== -1) {
+          const lo = Math.min(a, b), hi = Math.max(a, b);
+          for (let k = lo; k <= hi; k++) {
+            if (libSelectedIds.indexOf(ids[k]) === -1) libSelectedIds.push(ids[k]);
+          }
+        }
+      } else if (isCtrl) {
+        // トグル
+        const idx = libSelectedIds.indexOf(imageId);
+        if (idx === -1) libSelectedIds.push(imageId);
+        else libSelectedIds.splice(idx, 1);
+        libLastClickedId = imageId;
+      } else {
+        // 通常クリック: この1つだけに単独選択 (リセット)
+        libSelectedIds = [imageId];
+        libLastClickedId = imageId;
+      }
+      renderLibrary();
+    }
+
+    function clearLibSelection() {
+      libSelectedIds = [];
+      libLastClickedId = null;
+      renderLibrary();
+    }
+
+    // ----- ライブラリ ラバーバンド選択 (libList 空きエリアからドラッグ) -----
+    let libRubberState = null;
+    if (libList) {
+      libList.addEventListener('pointerdown', (e) => {
+        // 左クリックのみ、ターゲットが libList 自身 (アイテムやその子じゃない)
+        if (e.button !== 0) return;
+        if (e.target !== libList) return;
+        const startRect = libList.getBoundingClientRect();
+        const startX = e.clientX - startRect.left + libList.scrollLeft;
+        const startY = e.clientY - startRect.top + libList.scrollTop;
+        const band = document.createElement('div');
+        band.className = 'imgplace-lib-rubberband';
+        libList.appendChild(band);
+        libRubberState = {
+          startX, startY, curX: startX, curY: startY,
+          band: band,
+          pointerId: e.pointerId,
+          additive: e.ctrlKey || e.metaKey || e.shiftKey,
+          baselineIds: (e.ctrlKey || e.metaKey || e.shiftKey) ? libSelectedIds.slice() : []
+        };
+        try { libList.setPointerCapture(e.pointerId); } catch (_) {}
+        e.preventDefault();
+      });
+      libList.addEventListener('pointermove', (e) => {
+        if (!libRubberState) return;
+        const rect = libList.getBoundingClientRect();
+        libRubberState.curX = e.clientX - rect.left + libList.scrollLeft;
+        libRubberState.curY = e.clientY - rect.top + libList.scrollTop;
+        const s = libRubberState;
+        const xL = Math.min(s.startX, s.curX);
+        const yT = Math.min(s.startY, s.curY);
+        const xR = Math.max(s.startX, s.curX);
+        const yB = Math.max(s.startY, s.curY);
+        s.band.style.left = xL + 'px';
+        s.band.style.top = yT + 'px';
+        s.band.style.width = (xR - xL) + 'px';
+        s.band.style.height = (yB - yT) + 'px';
+        // 各 lib-item と交差判定 → libSelectedIds 更新
+        const items = libList.querySelectorAll('.imgplace-lib-item');
+        const newSel = s.additive ? s.baselineIds.slice() : [];
+        items.forEach(it => {
+          const ir = it.getBoundingClientRect();
+          // ラバーバンド と item の rect が交差してるか (viewport 座標で判定)
+          const r1 = {
+            left: rect.left + xL - libList.scrollLeft,
+            top: rect.top + yT - libList.scrollTop,
+            right: rect.left + xR - libList.scrollLeft,
+            bottom: rect.top + yB - libList.scrollTop
+          };
+          const hit = !(ir.right < r1.left || ir.left > r1.right || ir.bottom < r1.top || ir.top > r1.bottom);
+          if (hit) {
+            const id = it.dataset.imageId;
+            if (id && newSel.indexOf(id) === -1) newSel.push(id);
+          }
+        });
+        // 並び順を imageLibrary 順序に揃える (number badge 順序が直感的に)
+        const orderMap = new Map(imageLibrary.map((im, i) => [im.id, i]));
+        newSel.sort((a, b) => (orderMap.get(a) || 0) - (orderMap.get(b) || 0));
+        libSelectedIds = newSel;
+        // 軽量再描画: ラバーバンドの上にアイテム視覚状態だけ更新
+        items.forEach(it => {
+          const id = it.dataset.imageId;
+          const selIdx = libSelectedIds.indexOf(id);
+          if (selIdx !== -1) {
+            it.classList.add('lib-selected');
+            it.dataset.selOrder = (selIdx + 1);
+          } else {
+            it.classList.remove('lib-selected');
+            it.removeAttribute('data-sel-order');
+          }
+        });
+      });
+      const endRubber = (e) => {
+        if (!libRubberState) return;
+        if (libRubberState.band && libRubberState.band.parentNode) {
+          libRubberState.band.parentNode.removeChild(libRubberState.band);
+        }
+        libRubberState = null;
+        // 順次配置ボタンのラベル更新
+        updatePlaceQueueBtn();
+      };
+      libList.addEventListener('pointerup', endRubber);
+      libList.addEventListener('pointercancel', endRubber);
     }
 
     function removeLibraryImage(imageId) {
@@ -12680,20 +13663,36 @@
         }
       }
       imageLibrary = imageLibrary.filter(im => im.id !== imageId);
+      // 選択リストからも除外
+      libSelectedIds = libSelectedIds.filter(id => id !== imageId);
+      if (libLastClickedId === imageId) libLastClickedId = null;
+      // 順次配置 Queue にも入ってたら除外
+      placeQueue = placeQueue.filter(id => id !== imageId);
+      if (placeQueueMode && placeQueue.length === 0) stopPlaceQueueMode('対象画像なし');
       renderLibrary();
       renderPlacements();
     }
 
-    // ----- 初期サイズ計算（72dpi換算 + ページ幅50%上限） -----
+    // ----- 初期サイズ計算（72dpi換算 + サイズ上限） -----
+    // sizeCapEnabled: true ならページの幅 1/3 + 高さ 1/3 のどちらか厳しい方で縮小
+    //                 false なら 72dpi 原寸のまま（ページ幅 100% は超えないよう保険のみ）
     function calcInitialSizeMm(imageMeta) {
       // 72dpi換算: px / 72 * 25.4 = mm (1pt = 1/72 inch, 1mm = 1/25.4 inch)
       let widthMm = imageMeta.originalWidthPx / 72 * 25.4;
       let heightMm = imageMeta.originalHeightPx / 72 * 25.4;
       const pageSize = pageSizesMm[currentPageIndex];
-      if (pageSize && widthMm > pageSize.width * 0.5) {
-        const scale = (pageSize.width * 0.5) / widthMm;
-        widthMm *= scale;
-        heightMm *= scale;
+      if (pageSize) {
+        if (sizeCapEnabled) {
+          // ページの 1/3 を上限に、幅/高さ両軸で厳しい方の比率を採用
+          const maxW = pageSize.width / 3;
+          const maxH = pageSize.height / 3;
+          const ratio = Math.min(1, maxW / widthMm, maxH / heightMm);
+          if (ratio < 1) { widthMm *= ratio; heightMm *= ratio; }
+        } else {
+          // 上限解除時もページ範囲を超えないよう保険 (はみ出し配置防止)
+          const ratio = Math.min(1, pageSize.width / widthMm, pageSize.height / heightMm);
+          if (ratio < 1) { widthMm *= ratio; heightMm *= ratio; }
+        }
       }
       return { widthMm, heightMm };
     }
@@ -12739,11 +13738,21 @@
       selectSingle(id); // 配置直後は単独選択（既存マルチ選択はリセット）
       renderPlacements();
       renderLibrary();  // バッジ更新
+      queueThumbUpdate(currentPageIndex);
     }
 
     // ----- 画像ライブラリのドロップゾーン配線 -----
     if (libDropzone && libInput) {
       libDropzone.addEventListener('click', () => libInput.click());
+      // ドロップゾーン上でホイール → libList にスクロール転送 (画像沢山ある時操作性UP)
+      libDropzone.addEventListener('wheel', (e) => {
+        if (!libList) return;
+        // libList が実際にスクロール可能な時のみ転送 + ページスクロール抑止
+        if (libList.scrollHeight > libList.clientHeight) {
+          e.preventDefault();
+          libList.scrollTop += e.deltaY;
+        }
+      }, { passive: false });
       libDropzone.addEventListener('dragover', (e) => {
         // ライブラリ自身からのドラッグ（draggingLibImageId）はライブラリへの再ドロップを許可しない
         if (draggingLibImageId) return;
@@ -12790,13 +13799,147 @@
         const rect = canvasFrame.getBoundingClientRect();
         const xPx = e.clientX - rect.left;
         const yPx = e.clientY - rect.top;
-        // CSSピクセル → mm: ピクセル比 = pageSize.width / rect.width
         const xMm = (xPx / rect.width) * pageSize.width;
         const yMm = (yPx / rect.height) * pageSize.height;
-        placeAtPoint(draggingLibImageId, xMm, yMm);
+        // dataTransfer の中身を見て単一 or 複数 を判別
+        const payload = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || '';
+        if (payload.startsWith('imgplace-lib-multi:')) {
+          const ids = payload.slice('imgplace-lib-multi:'.length).split(',').filter(Boolean);
+          // ドロップ点から右下方向に少しずつオフセットして並べる
+          const OFFSET_MM = 5;
+          ids.forEach((id, i) => {
+            placeAtPoint(id, xMm + i * OFFSET_MM, yMm + i * OFFSET_MM);
+          });
+          setStatus(ids.length + ' 枚を配置 (ドロップ点から右下にオフセット)');
+        } else {
+          placeAtPoint(draggingLibImageId, xMm, yMm);
+        }
         draggingLibImageId = null;
       });
+
+      // 順次配置モード中: canvas クリックで Queue の先頭を配置
+      canvasFrame.addEventListener('click', (e) => {
+        if (!placeQueueMode || placeQueue.length === 0) return;
+        // 配置済み画像クリックや他要素クリックでは反応しない (ターゲット限定)
+        if (e.target !== canvasFrame && e.target.tagName !== 'CANVAS') return;
+        const pos = getPagePosMm(e.clientX, e.clientY);
+        if (!pos) return;
+        const nextId = placeQueue.shift();
+        placeAtPoint(nextId, pos.xMm, pos.yMm);
+        if (placeQueue.length === 0) {
+          stopPlaceQueueMode('全て配置完了');
+        } else {
+          setStatus('順次配置: クリックで次を配置 (残り ' + placeQueue.length + ' 枚 / Esc でキャンセル)');
+          updateQueuePreviewContent(); // 次の画像のプレビューに切替
+        }
+      });
+      // canvas 上で pointer 動いたらプレビュー追従
+      canvasFrame.addEventListener('pointermove', (e) => {
+        if (placeQueueMode && placeQueue.length > 0) {
+          moveQueuePreview(e.clientX, e.clientY);
+        }
+      });
+      canvasFrame.addEventListener('pointerleave', () => {
+        if (placeQueueMode) hideQueuePreview();
+      });
     }
+    // 順次配置モード制御
+    function startPlaceQueueMode() {
+      if (libSelectedIds.length === 0) {
+        setStatus('画像ライブラリで配置したい画像を選択してください', 'error');
+        return;
+      }
+      placeQueue = libSelectedIds.slice();
+      placeQueueMode = true;
+      const mode = document.getElementById('modeImgPlace');
+      if (mode) mode.classList.add('imgplace-place-queue-mode');
+      setStatus('順次配置: クリックで次を配置 (残り ' + placeQueue.length + ' 枚 / Esc でキャンセル)');
+      updatePlaceQueueBtn();
+      updateQueuePreviewContent(); // 1枚目のプレビュー内容セット
+    }
+    function stopPlaceQueueMode(reason) {
+      placeQueue = [];
+      placeQueueMode = false;
+      const mode = document.getElementById('modeImgPlace');
+      if (mode) mode.classList.remove('imgplace-place-queue-mode');
+      setStatus(reason || '順次配置モード終了');
+      updatePlaceQueueBtn();
+      hideQueuePreview();
+    }
+    // ----- 順次配置プレビュー (カーソル追従、サムネ+ファイル名) -----
+    function updateQueuePreviewContent() {
+      const el = document.getElementById('imgPlaceQueuePreview');
+      if (!el) return;
+      if (!placeQueueMode || placeQueue.length === 0) {
+        el.classList.remove('visible');
+        return;
+      }
+      const nextId = placeQueue[0];
+      const img = imageLibrary.find(im => im.id === nextId);
+      if (!img) { el.classList.remove('visible'); return; }
+      const imgEl = document.getElementById('imgPlaceQueuePreviewImg');
+      const nameEl = document.getElementById('imgPlaceQueuePreviewName');
+      const metaEl = document.getElementById('imgPlaceQueuePreviewMeta');
+      if (imgEl) imgEl.src = img.dataUrl;
+      if (nameEl) nameEl.textContent = img.filename;
+      if (metaEl) {
+        const orderInfo = (libSelectedIds.length - placeQueue.length + 1) + '/' + libSelectedIds.length;
+        metaEl.textContent = '次 ' + orderInfo + ' · ' + img.originalWidthPx + '×' + img.originalHeightPx;
+      }
+      // 表示は pointermove で起動 (canvas に入った時)
+    }
+    function hideQueuePreview() {
+      const el = document.getElementById('imgPlaceQueuePreview');
+      if (el) el.classList.remove('visible');
+    }
+    function moveQueuePreview(clientX, clientY) {
+      const el = document.getElementById('imgPlaceQueuePreview');
+      if (!el || !placeQueueMode || placeQueue.length === 0) return;
+      el.classList.add('visible');
+      // カーソル右下に少しオフセット (カーソル隠さないよう)
+      const offsetX = 18, offsetY = 18;
+      // 画面端近くなら左/上に反転
+      const w = el.offsetWidth || 260, h = el.offsetHeight || 76;
+      let x = clientX + offsetX;
+      let y = clientY + offsetY;
+      if (x + w > window.innerWidth) x = clientX - w - 8;
+      if (y + h > window.innerHeight) y = clientY - h - 8;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+    }
+    // 順次配置ボタンの表示・ラベル更新
+    function updatePlaceQueueBtn() {
+      const btn = document.getElementById('imgPlacePlaceQueueBtn');
+      if (!btn) return;
+      if (placeQueueMode) {
+        btn.textContent = '⏹ 順次配置中止 (残り' + placeQueue.length + ')';
+        btn.dataset.active = 'on';
+        btn.style.display = '';
+      } else if (libSelectedIds.length > 0) {
+        btn.textContent = '🎯 順次配置 (' + libSelectedIds.length + '枚)';
+        btn.dataset.active = 'off';
+        btn.style.display = '';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+    // Esc キーで順次配置キャンセル + 複数選択解除 (lib / pages)
+    window.addEventListener('keydown', (e) => {
+      const panel = document.getElementById('modeImgPlace');
+      if (!panel || !panel.classList.contains('active')) return;
+      if (e.key === 'Escape') {
+        if (placeQueueMode) {
+          stopPlaceQueueMode('順次配置キャンセル');
+        } else if (libSelectedIds.length > 0) {
+          clearLibSelection();
+        } else if (pageSelectedIndices.size > 0) {
+          pageSelectedIndices.clear();
+          pageLastClickedIndex = null;
+          updatePageSelectionDom();
+          setStatus('');
+        }
+      }
+    });
 
     // ----- ラバーバンド選択 -----
     function startRubberBand(e) {
@@ -13086,6 +14229,15 @@
       if (!dragState) return;
       // ゴミ箱上で離した場合は削除
       const deleteId = (dragState.mode === 'move' && dragState.overTrash) ? dragState.placementId : null;
+      // マルチ選択時は選択中の全配置を削除対象に
+      let deleteIds = [];
+      if (deleteId) {
+        if (selectedPlacementIds && selectedPlacementIds.size > 1 && selectedPlacementIds.has(deleteId)) {
+          deleteIds = Array.from(selectedPlacementIds);
+        } else {
+          deleteIds = [deleteId];
+        }
+      }
       // ゴースト破棄
       if (dragState.ghost) destroyDragGhost(dragState.ghost);
       dragState = null;
@@ -13098,10 +14250,13 @@
       const modePanel = document.getElementById('modeImgPlace');
       if (modePanel) modePanel.classList.remove('imgplace-dragging');
       hideTrash();
-      if (deleteId) {
-        deletePlacement(deleteId); // 内部で renderPlacements 呼ばれる
+      if (deleteIds.length > 0) {
+        for (const id of deleteIds) deletePlacement(id); // 各 deletePlacement 内で renderPlacements が呼ばれるが、軽量なのでOK
+        if (deleteIds.length > 1) setStatus(deleteIds.length + ' 個の配置を削除');
       } else {
         renderPlacements(); // dragging-source クラス除去とガイドクリアのため再描画
+        // 移動/リサイズ commit 後にもサムネ更新 (位置・サイズ変化反映)
+        queueThumbUpdate(currentPageIndex);
       }
     }
     function endPointerInteraction(e) {
@@ -13167,6 +14322,197 @@
         }
       });
     }
+
+    // ----- 1/3 サイズ制限トグルボタン -----
+    const sizeCapBtn = document.getElementById('imgPlaceSizeCapBtn');
+    function applySizeCapBtnState() {
+      if (!sizeCapBtn) return;
+      sizeCapBtn.dataset.active = sizeCapEnabled ? 'on' : 'off';
+      sizeCapBtn.textContent = sizeCapEnabled ? '📏 1/3制限 ON' : '📏 1/3制限 OFF';
+    }
+    applySizeCapBtnState();
+    if (sizeCapBtn) {
+      sizeCapBtn.addEventListener('click', () => {
+        sizeCapEnabled = !sizeCapEnabled;
+        try { localStorage.setItem('imgPlaceSizeCap', sizeCapEnabled ? 'on' : 'off'); } catch (_e) {}
+        applySizeCapBtnState();
+        setStatus(sizeCapEnabled
+          ? '配置サイズ上限: ページの1/3 (以降の配置に適用)'
+          : '配置サイズ上限: なし (原寸 / ページ範囲内のみ保険)');
+      });
+    }
+
+    // ----- カスタムセル トグル + 描画 / 削除 -----
+    // ----- 列幅スプリッター: 左/右ペインの幅をドラッグで可変、localStorage 永続化 -----
+    (function setupSplitters() {
+      const editor = document.querySelector('#modeImgPlace .imgplace-editor');
+      const leftSp = document.getElementById('imgPlaceSplitterLeft');
+      const rightSp = document.getElementById('imgPlaceSplitterRight');
+      if (!editor) return;
+      // localStorage から復元 (初回は default)
+      try {
+        const lw = localStorage.getItem('imgPlaceLeftW');
+        const rw = localStorage.getItem('imgPlaceRightW');
+        if (lw && /^\d+px$/.test(lw)) editor.style.setProperty('--imgplace-left', lw);
+        if (rw && /^\d+px$/.test(rw)) editor.style.setProperty('--imgplace-right', rw);
+      } catch (_e) {}
+      const MIN_LEFT = 80;
+      const MIN_RIGHT = 160;
+      function attach(sp, side) {
+        if (!sp) return;
+        sp.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          try { sp.setPointerCapture(e.pointerId); } catch (_) {}
+          sp.classList.add('dragging');
+          document.body.style.cursor = 'col-resize';
+          const startX = e.clientX;
+          const editorRect = editor.getBoundingClientRect();
+          const cs = getComputedStyle(editor);
+          const initLeft = parseFloat(cs.getPropertyValue('--imgplace-left')) || 180;
+          const initRight = parseFloat(cs.getPropertyValue('--imgplace-right')) || 280;
+          // canvas 列が小さくなりすぎないよう、左右合計の上限を editor 幅の80%にキャップ
+          const maxSumW = editorRect.width * 0.8;
+          function onMove(ev) {
+            const dx = ev.clientX - startX;
+            if (side === 'left') {
+              let w = Math.max(MIN_LEFT, initLeft + dx);
+              // 右ペインが現状幅のとき、左+右が maxSumW を超えないよう抑制
+              if (w + initRight > maxSumW) w = maxSumW - initRight;
+              editor.style.setProperty('--imgplace-left', w + 'px');
+            } else {
+              let w = Math.max(MIN_RIGHT, initRight - dx);
+              if (initLeft + w > maxSumW) w = maxSumW - initLeft;
+              editor.style.setProperty('--imgplace-right', w + 'px');
+            }
+          }
+          function onEnd() {
+            sp.classList.remove('dragging');
+            document.body.style.cursor = '';
+            sp.removeEventListener('pointermove', onMove);
+            sp.removeEventListener('pointerup', onEnd);
+            sp.removeEventListener('pointercancel', onEnd);
+            try {
+              const cur = getComputedStyle(editor);
+              const lw = cur.getPropertyValue('--imgplace-left').trim();
+              const rw = cur.getPropertyValue('--imgplace-right').trim();
+              if (lw) localStorage.setItem('imgPlaceLeftW', lw);
+              if (rw) localStorage.setItem('imgPlaceRightW', rw);
+            } catch (_) {}
+          }
+          sp.addEventListener('pointermove', onMove);
+          sp.addEventListener('pointerup', onEnd);
+          sp.addEventListener('pointercancel', onEnd);
+        });
+      }
+      attach(leftSp, 'left');
+      attach(rightSp, 'right');
+
+      // ウィンドウ縮小時、固定値の左/右ペインが canvas を潰しすぎないよう比例縮小
+      function clampColumnsToViewport() {
+        const W = editor.clientWidth;
+        if (W < 100) return;
+        const MIN_CANVAS = 280;
+        const SPLITTER_TOTAL = 12;
+        const maxSum = W - MIN_CANVAS - SPLITTER_TOTAL;
+        const cs2 = getComputedStyle(editor);
+        const leftStr = cs2.getPropertyValue('--imgplace-left').trim();
+        const rightStr = cs2.getPropertyValue('--imgplace-right').trim();
+        // ユーザーが固定値 (px) に設定済の時のみ介入。clamp() デフォルトはそのまま CSS に任せる
+        const leftFixed = leftStr.match(/^(\d+(?:\.\d+)?)px$/);
+        const rightFixed = rightStr.match(/^(\d+(?:\.\d+)?)px$/);
+        if (!leftFixed && !rightFixed) return;
+        const lv = leftFixed ? parseFloat(leftFixed[1]) : 0;
+        const rv = rightFixed ? parseFloat(rightFixed[1]) : 0;
+        if (lv + rv > maxSum && maxSum > 0) {
+          const ratio = maxSum / (lv + rv);
+          if (leftFixed) editor.style.setProperty('--imgplace-left', Math.max(80, Math.round(lv * ratio)) + 'px');
+          if (rightFixed) editor.style.setProperty('--imgplace-right', Math.max(160, Math.round(rv * ratio)) + 'px');
+        }
+      }
+      window.addEventListener('resize', clampColumnsToViewport);
+      // 初回 + editor サイズ変化時にも実行
+      if (typeof ResizeObserver === 'function') {
+        const ro = new ResizeObserver(() => clampColumnsToViewport());
+        ro.observe(editor);
+      }
+      clampColumnsToViewport();
+    })();
+
+    // ----- 右サイドバー 上下スプリッター: props ↔ library -----
+    (function setupSidebarSplitter() {
+      const sidebar = document.querySelector('#modeImgPlace .imgplace-sidebar');
+      const sp = document.getElementById('imgPlaceSidebarSplitter');
+      const propsEl = document.getElementById('imgPlaceProps');
+      if (!sidebar || !sp || !propsEl) return;
+      // localStorage から復元
+      try {
+        const ph = localStorage.getItem('imgPlacePropsH');
+        if (ph && /^\d+px$/.test(ph)) sidebar.style.setProperty('--imgplace-props-h', ph);
+      } catch (_e) {}
+      const MIN_PROPS = 60;
+      const MIN_LIB = 120;
+      sp.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        try { sp.setPointerCapture(e.pointerId); } catch (_) {}
+        sp.classList.add('dragging');
+        document.body.style.cursor = 'row-resize';
+        const startY = e.clientY;
+        // 自然コンテンツ高さを測る: CSS var を一時クリア → auto に戻る → 測定 → 復元
+        // ※同一 JS 同期実行なので画面チラつき無し
+        const savedVar = sidebar.style.getPropertyValue('--imgplace-props-h');
+        sidebar.style.removeProperty('--imgplace-props-h');
+        const naturalH = propsEl.offsetHeight;
+        if (savedVar) sidebar.style.setProperty('--imgplace-props-h', savedVar);
+        const propsRect = propsEl.getBoundingClientRect();
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const initH = propsRect.height;
+        // sidebar 余裕: 全高 - MIN_LIB - splitter - gap
+        const maxBySidebar = sidebarRect.height - MIN_LIB - 6 - 12;
+        // コンテンツ自然サイズで cap (これ以上広げても中身ないので無意味)
+        const maxByContent = naturalH;
+        const maxH = Math.max(MIN_PROPS, Math.min(maxBySidebar, maxByContent));
+        function onMove(ev) {
+          const dy = ev.clientY - startY;
+          let h = Math.max(MIN_PROPS, Math.min(maxH, initH + dy));
+          sidebar.style.setProperty('--imgplace-props-h', h + 'px');
+        }
+        function onEnd() {
+          sp.classList.remove('dragging');
+          document.body.style.cursor = '';
+          sp.removeEventListener('pointermove', onMove);
+          sp.removeEventListener('pointerup', onEnd);
+          sp.removeEventListener('pointercancel', onEnd);
+          try {
+            const ph = getComputedStyle(sidebar).getPropertyValue('--imgplace-props-h').trim();
+            if (ph) localStorage.setItem('imgPlacePropsH', ph);
+          } catch (_) {}
+        }
+        sp.addEventListener('pointermove', onMove);
+        sp.addEventListener('pointerup', onEnd);
+        sp.addEventListener('pointercancel', onEnd);
+      });
+
+      // sidebar 高さが縮んだ時、固定 props 高さがライブラリを潰さないよう再 clamp
+      function clampSidebarToViewport() {
+        const H = sidebar.clientHeight;
+        if (H < 100) return;
+        const cs3 = getComputedStyle(sidebar);
+        const phStr = cs3.getPropertyValue('--imgplace-props-h').trim();
+        const phFixed = phStr.match(/^(\d+(?:\.\d+)?)px$/);
+        if (!phFixed) return;
+        const ph = parseFloat(phFixed[1]);
+        const maxAllow = H - MIN_LIB - 6 - 12;
+        if (ph > maxAllow && maxAllow > MIN_PROPS) {
+          sidebar.style.setProperty('--imgplace-props-h', Math.round(maxAllow) + 'px');
+        }
+      }
+      window.addEventListener('resize', clampSidebarToViewport);
+      if (typeof ResizeObserver === 'function') {
+        const ro2 = new ResizeObserver(() => clampSidebarToViewport());
+        ro2.observe(sidebar);
+      }
+      clampSidebarToViewport();
+    })();
 
     // ----- カスタムセル トグル + 描画 / 削除 -----
     // ON: ドラッグで矩形追加 / 既存矩形クリックで削除
@@ -13536,6 +14882,9 @@
       editorPanel.style.display = '';
       filenameBar.style.display = '';
       actionBar.style.display = '';
+      // 編集モード ON: hero+upload panel を隠す
+      const modeImgPlaceEl2 = document.getElementById('modeImgPlace');
+      if (modeImgPlaceEl2) modeImgPlaceEl2.classList.add('imgplace-editing');
       // コントロール反映
       updateSnapBtn();
       if (fontSelect) {
@@ -13634,8 +14983,33 @@
           const obj = await serializeProject((userName || 'base') + '.pdf');
           const json = JSON.stringify(obj);
           const blob = new Blob([json], { type: 'application/json' });
-          await downloadOrShare(blob, finalName);
-          setStatus('保存処理を実行しました: ' + finalName + (isIos ? '（iOSは共有シートから「ファイルに保存」、本ツールは .json も読込可）' : ''));
+          // File System Access API: ブラウザ対応していれば「名前を付けて保存」ダイアログ
+          // (Chrome/Edge/Opera 等で利用可、Firefox/Safari/iOS は未対応 → 従来DLに fallback)
+          let saved = false;
+          if (typeof window.showSaveFilePicker === 'function' && !isIos) {
+            try {
+              const handle = await window.showSaveFilePicker({
+                suggestedName: finalName,
+                types: [{
+                  description: 'PDF Compact プロジェクト',
+                  accept: { 'application/json': ['.lpw', '.json'] }
+                }]
+              });
+              const writable = await handle.createWritable();
+              await writable.write(blob);
+              await writable.close();
+              saved = true;
+              setStatus('プロジェクト保存完了: ' + (handle.name || finalName));
+            } catch (e) {
+              // ユーザーキャンセル (AbortError) はそっと終わる、それ以外は fallback DL
+              if (e && e.name === 'AbortError') return;
+              console.warn('[imgPlace] showSaveFilePicker 失敗 → 通常DLに fallback:', e);
+            }
+          }
+          if (!saved) {
+            await downloadOrShare(blob, finalName);
+            setStatus('保存処理を実行しました: ' + finalName + (isIos ? '（iOSは共有シートから「ファイルに保存」、本ツールは .json も読込可）' : ''));
+          }
         } catch (err) {
           console.error('[imgPlace] 保存失敗:', err);
           setStatus('保存に失敗: ' + (err.message || err), 'error');
@@ -13854,6 +15228,62 @@
       clearBtn.addEventListener('click', () => {
         clearBase();
       });
+    }
+
+    // ----- 順次配置トグルボタン -----
+    const placeQueueBtn = document.getElementById('imgPlacePlaceQueueBtn');
+    if (placeQueueBtn) {
+      placeQueueBtn.addEventListener('click', () => {
+        if (placeQueueMode) {
+          stopPlaceQueueMode('順次配置キャンセル');
+        } else {
+          startPlaceQueueMode();
+        }
+      });
+    }
+
+    // ----- 追加PDF ボタン (ファイル選択 → 末尾にマージ) -----
+    const addPdfBtn = document.getElementById('imgPlaceAddPdfBtn');
+    const addPdfInput = document.getElementById('imgPlaceAddPdfInput');
+    if (addPdfBtn && addPdfInput) {
+      addPdfBtn.addEventListener('click', () => addPdfInput.click());
+      addPdfInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        await loadBasePdf(file); // basePdfBytes 既存 → 自動で append モード
+        e.target.value = ''; // 同じファイル再選択許可
+      });
+    }
+    // editor 全域に PDF ドロップ受付 (canvas-wrap + 周辺) → 末尾追加
+    if (canvasFrame) {
+      const editorEl = document.querySelector('#modeImgPlace .imgplace-editor');
+      const handlePdfDrop = async (e) => {
+        if (!e.dataTransfer || !e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+        const file = e.dataTransfer.files[0];
+        if (!file || (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name))) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (editorEl) editorEl.classList.remove('imgplace-pdf-dragover');
+        await loadBasePdf(file); // basePdfBytes 既存なら append
+      };
+      const handlePdfDragOver = (e) => {
+        // PDF ファイルドラッグ時のみハイライト (画像ドラッグは既存 handler 任せ)
+        if (e.dataTransfer && Array.from(e.dataTransfer.items || []).some(it =>
+            it.kind === 'file' && (it.type === 'application/pdf'))) {
+          e.preventDefault();
+          if (editorEl) editorEl.classList.add('imgplace-pdf-dragover');
+        }
+      };
+      const handlePdfDragLeave = (e) => {
+        if (editorEl && e.relatedTarget && !editorEl.contains(e.relatedTarget)) {
+          editorEl.classList.remove('imgplace-pdf-dragover');
+        }
+      };
+      if (editorEl) {
+        editorEl.addEventListener('drop', handlePdfDrop);
+        editorEl.addEventListener('dragover', handlePdfDragOver);
+        editorEl.addEventListener('dragleave', handlePdfDragLeave);
+      }
     }
 
     // ----- タイムスタンプトグル -----

@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
-  "notes": "罫線スナップ・カスタムセル・複製機能・平行アライメントガイド",
+  "version": "3.0.0",
+  "notes": "メジャーアップデート: UI再設計（左右ペイン固定 / 複数選択 / PDF追加削除 / サムネ反映 ほか多数）",
   "download_path": "pdf_compact_bundle.html"
 }

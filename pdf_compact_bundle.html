@@ -3102,8 +3102,12 @@
     /* スプリッターで高さ可変。--imgplace-props-h があれば fixed height、無ければ natural */
     flex: 0 0 var(--imgplace-props-h, auto);
     min-height: 60px;
-    overflow-y: auto;
+    /* 常時スクロールバー表示 (OS/ブラウザ問わず確実に出すため auto → scroll)
+       これでキャプション追加して props 内が縦に伸びても常にスクロールできる */
+    overflow-y: scroll;
     overscroll-behavior: contain;
+    /* スクロールバー領域を最初から確保して、表示時の幅ガタつき防止 */
+    scrollbar-gutter: stable;
   }
   #modeImgPlace .imgplace-props-title,
   #modeImgPlace .imgplace-library-title {
@@ -7504,7 +7508,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.0.0';
+  const APP_VERSION = '3.0.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {

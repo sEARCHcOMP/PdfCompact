@@ -183,6 +183,21 @@
     font-style: normal;
     color: var(--accent);
   }
+  /* バージョンバッジ (ブランド名の隣) */
+  .brand-version {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 7px;
+    border-radius: 100px;
+    vertical-align: middle;
+    margin-left: 8px;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+  }
   .brand-tag {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
@@ -3548,7 +3563,7 @@
           </svg>
         </div>
         <div class="brand-text">
-          <div class="brand-name">PDF<em>Compact</em></div>
+          <div class="brand-name">PDF<em>Compact</em><span class="brand-version" id="appVersionTopLabel"></span></div>
           <div class="brand-tag">COMPRESS · OCR · BATCH</div>
         </div>
       </div>
@@ -7508,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.0.1';
+  const APP_VERSION = '3.0.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -7538,10 +7553,13 @@
     }
     return false;
   }
-  // バージョンラベルを footer に表示
+  // バージョンラベルを footer と トップブランドの両方に表示
   function showVersionLabel() {
-    const el = document.getElementById('appVersionLabel');
-    if (el) el.textContent = 'v' + APP_VERSION;
+    const labels = ['appVersionLabel', 'appVersionTopLabel'];
+    for (const id of labels) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = 'v' + APP_VERSION;
+    }
   }
   // blob 経由ダウンロード (URL をアドレスバーに出さない)
   async function downloadUpdate(url, dlBtn) {

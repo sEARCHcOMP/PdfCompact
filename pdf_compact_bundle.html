@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.0';
+  const APP_VERSION = '3.1.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -11004,8 +11004,9 @@
         }
       }
 
-      // ノイズ除去: 2pt未満（約0.7mm）の極小線を除外
-      const MIN_LEN_PT = 2;
+      // ノイズ除去: 10mm未満の短い線は装飾(ロゴ・テキスト等)とみなして罫線扱いしない
+      // ※セル最小サイズ MIN_CELL_SIZE_MM=15mm より小さく取って、セル境界は確実に拾う
+      const MIN_LEN_PT = 10 * (72 / 25.4); // 10mm ≒ 28.35pt
       const filtered = lines.filter(l => {
         const dx = l.x2 - l.x1;
         const dy = l.y2 - l.y1;

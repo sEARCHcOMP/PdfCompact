@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.1.0** · 2026-05-23
+> **Version 3.1.1** · 2026-05-27
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.1.0)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.1.1)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.1.1 (2026-05-27) — Patch
+- 罫線スナップの線長フィルタを **0.7mm → 10mm** に強化(ロゴ等の短い装飾線をセル境界として誤検出しないように)
 
 ### v3.1.0 (2026-05-23) — Minor
 - **AVIF 画像の入力に対応** (画像→PDF / 変換 モード)

@@ -1,5 +1,5 @@
 {
-  "version": "3.1.0",
-  "notes": "AVIF 画像の入力に対応（画像→PDF / 変換）",
+  "version": "3.1.1",
+  "notes": "罫線スナップの線長フィルタを 0.7mm → 10mm に強化（ロゴ等の短い装飾線をセル境界として誤検出しないように）",
   "download_path": "pdf_compact_bundle.html"
 }

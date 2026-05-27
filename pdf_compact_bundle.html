@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.1';
+  const APP_VERSION = '3.1.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -9743,6 +9743,7 @@
       const totalOutputs = files.reduce((s, f) => s + f.pageCount, 0);
       let completed = 0;
       let totalSize = 0;
+      let successFlag = false;
 
       try {
         for (let fi = 0; fi < files.length; fi++) {
@@ -9826,6 +9827,7 @@
             ]
           });
         }
+        successFlag = true;
       } catch (err) {
         console.error(err);
         setStatus(`✕ エラー: ${err.message}`, 'error');
@@ -9833,6 +9835,14 @@
 
       generateBtn.disabled = false;
       clearBtn.disabled = false;
+      // 変換成功時のみ保持ファイルを破棄 (次の作業に備えてリセット)
+      if (successFlag) {
+        files.forEach(it => {
+          if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
+        });
+        files = [];
+        render();
+      }
       setTimeout(() => {
         if (progressWrap) progressWrap.classList.remove('active');
       }, 1500);

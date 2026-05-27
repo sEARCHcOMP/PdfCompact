@@ -1,5 +1,5 @@
 {
-  "version": "3.1.2",
-  "notes": "変換モード: 変換完了後に元ファイルを自動クリア",
+  "version": "3.1.3",
+  "notes": "変換モード: 個別DLでも2枚以上は自動でZIPにまとめる（ブラウザの「複数ファイルDL許可」プロンプト回避）",
   "download_path": "pdf_compact_bundle.html"
 }

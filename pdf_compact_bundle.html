@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.2';
+  const APP_VERSION = '3.1.3';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -9773,7 +9773,12 @@
         const now = new Date();
         const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
 
-        if (outputMode === 'zip') {
+        // 個別DL かつ 2枚以上 → ブラウザの「複数ファイルDL許可」プロンプト回避のため
+        // 自動で ZIP にまとめる。1枚だけの時はそのまま個別DL。
+        const effectiveMode = (outputMode === 'individual' && outputs.length > 1) ? 'zip' : outputMode;
+        const autoZipped = (effectiveMode === 'zip' && outputMode !== 'zip');
+
+        if (effectiveMode === 'zip') {
           setStatus('ZIP作成中...', 'info');
           await new Promise(r => setTimeout(r, 10));
           const zip = new JSZip();
@@ -9788,10 +9793,13 @@
           }
           triggerDownload(zipBlob, convZipName);
           const zipSizeMB = (zipBlob.size / (1024 * 1024)).toFixed(2);
-          setStatus(`✓ ${outputs.length}枚変換 · ZIP ${zipSizeMB} MB`, 'success');
+          const autoZipNote = autoZipped ? ' (複数ファイルのためZIPに自動集約)' : '';
+          setStatus(`✓ ${outputs.length}枚変換 · ZIP ${zipSizeMB} MB${autoZipNote}`, 'success');
           showSuccess({
             title: '変換完了',
-            subtitle: `ZIPダウンロードが始まりました`,
+            subtitle: autoZipped
+              ? `複数ファイル→ZIPダウンロードが始まりました`
+              : `ZIPダウンロードが始まりました`,
             stats: [
               { label: '変換ファイル', value: `${outputs.length} 枚`, highlight: true },
               { label: '出力形式', value: outputFormat.toUpperCase() },

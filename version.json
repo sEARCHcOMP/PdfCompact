@@ -1,5 +1,5 @@
 {
-  "version": "3.3.5",
-  "notes": "取説モーダル上部のボタン3連被り (ドックトグル / × / ガイドの『ツールを開く』) を解消。ドックトグル削除 + iframe 内の topnav-cta 自動非表示。",
+  "version": "3.3.6",
+  "notes": "v3.3.5 で取説が表示されなくなる致命バグ修正。ガイドソース内に <script> 入れたため外側の <script type='text/html'> が早期終了していたのを、親側 JS から iframe.contentDocument に style 注入する方式に変更。",
   "download_path": "pdf_compact_bundle.html"
 }

@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.5** · 2026-05-28
+> **Version 3.3.6** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.5)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.6)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,10 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.3.6 (2026-05-28) — Patch (Critical Fix)
+- **v3.3.5 の取説表示崩壊バグ修正**: ガイドソース内に `<script>` を追加したことで、外側の `<script type="text/html" id="guideSource">` が早期終了して取説 HTML が壊れていた
+- topnav-cta 非表示処理は親側 JS から `iframe.contentDocument` に `<style>` 注入する方式に変更
 
 ### v3.3.5 (2026-05-28) — Patch
 - **取説モーダル右上のボタン3連被りを解消**:

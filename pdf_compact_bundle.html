@@ -4606,10 +4606,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>
-  // iframe 内に読み込まれてるか即時判定して html にクラス付与 (CSS で topnav-cta 非表示用)
-  try { if (window.self !== window.top) document.documentElement.classList.add('in-iframe'); } catch(_) { document.documentElement.classList.add('in-iframe'); }
-</script>
 <style>
   :root {
     --bg: #f5f6f9;
@@ -4732,9 +4728,6 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 16px var(--accent-glow);
   }
-  /* iframe 内で読み込まれてる時 (= モーダル/ドックで親に埋め込まれてる時)、
-     親側の × ボタンが close 役割を担うので topnav-cta は非表示にして重なり回避 */
-  html.in-iframe .topnav-cta { display: none; }
   .topnav-cta .arr { transition: transform 0.15s ease; }
   .topnav-cta:hover .arr { transform: translateX(3px); }
 
@@ -7914,7 +7907,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.5';
+  const APP_VERSION = '3.3.6';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8087,6 +8080,13 @@
         const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
         if (!doc || doc.__anchorHandlerInstalled) return;
         doc.__anchorHandlerInstalled = true;
+        // ガイド側の topnav-cta 「ツールを開く」を非表示 (親側の × ボタンと役割重複するため)
+        // 親 JS で style 注入 (ガイド HTML 内に script 入れると外側の <script type="text/html"> が早期終了する)
+        try {
+          const hideStyle = doc.createElement('style');
+          hideStyle.textContent = '.topnav-cta { display: none !important; }';
+          (doc.head || doc.documentElement).appendChild(hideStyle);
+        } catch (e2) { /* ignore */ }
         doc.addEventListener('click', function(e) {
           let el = e.target;
           // Walk up to find an anchor with href

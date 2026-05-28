@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.2.1** · 2026-05-28
+> **Version 3.2.2** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.2.1)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.2.2)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,10 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.2.2 (2026-05-28) — Patch
+- **取説**: ツールカードの「フォーマット変換」を「変換」にリネーム(文字見切れ解消)+ `word-break: keep-all` ガード追加
+- **取説**: モーダル右上に「別ウィンドウで開く」ボタン追加。ツール画面と並べて見ながら作業できるように
 
 ### v3.2.1 (2026-05-28) — Patch (Docs)
 - 取説トップの tool-card セレクタと jumpnav にも「PDFに画像配置」リンクを追加(タブから直接ジャンプできるように)

@@ -1136,6 +1136,29 @@
     transition: all 0.2s ease;
     font-family: inherit;
   }
+  /* 別ウィンドウで開くボタン (× の左に配置) */
+  .guide-popout-btn {
+    position: fixed;
+    top: 48px;
+    right: 104px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    z-index: 1001;
+    box-shadow: 0 8px 24px rgba(0, 64, 255, 0.35);
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .guide-popout-btn:hover {
+    transform: scale(1.1);
+    background: var(--accent-deep);
+  }
   .guide-close-btn:hover {
     transform: rotate(90deg);
     background: var(--accent);
@@ -4432,6 +4455,13 @@
 </div>
 
 <div class="guide-modal" id="guideModal" role="dialog" aria-modal="true" aria-label="使い方ガイド">
+  <button class="guide-popout-btn" onclick="popoutGuide()" aria-label="別ウィンドウで開く" title="別ウィンドウで開いて、ツール画面と並べて見る">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+      <polyline points="15 3 21 3 21 9"/>
+      <line x1="10" y1="14" x2="21" y2="3"/>
+    </svg>
+  </button>
   <button class="guide-close-btn" onclick="closeGuide()" aria-label="閉じる">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="6" x2="6" y2="18"/>
@@ -4752,7 +4782,12 @@
     letter-spacing: -0.02em;
     margin-bottom: 8px;
     line-height: 1.2;
+    /* 5列レイアウトで日本語名が見切れないよう、必要時は折返し許可 */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
   }
+  /* 5列レイアウト時は font 少し下げて 8文字程度まで収まるように */
+  .tool-selector.five .tool-name { font-size: 17px; }
   .tool-desc {
     font-size: 13px;
     color: var(--ink-muted);
@@ -5823,7 +5858,7 @@
           </svg>
         </div>
         <div class="tool-label">PART 03</div>
-        <div class="tool-name">フォーマット変換</div>
+        <div class="tool-name">変換</div>
         <div class="tool-desc">JPG·PNG·PDF·BMP·TIFFを相互変換。ZIP一括DL対応。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
@@ -7763,7 +7798,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.2.1';
+  const APP_VERSION = '3.2.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -7994,6 +8029,45 @@
         try { iframe.src = 'about:blank'; } catch(e) {}
       }
     }, 320);
+  }
+  // 取説を別ウィンドウで開く (ツール画面と並べて見る用)
+  function popoutGuide() {
+    const srcEl = document.getElementById('guideSource');
+    if (!srcEl) {
+      alert('取説ソースが見つかりません。ページを再読み込みしてください。');
+      return;
+    }
+    const src = srcEl.textContent || srcEl.innerHTML || '';
+    if (!src || src.length < 100) {
+      alert('取説の内容が空です。ページを再読み込みしてください。');
+      return;
+    }
+    // 画面の右半分くらいのサイズで開く (ツールと並べやすいサイズ)
+    const w = Math.min(1100, Math.floor(window.screen.availWidth * 0.55));
+    const h = Math.floor(window.screen.availHeight * 0.92);
+    const left = window.screen.availWidth - w - 8;
+    const top = 8;
+    const features = `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no`;
+    const win = window.open('', 'pdfCompactGuide', features);
+    if (!win) {
+      alert('ポップアップがブロックされました。\nブラウザのアドレスバー右側のアイコンから、このサイトのポップアップを許可してください。');
+      return;
+    }
+    try {
+      win.document.open();
+      win.document.write(src);
+      win.document.close();
+      // タブのタイトルを設定 (ウィンドウ管理しやすく)
+      try { win.document.title = 'PDF Compact 使い方ガイド'; } catch(e) {}
+      // 別窓のハッシュリンクは普通にスクロールできる (iframe じゃないので install 不要)
+      win.focus();
+    } catch (e) {
+      console.error('popout write failed:', e);
+      alert('別ウィンドウへの書き込みに失敗しました: ' + (e && e.message ? e.message : e));
+      return;
+    }
+    // メインのモーダルは閉じる (別窓に移った前提)
+    closeGuide();
   }
   window.addEventListener('message', (e) => {
     if (e.data === 'closeGuide') closeGuide();

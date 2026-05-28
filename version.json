@@ -1,5 +1,5 @@
 {
-  "version": "3.2.1",
-  "notes": "取説の上部タブ (tool-card + jumpnav) にも 「PDFに画像配置」へのリンクを追加",
+  "version": "3.2.2",
+  "notes": "取説のツールカード文字見切れ修正 (フォーマット変換→変換にリネーム + word-break ガード) / 取説モーダルに『別ウィンドウで開く』ボタン追加でツール画面と並べて見れるように",
   "download_path": "pdf_compact_bundle.html"
 }

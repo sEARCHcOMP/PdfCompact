@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.3** · 2026-05-28
+> **Version 3.3.4** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.3)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.4)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,10 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.3.4 (2026-05-28) — Minor
+- **起動時に取説を自動でドック表示**: PDF Compact を開いた瞬間、右側に取説パネルが既に出てる状態でツール画面が左に表示される
+- × で閉じればそのセッション中は再表示しない (sessionStorage 経由)。ブラウザタブを閉じて開き直すと再度自動表示
 
 ### v3.3.3 (2026-05-28) — Patch
 - **取説を必ずドック表示で開くように**: localStorage 状態判定を廃止。過去に全画面に切替えていても、開く時は毎回右側ドック。「不要なら × で閉じる」運用に統一

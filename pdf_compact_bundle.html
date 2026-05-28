@@ -7913,7 +7913,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.3';
+  const APP_VERSION = '3.3.4';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8019,15 +8019,33 @@
       console.debug('[updateCheck] skipped:', e && e.message);
     }
   }
-  // DOMContentLoaded 後にバージョンラベル表示 + 2秒遅延でチェック
+  // 取説を起動時に自動でドック表示 (ユーザー要件)
+  // × で閉じたら sessionStorage に記録、当セッション内は再表示しない
+  const GUIDE_AUTO_OPEN_DISMISS_KEY = 'pdfCompact.guideAutoOpenDismissed';
+  function autoOpenGuide() {
+    try {
+      // 当セッションで × を押されてたらスキップ
+      if (sessionStorage.getItem(GUIDE_AUTO_OPEN_DISMISS_KEY) === '1') return;
+    } catch(_) {}
+    // 既に開いてる場合はスキップ (二重起動防止)
+    const modal = document.getElementById('guideModal');
+    if (modal && modal.classList.contains('open')) return;
+    if (typeof window.openGuide === 'function') {
+      try { window.openGuide(); } catch(e) { console.debug('autoOpenGuide failed:', e); }
+    }
+  }
+  // DOMContentLoaded 後にバージョンラベル表示 + 2秒遅延でチェック + 取説自動表示
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       showVersionLabel();
       setTimeout(checkForUpdate, 2000);
+      // ページレンダリング完了後に取説オープン (少し遅らせて他の init を邪魔しない)
+      setTimeout(autoOpenGuide, 100);
     });
   } else {
     showVersionLabel();
     setTimeout(checkForUpdate, 2000);
+    setTimeout(autoOpenGuide, 100);
   }
 
   // Defensive: wrap in try so a missing library doesn't block function declarations below
@@ -8142,6 +8160,8 @@
       document.documentElement.style.removeProperty('padding-right');
       document.body.style.overflow = '';
     }
+    // × で閉じた場合、当セッションは自動表示しない (リロードまでは再オープンしない)
+    try { sessionStorage.setItem('pdfCompact.guideAutoOpenDismissed', '1'); } catch(_) {}
     setTimeout(() => {
       if (iframe) {
         // Clear all possible content sources

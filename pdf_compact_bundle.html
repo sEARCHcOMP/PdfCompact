@@ -1136,8 +1136,8 @@
     transition: all 0.2s ease;
     font-family: inherit;
   }
-  /* 別ウィンドウで開くボタン (× の左に配置) */
-  .guide-popout-btn {
+  /* ドック切替ボタン (× の左に配置) */
+  .guide-dock-btn {
     position: fixed;
     top: 48px;
     right: 104px;
@@ -1155,7 +1155,7 @@
     transition: all 0.2s ease;
     font-family: inherit;
   }
-  .guide-popout-btn:hover {
+  .guide-dock-btn:hover {
     transform: scale(1.1);
     background: var(--accent-deep);
   }
@@ -1179,6 +1179,98 @@
       width: 40px;
       height: 40px;
     }
+    /* モバイルではドック切替不要 (画面狭くて意味ない) */
+    .guide-dock-btn { display: none; }
+  }
+
+  /* ============ GUIDE DOCKED MODE (右側ドッキング) ============ */
+  :root { --guide-dock-w: 480px; }
+
+  /* docked: backdrop透明 + 全体 pointer-events: none で下のツール操作可能に */
+  .guide-modal.docked {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
+    transition: none;
+  }
+  /* docked: frame は右端固定パネル化 */
+  .guide-modal.docked .guide-modal-frame {
+    position: fixed;
+    top: 0; bottom: 0;
+    right: 0; left: auto;
+    width: var(--guide-dock-w, 480px);
+    height: 100vh;
+    border-radius: 0;
+    transform: none;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.18);
+    pointer-events: auto;
+  }
+  /* docked: ボタンはパネル内右上に小型化 */
+  .guide-modal.docked .guide-close-btn,
+  .guide-modal.docked .guide-dock-btn {
+    top: 8px;
+    width: 32px;
+    height: 32px;
+    box-shadow: none;
+    pointer-events: auto;
+  }
+  .guide-modal.docked .guide-close-btn {
+    right: 8px;
+    background: rgba(0,0,0,0.55);
+  }
+  .guide-modal.docked .guide-dock-btn {
+    right: 46px;
+    background: rgba(0,0,0,0.55);
+  }
+  .guide-modal.docked .guide-close-btn:hover {
+    transform: rotate(90deg);
+    background: var(--accent);
+  }
+  .guide-modal.docked .guide-dock-btn:hover {
+    transform: scale(1.1);
+    background: var(--accent);
+  }
+  /* スプリッター: docked 時のみ表示 */
+  .guide-dock-splitter {
+    display: none;
+  }
+  .guide-modal.docked .guide-dock-splitter {
+    display: block;
+    position: fixed;
+    top: 0; bottom: 0;
+    right: var(--guide-dock-w, 480px);
+    width: 6px;
+    margin-right: -3px; /* 中央寄せでクリッカブル幅確保 */
+    background: transparent;
+    cursor: col-resize;
+    z-index: 1002;
+    pointer-events: auto;
+    transition: background 0.15s;
+  }
+  .guide-dock-splitter:hover,
+  .guide-dock-splitter.dragging {
+    background: var(--accent);
+  }
+
+  /* body が docked 中: 右側にスペース確保 (通常レイアウト用) */
+  body.guide-docked {
+    padding-right: var(--guide-dock-w, 480px);
+    transition: padding-right 0.2s ease;
+  }
+  /* imgPlace 右ペインを dock 分シフト */
+  body.guide-docked #modeImgPlace.imgplace-editing .imgplace-sidebar {
+    right: calc(16px + var(--guide-dock-w, 480px)) !important;
+  }
+  /* 更新バナーも dock 分シフト */
+  body.guide-docked .update-banner {
+    right: calc(16px + var(--guide-dock-w, 480px));
+  }
+  /* リサイズ中はスムージング切る (引っかかり感解消) */
+  body.guide-dock-resizing,
+  body.guide-dock-resizing #modeImgPlace.imgplace-editing .imgplace-sidebar,
+  body.guide-dock-resizing .update-banner {
+    transition: none !important;
   }
 
 
@@ -4455,11 +4547,11 @@
 </div>
 
 <div class="guide-modal" id="guideModal" role="dialog" aria-modal="true" aria-label="使い方ガイド">
-  <button class="guide-popout-btn" onclick="popoutGuide()" aria-label="別ウィンドウで開く" title="別ウィンドウで開いて、ツール画面と並べて見る">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-      <polyline points="15 3 21 3 21 9"/>
-      <line x1="10" y1="14" x2="21" y2="3"/>
+  <div class="guide-dock-splitter" id="guideDockSplitter" aria-label="取説パネル幅調整" role="separator"></div>
+  <button class="guide-dock-btn" id="guideDockBtn" onclick="toggleGuideDock()" aria-label="ドック切替" title="右側にドッキング (ツールと並べて表示)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <line x1="14" y1="4" x2="14" y2="20"/>
     </svg>
   </button>
   <button class="guide-close-btn" onclick="closeGuide()" aria-label="閉じる">
@@ -7798,7 +7890,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.2.2';
+  const APP_VERSION = '3.3.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -7941,7 +8033,14 @@
 
     // Show modal first
     modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    // 前回の dock 設定を復元 (docked=1 ならドック状態で開く、それ以外は全画面モーダル)
+    try {
+      const wasDocked = localStorage.getItem(GUIDE_DOCK_KEY) === '1';
+      setGuideDocked(wasDocked);
+    } catch (e) {
+      // localStorage 不可 (private mode 等) は全画面モーダルにフォールバック
+      document.body.style.overflow = 'hidden';
+    }
 
     // Install anchor-click interceptor inside the iframe doc.
     // This prevents hash links from navigating (which triggers the Claude
@@ -8019,6 +8118,9 @@
     const iframe = document.getElementById('guideFrame');
     if (modal) {
       modal.classList.remove('open');
+      // docked 状態も解除 (body の padding-right も外す)
+      modal.classList.remove('docked');
+      document.body.classList.remove('guide-docked');
       document.body.style.overflow = '';
     }
     setTimeout(() => {
@@ -8030,45 +8132,103 @@
       }
     }, 320);
   }
-  // 取説を別ウィンドウで開く (ツール画面と並べて見る用)
-  function popoutGuide() {
-    const srcEl = document.getElementById('guideSource');
-    if (!srcEl) {
-      alert('取説ソースが見つかりません。ページを再読み込みしてください。');
-      return;
-    }
-    const src = srcEl.textContent || srcEl.innerHTML || '';
-    if (!src || src.length < 100) {
-      alert('取説の内容が空です。ページを再読み込みしてください。');
-      return;
-    }
-    // 画面の右半分くらいのサイズで開く (ツールと並べやすいサイズ)
-    const w = Math.min(1100, Math.floor(window.screen.availWidth * 0.55));
-    const h = Math.floor(window.screen.availHeight * 0.92);
-    const left = window.screen.availWidth - w - 8;
-    const top = 8;
-    const features = `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no`;
-    const win = window.open('', 'pdfCompactGuide', features);
-    if (!win) {
-      alert('ポップアップがブロックされました。\nブラウザのアドレスバー右側のアイコンから、このサイトのポップアップを許可してください。');
-      return;
-    }
-    try {
-      win.document.open();
-      win.document.write(src);
-      win.document.close();
-      // タブのタイトルを設定 (ウィンドウ管理しやすく)
-      try { win.document.title = 'PDF Compact 使い方ガイド'; } catch(e) {}
-      // 別窓のハッシュリンクは普通にスクロールできる (iframe じゃないので install 不要)
-      win.focus();
-    } catch (e) {
-      console.error('popout write failed:', e);
-      alert('別ウィンドウへの書き込みに失敗しました: ' + (e && e.message ? e.message : e));
-      return;
-    }
-    // メインのモーダルは閉じる (別窓に移った前提)
-    closeGuide();
+  // ===== 取説のドック切替 (右側ピン留め ⇔ 全画面モーダル) =====
+  const GUIDE_DOCK_KEY = 'pdfCompact.guideDocked';
+  const GUIDE_DOCK_W_KEY = 'pdfCompact.guideDockWidth';
+  const GUIDE_DOCK_MIN = 320;
+  function getGuideDockMax() {
+    // 画面幅の 70% を上限 (ツール側が狭くなりすぎないように)
+    return Math.max(GUIDE_DOCK_MIN + 100, Math.floor(window.innerWidth * 0.7));
   }
+  function applyGuideDockWidth(px) {
+    const clamped = Math.max(GUIDE_DOCK_MIN, Math.min(getGuideDockMax(), px));
+    document.documentElement.style.setProperty('--guide-dock-w', clamped + 'px');
+    try { localStorage.setItem(GUIDE_DOCK_W_KEY, String(clamped)); } catch(e) {}
+    return clamped;
+  }
+  function setGuideDocked(docked) {
+    const modal = document.getElementById('guideModal');
+    if (!modal) return;
+    const btn = document.getElementById('guideDockBtn');
+    if (docked) {
+      modal.classList.add('docked');
+      document.body.classList.add('guide-docked');
+      // body の overflow を戻す (docked なら下のツール操作できる必要あり)
+      document.body.style.overflow = '';
+      if (btn) btn.title = '全画面表示に戻す';
+      // 保存された幅を適用
+      let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
+      if (!saved || isNaN(saved)) saved = 480;
+      applyGuideDockWidth(saved);
+      try { localStorage.setItem(GUIDE_DOCK_KEY, '1'); } catch(e) {}
+    } else {
+      modal.classList.remove('docked');
+      document.body.classList.remove('guide-docked');
+      // モーダル開いてる時のみ overflow hidden に戻す
+      if (modal.classList.contains('open')) {
+        document.body.style.overflow = 'hidden';
+      }
+      if (btn) btn.title = '右側にドッキング (ツールと並べて表示)';
+      try { localStorage.setItem(GUIDE_DOCK_KEY, '0'); } catch(e) {}
+    }
+  }
+  function toggleGuideDock() {
+    const modal = document.getElementById('guideModal');
+    if (!modal) return;
+    setGuideDocked(!modal.classList.contains('docked'));
+  }
+
+  // スプリッターのドラッグでドック幅をリアルタイム調整
+  (function initGuideDockSplitter() {
+    const start = () => {
+      const splitter = document.getElementById('guideDockSplitter');
+      if (!splitter) return;
+      let dragging = false;
+      const onDown = (e) => {
+        dragging = true;
+        splitter.classList.add('dragging');
+        document.body.classList.add('guide-dock-resizing');
+        try { splitter.setPointerCapture(e.pointerId); } catch(_) {}
+        e.preventDefault();
+      };
+      const onMove = (e) => {
+        if (!dragging) return;
+        // パネルは右端固定 → 幅 = viewport幅 - クリックX
+        const newW = window.innerWidth - e.clientX;
+        applyGuideDockWidth(newW);
+      };
+      const onUp = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        splitter.classList.remove('dragging');
+        document.body.classList.remove('guide-dock-resizing');
+        try { splitter.releasePointerCapture(e.pointerId); } catch(_) {}
+      };
+      splitter.addEventListener('pointerdown', onDown);
+      splitter.addEventListener('pointermove', onMove);
+      splitter.addEventListener('pointerup', onUp);
+      splitter.addEventListener('pointercancel', onUp);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start);
+    } else {
+      start();
+    }
+  })();
+
+  // 起動時: 保存された ドック幅を CSS var に反映 (即用意しないと初回ガクッと動く)
+  (function restoreGuideDockWidth() {
+    let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
+    if (!saved || isNaN(saved)) saved = 480;
+    document.documentElement.style.setProperty('--guide-dock-w', Math.max(GUIDE_DOCK_MIN, saved) + 'px');
+  })();
+
+  // ウィンドウリサイズ時にドック幅を再 clamp (ブラウザ縮めた時のはみ出し防止)
+  window.addEventListener('resize', () => {
+    if (!document.body.classList.contains('guide-docked')) return;
+    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--guide-dock-w'), 10) || 480;
+    applyGuideDockWidth(cur);
+  });
   window.addEventListener('message', (e) => {
     if (e.data === 'closeGuide') closeGuide();
   });

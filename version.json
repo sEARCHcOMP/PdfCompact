@@ -1,5 +1,5 @@
 {
-  "version": "3.3.2",
-  "notes": "取説ドック表示の致命バグ修正: 旧バージョンで localStorage に '0' が auto-save されてデフォルトドックが効かなかった問題と、body の padding-right が CSS で適用されず取説とツールが被っていた問題を修正。",
+  "version": "3.3.3",
+  "notes": "取説を常にドック表示で開くように変更 (localStorage 状態判定を廃止)。過去にトグルで全画面に切替えた状態でも、開く時は必ず右側ドックで表示。",
   "download_path": "pdf_compact_bundle.html"
 }

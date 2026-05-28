@@ -7913,7 +7913,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.2';
+  const APP_VERSION = '3.3.3';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8056,16 +8056,9 @@
 
     // Show modal first
     modal.classList.add('open');
-    // デフォルトは ドック表示。ユーザーが明示的に '0' (全画面) にした時だけ全画面で開く
-    // persist=false で呼ぶことで localStorage を汚染しない (= 「未操作」を維持)
-    try {
-      const stored = localStorage.getItem(GUIDE_DOCK_KEY);
-      const wantDocked = stored !== '0'; // null (未設定) or '1' → docked
-      setGuideDocked(wantDocked, false);
-    } catch (e) {
-      // localStorage 不可 (private mode 等) → デフォルトのドック表示
-      setGuideDocked(true, false);
-    }
+    // 常にドック表示で開く (ユーザー要件: 「開いたら右に出す、不要なら×で閉じる」)
+    // 過去の docked 状態は記憶しない (= 全画面切替は当セッションのみ有効)
+    setGuideDocked(true, false);
 
     // Install anchor-click interceptor inside the iframe doc.
     // This prevents hash links from navigating (which triggers the Claude

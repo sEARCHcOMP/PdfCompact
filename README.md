@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.2** · 2026-05-28
+> **Version 3.3.3** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.2)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.3)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.3.3 (2026-05-28) — Patch
+- **取説を必ずドック表示で開くように**: localStorage 状態判定を廃止。過去に全画面に切替えていても、開く時は毎回右側ドック。「不要なら × で閉じる」運用に統一
 
 ### v3.3.2 (2026-05-28) — Patch (Critical Fix)
 - **デフォルトドック表示の効かない問題を修正**: v3.3.0 が初回開いた時に localStorage に '0' を自動保存していたせいで、v3.3.1 のデフォルトドック判定が「明示的全画面」と誤判定していた。新キー .v2 に刷新 + 旧キー削除でリセット

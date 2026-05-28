@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.1.5** · 2026-05-28
+> **Version 3.1.6** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.1.5)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.1.6)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.1.6 (2026-05-28) — Patch
+- 取説(使い方ガイド)の更新履歴に v3.0.1 〜 v3.1.5 を追記(これまで反映漏れ)
 
 ### v3.1.5 (2026-05-28) — Patch
 - **罫線スナップ**: 扁平率4倍超のセル(細長い帯状)を矩形として認識しないように

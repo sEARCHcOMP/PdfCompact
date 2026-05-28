@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.7** · 2026-05-28
+> **Version 3.3.8** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.7)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.8)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,13 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.3.8 (2026-05-28) — Minor
+- **取説の拡大表示モード復活**: × の左に拡大/縮小トグルボタン追加
+  - ドック中 → 拡大アイコン押下で全画面モーダル化
+  - 全画面中 → 縮小アイコン押下でドック復帰
+  - × で閉じた後の再オープンは **必ずドック表示** から(全画面状態は記憶しない)
+  - タブ連動スクロールは両モードで動作
 
 ### v3.3.7 (2026-05-28) — Minor
 - **モードタブ切替で取説も連動スクロール**: PDF軽量化タブ押す → 取説ドックも PART 01 まで自動スクロール。他モードも同様に対応セクションへ移動

@@ -1,5 +1,5 @@
 {
-  "version": "3.3.7",
-  "notes": "モードタブ切替時に右側ドックの取説も該当セクションへ自動スクロールするように。compress→PART01, imgtopdf→PART02, convert→PART03, pdfedit→PART04, imgplace→PART05",
+  "version": "3.3.8",
+  "notes": "取説の拡大表示モード復活: × の左に拡大/縮小トグルボタン。ドック ⇔ 全画面を切替可能。× で閉じた後に再オープンしたら必ずドック表示から (全画面状態は記憶しない)。タブ連動スクロールは両モードで動作。",
   "download_path": "pdf_compact_bundle.html"
 }

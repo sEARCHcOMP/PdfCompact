@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.3';
+  const APP_VERSION = '3.1.4';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8103,9 +8103,18 @@
   });
 
   downloadAllBtn.addEventListener('click', () => {
-    files.filter(f => f.status === 'done').forEach((f, i) => {
+    const doneFiles = files.filter(f => f.status === 'done');
+    doneFiles.forEach((f, i) => {
       setTimeout(() => triggerDownload(f.result, makeOutputName(f.file.name)), i * 300);
     });
+    // 全DL終了後に保持ファイルをクリア (連続作業しやすく)
+    if (doneFiles.length > 0) {
+      const totalDelay = doneFiles.length * 300 + 500;
+      setTimeout(() => {
+        files = [];
+        render();
+      }, totalDelay);
+    }
   });
 
   compressBtn.addEventListener('click', async () => {
@@ -9114,6 +9123,7 @@
       if (progressBar) progressBar.style.width = '0%';
       setStatus('PDF生成中...', 'info');
       await new Promise(r => setTimeout(r, 50));
+      let successFlag = false;
 
       try {
         const preset = QUALITY_PRESETS[qualityKey];
@@ -9221,6 +9231,7 @@
           subtitle: 'ダウンロードが始まりました',
           stats: stats
         });
+        successFlag = true;
       } catch (err) {
         console.error(err);
         setStatus(`✕ エラー: ${err.message}`, 'error');
@@ -9228,6 +9239,14 @@
 
       generateBtn.disabled = false;
       clearBtn.disabled = false;
+      // PDF出力成功時のみ保持ファイルを破棄 (次の作業に備えてリセット)
+      if (successFlag) {
+        files.forEach(it => {
+          if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
+        });
+        files = [];
+        render();
+      }
       setTimeout(() => {
         if (progressWrap) progressWrap.classList.remove('active');
       }, 1500);
@@ -10262,6 +10281,7 @@
       if (progressBar) progressBar.style.width = '0%';
       setStatus(onlySelected ? '選択ページを抽出中...' : 'PDFを組み立て中...', 'info');
       await new Promise(r => setTimeout(r, 50));
+      let successFlag = false;
 
       try {
         const { PDFDocument, degrees } = PDFLib;
@@ -10492,6 +10512,7 @@
               { label: 'ファイル名', value: finalName }
             ]
           });
+          successFlag = true;
         } else {
           setStatus('ZIP作成中...', 'info');
           const zip = new JSZip();
@@ -10528,6 +10549,7 @@
             subtitle: compressedInfo ? `${outputBlobs.length}個を軽量化してZIPでDL` : `${outputBlobs.length}個のPDFをZIPでDL`,
             stats: editStats
           });
+          successFlag = true;
         }
       } catch (err) {
         console.error(err);
@@ -10536,6 +10558,13 @@
 
       generateBtn.disabled = false;
       clearBtn.disabled = false;
+      // PDF出力成功時のみ保持データを破棄 (sources/pages/splits まとめてリセット)
+      if (successFlag) {
+        sources = [];
+        pages = [];
+        splits.clear();
+        render();
+      }
       setTimeout(() => {
         if (progressWrap) progressWrap.classList.remove('active');
       }, 1500);

@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.1.3** · 2026-05-27
+> **Version 3.1.4** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.1.3)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.1.4)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.1.4 (2026-05-28) — Patch
+- **軽量化(全部DL後) / 画像→PDF / PDF編集** でも出力後に保持ファイルを自動クリア(全モードで挙動統一)
 
 ### v3.1.3 (2026-05-27) — Patch
 - **変換モード**: 個別DL指定でも2枚以上は自動でZIPにまとめる(ブラウザの「複数ファイルダウンロード許可」プロンプト回避)

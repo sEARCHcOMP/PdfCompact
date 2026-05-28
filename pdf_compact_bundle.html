@@ -6798,7 +6798,199 @@
     </div>
   </section>
 
-  
+
+  <!-- ==========================================================
+       PART 5: PDF IMAGE PLACE (PDFに画像配置)
+       ========================================================== -->
+  <section id="part-imgplace" class="part-divider">
+    <div class="part-label-pill">PART 05 / IMAGE PLACE</div>
+    <h1 class="part-title">PDFに<em>画像配置</em>の使い方</h1>
+    <p class="part-lead">
+      JWWで作った枠だけのPDFに、写真や図をドラッグで流し込んでサクッと仕上げる。罫線スナップ・カスタムセル・複数選択でも作業を高速化。ベクター品質を保ったままPDF出力。
+    </p>
+  </section>
+
+  <section id="imgplace-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">4ステップで配置完了</h2>
+      <p class="section-lead">枠PDF読込 → 画像追加 → ドラッグ配置 → PDF出力。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">BASE PDF</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ベースPDFをドロップ</h3>
+        <p class="step-text">JWWで作った枠だけのPDF (照明器具表・施工写真台帳など) を投入。あとから追加でPDFを末尾ドロップしてページ連結もOK。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">IMAGES</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">画像をライブラリに追加</h3>
+        <p class="step-text">右の画像ライブラリにJPG/PNGをまとめてドロップ。複数選択(Ctrl+クリックやドラッグ範囲)もOK。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">PLACE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ドラッグで配置</h3>
+        <p class="step-text">画像を中央のPDFにドラッグして好きな位置に。罫線スナップONなら枠の中心に自動吸い付き。8隅でリサイズ。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">04</div>
+        <div class="step-label">EXPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFとして出力</h3>
+        <p class="step-text">アクションバーの「PDFとして出力」で完成PDFをDL。元のベクター品質はそのまま保持、画像はベクター枠と完全合成。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="imgplace-snap">
+    <div class="section-head">
+      <div class="section-num">RULER SNAP</div>
+      <h2 class="section-title">罫線スナップ + カスタムセル</h2>
+      <p class="section-lead">JWWの枠線を自動検出して、画像中心をピタッと枠の真ん中に。</p>
+    </div>
+
+    <div class="heic-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">📐 罫線スナップ</span>
+        <span class="ocr-pill">セル中心XY同時吸付</span>
+        <span class="ocr-pill">緑外枠ハイライト</span>
+        <span class="ocr-pill">扁平率フィルタ</span>
+      </div>
+
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:8px;">
+        アクションバーの <strong>📐 罫線スナップ</strong> ボタンを押すと、ベースPDFの罫線(直線・矩形)を自動検出して、枠で囲まれたセル中心が <span style="color:#00cc44; font-weight:700;">緑の +</span> マーカーで可視化されます。画像をドラッグするとそのセル中心にXY同時にピタッと吸い付き、対象セルが <span style="color:#00cc44; font-weight:700;">緑の外枠ハイライト</span> で確認できます。
+      </p>
+
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">検出されるセル条件</strong><br>
+        &nbsp;&nbsp;✓ 4辺がすべて実線で囲まれている (罫線の隙間 1.5mm まで許容)<br>
+        &nbsp;&nbsp;✓ 各辺 15mm 以上 + 面積 500mm² 以上<br>
+        &nbsp;&nbsp;✓ 長辺/短辺 が 4倍以下 (細長い帯は除外)<br>
+        &nbsp;&nbsp;✓ 罫線として認識される線は 10mm 以上 (ロゴ装飾は除外)
+      </div>
+
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:16px;">
+        自動検出されない枠があったり、独自に範囲を決めたい場合は <strong>✏️ カスタムセル</strong> ボタン。ONにして枠内をドラッグすれば自分用の矩形を追加できます。4隅ハンドルでリサイズ、本体ドラッグで移動、× で削除、+ で複製。罫線スナップONなら既存罫線にも吸い付きながら描画できます。
+      </p>
+    </div>
+  </section>
+
+  <section id="imgplace-multi">
+    <div class="section-head">
+      <div class="section-num">MULTI-SELECT</div>
+      <h2 class="section-title">複数選択 + 一括/順次配置</h2>
+      <p class="section-lead">大量の画像を効率よく配置する2つの方法。</p>
+    </div>
+
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">一括ドラッグ</div>
+          <div class="quality-spec">複数選択 → ドラッグ → オフセット並べ</div>
+          <p class="quality-use">画像ライブラリで Ctrl+クリック or ラバーバンドで複数選択 → どれか1つを canvas にドラッグすると、選択した全画像が右下方向に少しずつオフセットされて並んで配置。後で手で整列。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">🎯 順次配置</div>
+          <div class="quality-spec">クリックで1枚ずつ順番配置</div>
+          <p class="quality-use">複数選択した状態でアクションバーの <strong>🎯 順次配置</strong> ボタン → canvas が照準モード → クリックで Queue 先頭から順番に配置。カーソル追従で次に置く画像のサムネ+ファイル名が表示。罫線スナップと組合せると セル芯に1枚ずつ ピタッと配置できる。</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:13.5px; color:var(--ink-muted); line-height:1.85; margin-top:16px;">
+      ⌨ <strong>Esc</strong> で順次配置キャンセル / 複数選択解除。ページ切替しても順次配置モードは継続。
+    </p>
+  </section>
+
+  <section id="imgplace-page">
+    <div class="section-head">
+      <div class="section-num">PAGE OPS</div>
+      <h2 class="section-title">ページ追加・削除・複数選択</h2>
+      <p class="section-lead">ベースPDFのページ管理もこの画面で完結。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>追加PDF</strong>: アクションバーの「📄+ PDF追加」ボタン、または canvas 領域にPDFをドラッグ&ドロップ。末尾にページが連結。</li>
+        <li><strong>ページ削除</strong>: 左サムネにマウスホバー → 右上の赤い × ボタン。配置済画像/カスタムセルも自動で一緒に削除。</li>
+        <li><strong>ページ複数選択</strong>: Ctrl+クリック / Shift+クリック / 空きエリアからドラッグでラバーバンド選択。橙枠でハイライト。</li>
+        <li><strong>一括削除</strong>: 複数ページ選択中に × ボタンで選択中の全ページを一括削除。</li>
+        <li><strong>サムネに配置画像反映</strong>: 配置・移動・リサイズすると数百ms後に左サムネにも反映、全ページ俯瞰しやすい。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="imgplace-layout">
+    <div class="section-head">
+      <div class="section-num">LAYOUT</div>
+      <h2 class="section-title">レイアウトのカスタマイズ</h2>
+      <p class="section-lead">画面解像度や作業スタイルに合わせて自由に調整。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>左右ペイン固定</strong>: ページ全体をスクロールしても左右の操作パネルは常に viewport 上部に固定。中央 canvas だけがスクロール。</li>
+        <li><strong>列幅ドラッグ</strong>: 左ペインと中央、中央と右ペインの間の縦バーをドラッグで列幅変更。設定は localStorage に保存。</li>
+        <li><strong>右ペイン内 上下スプリッター</strong>: プロパティ枠と画像ライブラリの境界もドラッグで上下調整。</li>
+        <li><strong>列数自動増減</strong>: 右画像ライブラリは幅に応じて 2→3→4列に自動増減 (auto-fill)。</li>
+        <li><strong>1/3 サイズ制限 📏</strong>: 画像配置時の初期サイズをページの1/3 までに自動圧縮 (ON/OFF切替)。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="imgplace-project">
+    <div class="section-head">
+      <div class="section-num">PROJECT FILE</div>
+      <h2 class="section-title">.lpw プロジェクト保存・autosave</h2>
+      <p class="section-lead">作業を中断しても完全復元。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        アクションバーの <strong>💾 プロジェクト保存</strong> でベースPDF + 配置画像 + カスタムセル + キャプション すべて含む <code>.lpw</code> ファイル(JSON形式)を出力。「名前を付けて保存」ダイアログで保存先を選べる(Chrome/Edge)。
+      </p>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:12px;">
+        ベースPDF読込前の画面にある <strong>📂 プロジェクト読込</strong> から復元。さらに <strong>autosave</strong> 機能でブラウザの IndexedDB に5秒debounceで自動保存、同じPDFを開き直すと「前回の状態を復元しますか?」とダイアログ提案。
+      </p>
+    </div>
+  </section>
+
+
   <!-- ==========================================================
        SHARED: FILENAME & TIMESTAMP
        ========================================================== -->
@@ -7545,7 +7737,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.6';
+  const APP_VERSION = '3.2.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {

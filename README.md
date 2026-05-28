@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.0** · 2026-05-28
+> **Version 3.3.1** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.0)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.3.1)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,14 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.3.1 (2026-05-28) — Patch
+- **取説をデフォルトでドック表示**(右側ピン留め)で開くように変更。不要なら × で閉じる
+- **被り解消**:
+  - imgPlace の editor が 100vw でブレイクアウトしてドック裏に潜り込む問題を修正(幅とマージンをドック分補正)
+  - フローティングゴミ箱(削除ボタン)をツール領域の中央に再配置
+  - 追加PDFドロップヒントも同様にシフト
+  - 成功モーダル(完了通知)もドックに被らないように
 
 ### v3.3.0 (2026-05-28) — Minor
 - **取説を右側ドック表示に切替可能化**: モーダル右上の □| ボタンで取説を右側にピン留め。ツール画面と並べて見ながら作業できる

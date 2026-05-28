@@ -1,5 +1,5 @@
 {
-  "version": "3.3.0",
-  "notes": "取説を右側ドッキング表示に切替可能に。ツール画面と並べて見ながら作業できる。境界スプリッターで幅可変、設定は localStorage で永続化。",
+  "version": "3.3.1",
+  "notes": "取説をデフォルトでドック表示で開くように。imgPlace editor 横幅補正 + ゴミ箱・成功モーダル等の位置をドック分シフトして被り解消。",
   "download_path": "pdf_compact_bundle.html"
 }

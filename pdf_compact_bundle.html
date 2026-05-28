@@ -1262,13 +1262,34 @@
   body.guide-docked #modeImgPlace.imgplace-editing .imgplace-sidebar {
     right: calc(16px + var(--guide-dock-w, 480px)) !important;
   }
+  /* imgPlace editor は 100vw ブレイクアウトで dock 裏に潜り込むから幅とマージンを補正 */
+  body.guide-docked #modeImgPlace .imgplace-editor {
+    width: calc(100vw - 32px - var(--guide-dock-w, 0px)) !important;
+    max-width: calc(100vw - 32px - var(--guide-dock-w, 0px)) !important;
+    margin-left: calc(50% - 50vw + 16px + var(--guide-dock-w, 0px) / 2) !important;
+    margin-right: calc(50% - 50vw + 16px + var(--guide-dock-w, 0px) / 2) !important;
+  }
+  /* imgPlace ゴミ箱 (フローティング削除ボタン) を ツール領域の中心に */
+  body.guide-docked .imgplace-trash {
+    left: calc(50% - var(--guide-dock-w, 0px) / 2);
+  }
+  /* imgPlace 追加PDFドロップヒント (中央表示) も ツール領域中心に */
+  body.guide-docked #modeImgPlace .imgplace-editor.imgplace-pdf-dragover::after {
+    left: calc(50% - var(--guide-dock-w, 0px) / 2);
+  }
   /* 更新バナーも dock 分シフト */
   body.guide-docked .update-banner {
     right: calc(16px + var(--guide-dock-w, 480px));
   }
+  /* 成功モーダル (完了通知) もツール領域に収める (dock 跨ぎ防止) */
+  body.guide-docked .success-modal {
+    right: var(--guide-dock-w, 0px);
+  }
   /* リサイズ中はスムージング切る (引っかかり感解消) */
   body.guide-dock-resizing,
   body.guide-dock-resizing #modeImgPlace.imgplace-editing .imgplace-sidebar,
+  body.guide-dock-resizing #modeImgPlace .imgplace-editor,
+  body.guide-dock-resizing .imgplace-trash,
   body.guide-dock-resizing .update-banner {
     transition: none !important;
   }
@@ -7890,7 +7911,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.0';
+  const APP_VERSION = '3.3.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8033,13 +8054,14 @@
 
     // Show modal first
     modal.classList.add('open');
-    // 前回の dock 設定を復元 (docked=1 ならドック状態で開く、それ以外は全画面モーダル)
+    // デフォルトは ドック表示。ユーザーが明示的に '0' (全画面) にした時だけ全画面で開く
     try {
-      const wasDocked = localStorage.getItem(GUIDE_DOCK_KEY) === '1';
-      setGuideDocked(wasDocked);
+      const stored = localStorage.getItem(GUIDE_DOCK_KEY);
+      const wantDocked = stored !== '0'; // null (未設定) or '1' → docked
+      setGuideDocked(wantDocked);
     } catch (e) {
-      // localStorage 不可 (private mode 等) は全画面モーダルにフォールバック
-      document.body.style.overflow = 'hidden';
+      // localStorage 不可 (private mode 等) → デフォルトのドック表示
+      setGuideDocked(true);
     }
 
     // Install anchor-click interceptor inside the iframe doc.

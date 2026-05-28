@@ -4924,6 +4924,9 @@
     color: var(--ink-muted);
     line-height: 1.65;
     margin-bottom: 16px;
+    /* 狭幅(ドック表示)時、JPG·PNG·PDF·BMP·TIFF みたいな中黒区切りでも改行できるように */
+    word-break: break-all;
+    overflow-wrap: anywhere;
   }
   .tool-link {
     display: inline-flex;
@@ -7929,7 +7932,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.8';
+  const APP_VERSION = '3.3.9';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8094,6 +8097,11 @@
     // 過去の docked 状態は記憶しない (= 全画面切替は当セッションのみ有効)
     setGuideDocked(true, false);
 
+    // ガイド再表示時、現在 active なモードタブのセクションへ自動スクロール
+    // (iframe ロード完了後に走らせる必要があるので installAnchorHandler 経由で実行)
+    const _activeTab = document.querySelector('.mode-tab.active');
+    const _currentMode = _activeTab ? _activeTab.dataset.mode : null;
+
     // Install anchor-click interceptor inside the iframe doc.
     // This prevents hash links from navigating (which triggers the Claude
     // artifact viewer's "loading" error) and scrolls manually instead.
@@ -8109,6 +8117,10 @@
           hideStyle.textContent = '.topnav-cta { display: none !important; }';
           (doc.head || doc.documentElement).appendChild(hideStyle);
         } catch (e2) { /* ignore */ }
+        // 現在の active タブに合わせて該当セクションへスクロール (instant: 開いた瞬間に最終位置)
+        if (_currentMode && typeof scrollGuideToSection === 'function') {
+          try { scrollGuideToSection(_currentMode, 'auto'); } catch(_) {}
+        }
         doc.addEventListener('click', function(e) {
           let el = e.target;
           // Walk up to find an anchor with href
@@ -9154,7 +9166,8 @@
     imgplace: 'part-imgplace'
   };
   // 取説 iframe を該当セクションまでスクロール (ドック表示中の時のみ意味あり)
-  function scrollGuideToSection(mode) {
+  // behavior: 'smooth' (タブ切替時のアニメ) or 'auto' (再表示時の瞬間移動)
+  function scrollGuideToSection(mode, behavior) {
     const sectionId = GUIDE_SECTION_MAP[mode];
     if (!sectionId) return;
     const iframe = document.getElementById('guideFrame');
@@ -9163,7 +9176,7 @@
       const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
       if (!doc) return;
       const target = doc.getElementById(sectionId);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (target) target.scrollIntoView({ behavior: behavior || 'smooth', block: 'start' });
     } catch (e) { /* CORS 等で読めない場合は黙殺 */ }
   }
 

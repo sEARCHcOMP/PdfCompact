@@ -1,5 +1,5 @@
 {
-  "version": "3.1.4",
-  "notes": "軽量化（全部DL後）/ 画像→PDF / PDF編集 でも出力後に保持ファイルを自動クリア",
+  "version": "3.1.5",
+  "notes": "罫線スナップ: 扁平率4倍超のセル（細長い帯状）を矩形として認識しないように",
   "download_path": "pdf_compact_bundle.html"
 }

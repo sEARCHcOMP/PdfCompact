@@ -7523,7 +7523,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.1.4';
+  const APP_VERSION = '3.1.5';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -11559,6 +11559,9 @@
       // (文字欄・ラベル欄は高さ ~8mm で除外される)
       const MIN_CELL_SIZE_MM = 15.0;
       const MIN_CELL_AREA_MM2 = 500;      // 面積 500mm² 未満は無視 (細長い帯状のノイズ対策)
+      // 扁平率上限: 長辺/短辺 が これを超えるセルは「帯状」とみなして除外
+      //   1.0 = 正方形、1.41 = A4、2 = よくある写真、4 = 細長すぎ
+      const MAX_CELL_ASPECT_RATIO = 4.0;
       // 性能ガード: 上限の素朴な見積もり (実際は xR-xL < 5mm / 面積<500 で大半が早期スキップされるので
       // 2M でも実質コストは数十万 cover-check に収まる)
       const MAX_PAIRS = 2000000;
@@ -11642,7 +11645,10 @@
               for (let j2 = j + 1; j2 < M; j2++) {
                 const yT = hYsMm[j], yB = hYsMm[j2];
                 if (yB - yT < MIN_CELL_SIZE_MM) continue;
-                if ((xR - xL) * (yB - yT) < MIN_CELL_AREA_MM2) continue;
+                const _w = xR - xL, _h = yB - yT;
+                if (_w * _h < MIN_CELL_AREA_MM2) continue;
+                // 扁平率チェック: 長辺/短辺 が閾値を超えるセルは「帯状」とみなして除外
+                if (Math.max(_w, _h) / Math.min(_w, _h) > MAX_CELL_ASPECT_RATIO) continue;
                 if (hasHCover(yT, xL, xR)
                     && hasHCover(yB, xL, xR)
                     && hasVCover(xL, yT, yB)

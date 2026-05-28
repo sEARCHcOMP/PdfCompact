@@ -7907,7 +7907,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.6';
+  const APP_VERSION = '3.3.7';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -9123,6 +9123,28 @@
     });
   }
 
+  // モード(data-mode) → ガイド側セクション ID マッピング
+  const GUIDE_SECTION_MAP = {
+    compress: 'part-compress',
+    imgtopdf: 'part-imgtopdf',
+    convert: 'part-convert',
+    pdfedit: 'part-edit',
+    imgplace: 'part-imgplace'
+  };
+  // 取説 iframe を該当セクションまでスクロール (ドック表示中の時のみ意味あり)
+  function scrollGuideToSection(mode) {
+    const sectionId = GUIDE_SECTION_MAP[mode];
+    if (!sectionId) return;
+    const iframe = document.getElementById('guideFrame');
+    if (!iframe) return;
+    try {
+      const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+      if (!doc) return;
+      const target = doc.getElementById(sectionId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { /* CORS 等で読めない場合は黙殺 */ }
+  }
+
   document.querySelectorAll('.mode-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.mode;
@@ -9142,6 +9164,8 @@
       // Retrigger the warp-in animation on newly-active panel's icons
       restartWarpAnimations(targetPanel);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 取説ドックが開いてたら該当セクションへスクロール
+      scrollGuideToSection(target);
     });
   });
 

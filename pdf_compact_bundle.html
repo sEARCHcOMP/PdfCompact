@@ -1253,10 +1253,12 @@
     background: var(--accent);
   }
 
-  /* body が docked 中: 右側にスペース確保 (通常レイアウト用) */
+  /* body の padding-right は CSS のみだと Chrome の cascade で
+     body { padding: shorthand } を上書きできない (再現済み)。
+     setGuideDocked() で inline style を直接設定する */
   body.guide-docked {
-    padding-right: var(--guide-dock-w, 480px);
-    transition: padding-right 0.2s ease;
+    /* CSS だと効かないので transition だけ宣言、値は JS で inline 上書き */
+    transition: padding 0.2s ease;
   }
   /* imgPlace 右ペインを dock 分シフト */
   body.guide-docked #modeImgPlace.imgplace-editing .imgplace-sidebar {
@@ -7911,7 +7913,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.1';
+  const APP_VERSION = '3.3.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8055,13 +8057,14 @@
     // Show modal first
     modal.classList.add('open');
     // デフォルトは ドック表示。ユーザーが明示的に '0' (全画面) にした時だけ全画面で開く
+    // persist=false で呼ぶことで localStorage を汚染しない (= 「未操作」を維持)
     try {
       const stored = localStorage.getItem(GUIDE_DOCK_KEY);
       const wantDocked = stored !== '0'; // null (未設定) or '1' → docked
-      setGuideDocked(wantDocked);
+      setGuideDocked(wantDocked, false);
     } catch (e) {
       // localStorage 不可 (private mode 等) → デフォルトのドック表示
-      setGuideDocked(true);
+      setGuideDocked(true, false);
     }
 
     // Install anchor-click interceptor inside the iframe doc.
@@ -8140,9 +8143,10 @@
     const iframe = document.getElementById('guideFrame');
     if (modal) {
       modal.classList.remove('open');
-      // docked 状態も解除 (body の padding-right も外す)
+      // docked 状態も解除 (html の padding-right も外す)
       modal.classList.remove('docked');
       document.body.classList.remove('guide-docked');
+      document.documentElement.style.removeProperty('padding-right');
       document.body.style.overflow = '';
     }
     setTimeout(() => {
@@ -8155,9 +8159,11 @@
     }, 320);
   }
   // ===== 取説のドック切替 (右側ピン留め ⇔ 全画面モーダル) =====
-  const GUIDE_DOCK_KEY = 'pdfCompact.guideDocked';
+  const GUIDE_DOCK_KEY = 'pdfCompact.guideDocked.v2'; // v3.3.2: 旧キーが auto-save で汚染されてたので刷新
   const GUIDE_DOCK_W_KEY = 'pdfCompact.guideDockWidth';
   const GUIDE_DOCK_MIN = 320;
+  // 旧キー (v3.3.0/3.3.1) を削除 (新規ユーザーは影響なし、旧ユーザーはリセット)
+  try { localStorage.removeItem('pdfCompact.guideDocked'); } catch(e) {}
   function getGuideDockMax() {
     // 画面幅の 70% を上限 (ツール側が狭くなりすぎないように)
     return Math.max(GUIDE_DOCK_MIN + 100, Math.floor(window.innerWidth * 0.7));
@@ -8165,10 +8171,16 @@
   function applyGuideDockWidth(px) {
     const clamped = Math.max(GUIDE_DOCK_MIN, Math.min(getGuideDockMax(), px));
     document.documentElement.style.setProperty('--guide-dock-w', clamped + 'px');
+    // padding-right は html 要素に inline で設定 (body だと Chrome の何かに弾かれて効かない)
+    if (document.body.classList.contains('guide-docked')) {
+      document.documentElement.style.setProperty('padding-right', clamped + 'px', 'important');
+    }
     try { localStorage.setItem(GUIDE_DOCK_W_KEY, String(clamped)); } catch(e) {}
     return clamped;
   }
-  function setGuideDocked(docked) {
+  // persist=true なら設定保存 (ユーザー操作)、false なら表示変更のみ (openGuide からの自動適用)
+  function setGuideDocked(docked, persist) {
+    if (persist === undefined) persist = true;
     const modal = document.getElementById('guideModal');
     if (!modal) return;
     const btn = document.getElementById('guideDockBtn');
@@ -8178,26 +8190,28 @@
       // body の overflow を戻す (docked なら下のツール操作できる必要あり)
       document.body.style.overflow = '';
       if (btn) btn.title = '全画面表示に戻す';
-      // 保存された幅を適用
+      // 保存された幅を適用 (この中で body の padding-right も inline 設定される)
       let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
       if (!saved || isNaN(saved)) saved = 480;
       applyGuideDockWidth(saved);
-      try { localStorage.setItem(GUIDE_DOCK_KEY, '1'); } catch(e) {}
+      if (persist) { try { localStorage.setItem(GUIDE_DOCK_KEY, '1'); } catch(e) {} }
     } else {
       modal.classList.remove('docked');
       document.body.classList.remove('guide-docked');
+      // html の inline padding-right を解除 (CSS のデフォルトに戻す)
+      document.documentElement.style.removeProperty('padding-right');
       // モーダル開いてる時のみ overflow hidden に戻す
       if (modal.classList.contains('open')) {
         document.body.style.overflow = 'hidden';
       }
       if (btn) btn.title = '右側にドッキング (ツールと並べて表示)';
-      try { localStorage.setItem(GUIDE_DOCK_KEY, '0'); } catch(e) {}
+      if (persist) { try { localStorage.setItem(GUIDE_DOCK_KEY, '0'); } catch(e) {} }
     }
   }
   function toggleGuideDock() {
     const modal = document.getElementById('guideModal');
     if (!modal) return;
-    setGuideDocked(!modal.classList.contains('docked'));
+    setGuideDocked(!modal.classList.contains('docked'), true);
   }
 
   // スプリッターのドラッグでドック幅をリアルタイム調整

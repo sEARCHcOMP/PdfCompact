@@ -1,5 +1,5 @@
 {
-  "version": "3.3.1",
-  "notes": "取説をデフォルトでドック表示で開くように。imgPlace editor 横幅補正 + ゴミ箱・成功モーダル等の位置をドック分シフトして被り解消。",
+  "version": "3.3.2",
+  "notes": "取説ドック表示の致命バグ修正: 旧バージョンで localStorage に '0' が auto-save されてデフォルトドックが効かなかった問題と、body の padding-right が CSS で適用されず取説とツールが被っていた問題を修正。",
   "download_path": "pdf_compact_bundle.html"
 }

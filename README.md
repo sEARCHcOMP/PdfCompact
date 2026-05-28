@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.2.0** · 2026-05-28
+> **Version 3.2.1** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.2.0)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.2.1)-1a85ff?style=for-the-badge)](https://tinyurl.com/28x658ss)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.2.1 (2026-05-28) — Patch (Docs)
+- 取説トップの tool-card セレクタと jumpnav にも「PDFに画像配置」リンクを追加(タブから直接ジャンプできるように)
 
 ### v3.2.0 (2026-05-28) — Minor (Docs)
 - **取説に「PDFに画像配置」モードの章 (PART 05) を新規追加**

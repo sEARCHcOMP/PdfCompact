@@ -1,5 +1,5 @@
 {
-  "version": "3.2.0",
-  "notes": "取説に「PDFに画像配置」モードの章 (PART 05) を新規追加 — クイックスタート/罫線スナップ/複数選択/ページ管理/レイアウト/プロジェクト保存",
+  "version": "3.2.1",
+  "notes": "取説の上部タブ (tool-card + jumpnav) にも 「PDFに画像配置」へのリンクを追加",
   "download_path": "pdf_compact_bundle.html"
 }

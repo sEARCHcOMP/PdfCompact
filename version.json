@@ -1,5 +1,5 @@
 {
-  "version": "3.3.4",
-  "notes": "PDF Compact 起動時に取説を自動で右側ドック表示するように。× で閉じればそのセッション中は再表示しない。",
+  "version": "3.3.5",
+  "notes": "取説モーダル上部のボタン3連被り (ドックトグル / × / ガイドの『ツールを開く』) を解消。ドックトグル削除 + iframe 内の topnav-cta 自動非表示。",
   "download_path": "pdf_compact_bundle.html"
 }

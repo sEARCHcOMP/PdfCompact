@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.4.0** · 2026-05-28
+> **Version 3.4.1** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.4.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.4.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,16 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.4.1 (2026-05-28) — Patch (バグハント結果 続き)
+v3.4.0 で先送りした残バグを処理:
+- **軽量化モード**: 全ファイル圧縮失敗時、これまで無反応だった → エラーステータス明示で原因確認しやすく
+- **変換モード**: 失敗時に「途中まで処理完了 vs 全失敗」を区別表示。`X/Y まで変換、残りで失敗` という風に進捗込みエラー
+- **画像→PDF**: AVIF 等未対応形式や破損ファイルの読込失敗を黙殺せず、`⚠ XX は読込めません` と明示通知
+- **imgPlace ピンチ**: 3本目以降のタッチで `activeTouches` leak していたのを `>=2 で早期 return` ガード
+- **imgPlace ページ複数選択**: 全ページ選択中に削除試行した時の早期 return で選択状態が残ってた問題修正
+- **取説ドック**: iframe ロード中にタブ切替された場合、古いタブのセクションへスクロールしてた問題を修正(load 完了時に再取得)
+- **取説**: GUIDE_AUTO_OPEN_DISMISS_KEY 定数と リテラル文字列の重複を解消(将来のキー改名時の取り漏れ防止)
 
 ### v3.4.0 (2026-05-28) — Minor (バグハント結果)
 並列エージェント(3名)による徹底バグ調査で発見した複数バグを修正:

@@ -1,5 +1,5 @@
 {
-  "version": "3.4.0",
-  "notes": "並列バグハント (3エージェント) で発見した複数バグ修正: imgPlace trash 残留 / dock 幅 clamp 漏れ / スプリッター pointerup leak / scrollGuideToSection 無駄実行 / PDF Rotation 配置ズレ (TODO 残し)",
+  "version": "3.4.1",
+  "notes": "v3.4.0 残バグ修正: 軽量化/変換の全エラー時 UX 改善 / AVIF onerror に通知追加 / ピンチ3本目ガード / 取説 closure 修正 / 定数とリテラル統一 / ページ複数選択削除の早期 return クリア",
   "download_path": "pdf_compact_bundle.html"
 }

@@ -7937,7 +7937,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.4.0';
+  const APP_VERSION = '3.4.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8102,11 +8102,6 @@
     // 過去の docked 状態は記憶しない (= 全画面切替は当セッションのみ有効)
     setGuideDocked(true, false);
 
-    // ガイド再表示時、現在 active なモードタブのセクションへ自動スクロール
-    // (iframe ロード完了後に走らせる必要があるので installAnchorHandler 経由で実行)
-    const _activeTab = document.querySelector('.mode-tab.active');
-    const _currentMode = _activeTab ? _activeTab.dataset.mode : null;
-
     // Install anchor-click interceptor inside the iframe doc.
     // This prevents hash links from navigating (which triggers the Claude
     // artifact viewer's "loading" error) and scrolls manually instead.
@@ -8122,7 +8117,10 @@
           hideStyle.textContent = '.topnav-cta { display: none !important; }';
           (doc.head || doc.documentElement).appendChild(hideStyle);
         } catch (e2) { /* ignore */ }
-        // 現在の active タブに合わせて該当セクションへスクロール (instant: 開いた瞬間に最終位置)
+        // 現在の active タブに合わせて該当セクションへスクロール
+        // (iframe load 中にタブ切替された場合に備えて、ここで再取得する)
+        const _currentTab = document.querySelector('.mode-tab.active');
+        const _currentMode = _currentTab ? _currentTab.dataset.mode : null;
         if (_currentMode && typeof scrollGuideToSection === 'function') {
           try { scrollGuideToSection(_currentMode, 'auto'); } catch(_) {}
         }
@@ -8201,7 +8199,7 @@
       document.body.style.overflow = '';
     }
     // × で閉じた場合、当セッションは自動表示しない (リロードまでは再オープンしない)
-    try { sessionStorage.setItem('pdfCompact.guideAutoOpenDismissed', '1'); } catch(_) {}
+    try { sessionStorage.setItem(GUIDE_AUTO_OPEN_DISMISS_KEY, '1'); } catch(_) {}
     setTimeout(() => {
       if (iframe) {
         // Clear all possible content sources
@@ -8775,6 +8773,9 @@
         subtitle: sub,
         stats: stats
       });
+    } else if (errFiles.length > 0) {
+      // 全ファイルがエラー → 何が起きたか明示 (success-modal 経路に乗らないので独自に)
+      setStatus(`✕ ${errFiles.length}件すべて圧縮失敗。ファイル形式・破損・ロックを確認してください`, 'error');
     }
   });
 
@@ -9446,7 +9447,11 @@
                   });
                   resolve();
                 };
-                img.onerror = () => resolve();
+                img.onerror = () => {
+                  setStatus(`⚠ ${pf.name} (TIFF変換結果) の表示に失敗`, 'error');
+                  try { URL.revokeObjectURL(url); } catch(_) {}
+                  resolve();
+                };
                 img.src = url;
               });
             }
@@ -9472,7 +9477,13 @@
                 });
                 resolve();
               };
-              img.onerror = () => resolve();
+              img.onerror = () => {
+                // ブラウザ未対応形式 (古い Firefox の AVIF 等) or 破損ファイル
+                const ext = (origFile.name.split('.').pop() || '').toUpperCase();
+                setStatus(`⚠ ${origFile.name} は読込めません (${ext} がブラウザ未対応 or 破損ファイル)`, 'error');
+                try { URL.revokeObjectURL(url); } catch(_) {}
+                resolve();
+              };
               img.src = url;
             });
           }
@@ -10454,7 +10465,9 @@
         successFlag = true;
       } catch (err) {
         console.error(err);
-        setStatus(`✕ エラー: ${err.message}`, 'error');
+        // どこまで進んでたかも示す (完全失敗 vs 途中失敗の区別)
+        const progressInfo = completed > 0 ? `${completed}/${totalOutputs}まで変換、残りで失敗。` : '全て失敗。';
+        setStatus(`✕ ${progressInfo} エラー: ${err.message}`, 'error');
       }
 
       generateBtn.disabled = false;
@@ -13393,6 +13406,8 @@
 
           // タッチイベント時は activeTouches に追加して、2 指目ならピンチ開始
           if (e.pointerType === 'touch') {
+            // 3本目以降のタッチは無視 (activeTouches leak で pinchState 残留を防ぐ)
+            if (activeTouches.size >= 2) return;
             activeTouches.set(e.pointerId, {
               clientX: e.clientX, clientY: e.clientY,
               placementId: pl.id
@@ -13764,6 +13779,9 @@
       if (!basePdfBytes || !indices || indices.length === 0) return;
       if (indices.length >= pageCount) {
         setStatus('全ページ選択中は一括削除できません (最低1ページ残す)', 'error');
+        // 選択も解除して × ボタンのタイトル「N ページ一括削除」誤誘導を消す
+        pageSelectedIndices.clear();
+        updatePageSelectionDom();
         return;
       }
       // 関連配置/セル件数を集計

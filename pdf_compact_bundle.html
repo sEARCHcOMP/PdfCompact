@@ -3235,6 +3235,11 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+  /* タブ切替で imgPlace が active じゃなくなった時、body直下の trash が画面下に残る
+     問題を CSS だけで強制非表示 (:has() で imgPlace の active 状態を見る) */
+  body:not(:has(#modeImgPlace.active)) .imgplace-trash {
+    display: none !important;
+  }
   .imgplace-trash.hover {
     background: #a8421a;
     transform: translateX(-50%) translateY(-4px) scale(1.08);
@@ -7932,7 +7937,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.3.9';
+  const APP_VERSION = '3.4.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8292,6 +8297,10 @@
       splitter.addEventListener('pointermove', onMove);
       splitter.addEventListener('pointerup', onUp);
       splitter.addEventListener('pointercancel', onUp);
+      // setPointerCapture が失敗するブラウザ用フォールバック:
+      // ポインタが iframe 上に逃げて離されても確実に dragging を解除
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
     };
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', start);
@@ -8304,7 +8313,9 @@
   (function restoreGuideDockWidth() {
     let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
     if (!saved || isNaN(saved)) saved = 480;
-    document.documentElement.style.setProperty('--guide-dock-w', Math.max(GUIDE_DOCK_MIN, saved) + 'px');
+    // 大画面で保存 → 小画面で起動した時、視窗の 70% を超えないよう clamp
+    const clamped = Math.max(GUIDE_DOCK_MIN, Math.min(getGuideDockMax(), saved));
+    document.documentElement.style.setProperty('--guide-dock-w', clamped + 'px');
   })();
 
   // ウィンドウリサイズ時にドック幅を再 clamp (ブラウザ縮めた時のはみ出し防止)
@@ -9170,6 +9181,9 @@
   function scrollGuideToSection(mode, behavior) {
     const sectionId = GUIDE_SECTION_MAP[mode];
     if (!sectionId) return;
+    // ガイドが開いてない時は早期 return (毎タブ切替で iframe 触らない)
+    const modal = document.getElementById('guideModal');
+    if (!modal || !modal.classList.contains('open')) return;
     const iframe = document.getElementById('guideFrame');
     if (!iframe) return;
     try {
@@ -15796,6 +15810,10 @@
         const img = imageLibrary.find(im => im.id === pl.imageId);
         if (!img) continue;
         const page = pdfDoc.getPage(pl.pageIndex);
+        // TODO: ページが Rotation 90/180/270 を持つ PDF (スマホスキャナ等) で
+        // pl.xMm/yMm は pdf.js viewport (回転後) 座標、page.getSize() は回転前。
+        // 配置がズレるので将来 page.getRotation() で座標変換を実装する。
+        // 現在は回転 0 を前提とした計算 (CAD 出力 PDF は通常 0 なので大半は問題なし)
         const pageSize = page.getSize();
         const embedded = await getEmbedded(img);
 

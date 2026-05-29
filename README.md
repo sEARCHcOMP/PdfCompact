@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.3.9** · 2026-05-28
+> **Version 3.4.0** · 2026-05-28
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.3.9)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.4.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,14 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.4.0 (2026-05-28) — Minor (バグハント結果)
+並列エージェント(3名)による徹底バグ調査で発見した複数バグを修正:
+- **imgPlace**: タブ切替後にフローティングゴミ箱(削除ボタン)が画面下に残留する問題を CSS の `:has()` で根本解消
+- **取説ドック**: スプリッターをドラッグ中にポインタが iframe に逃げると `dragging` 状態が解除されない問題 → `window` にも `pointerup` 登録
+- **取説ドック**: 大画面で保存したドック幅が小画面起動時にはみ出す問題 → 起動時にも `getGuideDockMax()` で clamp
+- **取説ドック**: ガイド閉じてる時もタブ切替で `scrollGuideToSection` が iframe アクセスして無駄処理 → open チェックで早期 return
+- **imgPlace 出力**: ページ Rotation 考慮の TODO コメント追加(回転PDF配置ズレの将来対応用)
 
 ### v3.3.9 (2026-05-28) — Patch
 - **取説ドック狭幅でツールカードの説明文が見切れる問題修正**: `.tool-desc` に `word-break: break-all` + `overflow-wrap: anywhere` 追加。中黒(·)区切りでも適切に折返し

@@ -1,5 +1,5 @@
 {
-  "version": "3.3.9",
-  "notes": "ドック狭幅で tool-card 説明文が見切れる問題修正 (word-break 追加)。取説再表示時に現在の active タブのセクションへ自動スクロール。",
+  "version": "3.4.0",
+  "notes": "並列バグハント (3エージェント) で発見した複数バグ修正: imgPlace trash 残留 / dock 幅 clamp 漏れ / スプリッター pointerup leak / scrollGuideToSection 無駄実行 / PDF Rotation 配置ズレ (TODO 残し)",
   "download_path": "pdf_compact_bundle.html"
 }

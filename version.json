@@ -1,5 +1,5 @@
 {
-  "version": "3.5.0",
-  "notes": "iPad で PC と同じドック表示で使えるように: ドック閾値 720→700px / ドック幅を viewport 適応 (iPad portrait 345px / landscape 460px / PC 480px) / iOS PWA メタタグ追加で『ホーム画面に追加』対応",
+  "version": "3.5.1",
+  "notes": "取説内の更新履歴セクションに v3.1.6 / v3.2.x / v3.3.x / v3.4.x / v3.5.x を追記(これまで v3.1.5 まで止まってた)",
   "download_path": "pdf_compact_bundle.html"
 }

@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.5.0** · 2026-06-02
+> **Version 3.5.1** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.5.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.5.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,10 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.5.1 (2026-06-02) — Docs
+- 取説内の「更新履歴」セクションが v3.1.5 までで止まっていたので v3.1.6 / v3.2.x / v3.3.x / v3.4.x / v3.5.x を追記
+- v3.5.x シリーズを default open に変更(v3.0.0 は閉じる)
 
 ### v3.5.0 (2026-06-02) — Minor (iPad対応)
 - **iPad で PC と同じドック表示が使えるように**:

@@ -7823,9 +7823,63 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v3.5.x シリーズ (2026-06-02) — iPad 対応</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.5.0</strong> — iPad で PC と同じドック表示が使えるように:
+              <ul style="margin-left:1.5em;">
+                <li>ドック許可閾値を 720→700px に下げて iPad portrait (768px) を許可</li>
+                <li>ドック幅を viewport 適応 (iPad portrait 345px / landscape 460px / PC 480px)</li>
+                <li>iOS PWA 対応: 共有 → 「ホーム画面に追加」でアドレスバーなしのアプリ風表示</li>
+                <li>README.txt に iPad 利用手順を追記</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.4.x シリーズ (2026-05-28〜06-02) — バグハント + モバイル致命修正</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.4.2</strong> — スマホで取説ドック幅がツールを隠していた致命バグ修正(モバイル<700pxは強制全画面モーダル化、自動表示も無効)</li>
+            <li><strong>v3.4.1</strong> — 軽量化/変換の全失敗時UX改善、AVIF onerrorに通知追加、ピンチ3本目ガード、取説 closure 修正、定数とリテラル統一、ページ複数選択削除の早期returnクリア</li>
+            <li><strong>v3.4.0</strong> — 並列エージェント(3名)バグハント結果:imgPlace タブ切替後のフローティングゴミ箱残留 / 取説ドックスプリッターpointerupリーク / ドック幅 restore のclamp漏れ / scrollGuideToSection早期return / PDF Rotation TODO追加</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.3.x シリーズ (2026-05-28) — 取説ドック表示の進化</summary>
+        <div class="faq-body">
+          <p><strong>取説を「ツールと並べて見れる」体験に全面刷新。</strong></p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.3.9</strong> — ドック狭幅でツールカード説明文が中黒区切りで見切れる問題修正、再表示時に現在のタブのセクションへ自動スクロール</li>
+            <li><strong>v3.3.8</strong> — 拡大⇔ドックトグルボタン(× の左)復活、× で閉じた後の再オープンは必ずドック表示から</li>
+            <li><strong>v3.3.7</strong> — モードタブ切替で取説も該当 PART セクションへ smooth スクロール連動</li>
+            <li><strong>v3.3.6</strong> — v3.3.5 で取説表示が崩壊するバグを即修正(ガイドソース内に script タグ入れて外側 script type=text/html が早期終了していた)</li>
+            <li><strong>v3.3.5</strong> — 取説モーダル右上のボタン3連被り(ドックトグル/×/ツールを開く)を解消</li>
+            <li><strong>v3.3.4</strong> — PDF Compact 起動時に取説を自動でドック表示するように(× で閉じればそのセッション中は再表示しない)</li>
+            <li><strong>v3.3.3</strong> — 取説を必ずドック表示で開くように(localStorage 状態判定を廃止、過去にトグルしてても毎回ドック)</li>
+            <li><strong>v3.3.2</strong> — localStorage マイグレーション + body の padding-right が CSS で効かない Chrome の挙動を html 要素 inline で回避</li>
+            <li><strong>v3.3.1</strong> — デフォルトドック表示 + 被り要素の位置補正(imgPlace 右ペイン・編集 editor の 100vw breakout 補正)</li>
+            <li><strong>v3.3.0</strong> — 取説モーダルを右側ドックパネルに切替可能化、境界スプリッターでドック幅可変、設定は localStorage 永続化</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.2.x シリーズ (2026-05-28) — 取説強化</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.2.2</strong> — 取説のツールカード「フォーマット変換」を「変換」にリネーム(文字見切れ解消)+ word-break ガード追加</li>
+            <li><strong>v3.2.1</strong> — 取説トップの tool-card + jumpnav にも「PDFに画像配置」リンクを追加</li>
+            <li><strong>v3.2.0</strong> — 取説に <strong>「PDFに画像配置」モード章 (PART 05)</strong> を新規追加(クイックスタート / 罫線スナップ + カスタムセル / 複数選択 + 順次配置 / ページ管理 / レイアウト / .lpw プロジェクト保存)</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.1.x シリーズ (2026-05-27〜28) — 改善 + バグ修正</summary>
         <div class="faq-body">
           <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.1.6</strong> — 取説の更新履歴に v3.0.1〜v3.1.5 を追記(反映漏れ対応)</li>
             <li><strong>v3.1.5</strong> — 罫線スナップ: 扁平率4倍超のセル(細長い帯状)を矩形として認識しないように</li>
             <li><strong>v3.1.4</strong> — 軽量化(全部DL後)/画像→PDF/PDF編集 でも出力後に保持ファイル自動クリア(全モード統一)</li>
             <li><strong>v3.1.3</strong> — 変換モード: 個別DLでも2枚以上は自動でZIPにまとめる(ブラウザの「複数ファイルDL許可」プロンプト回避)</li>
@@ -7844,7 +7898,7 @@
           </ul>
         </div>
       </details>
-      <details class="faq-item" open>
+      <details class="faq-item">
         <summary class="faq-summary">v3.0.0 (2026-05-23) — メジャーアップデート: UI再設計</summary>
         <div class="faq-body">
           <p><strong>「PDFに画像配置」モードのレイアウト全面刷新。</strong>大量画像・複数ページの編集が劇的に快適に。</p>
@@ -7943,7 +7997,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.5.0';
+  const APP_VERSION = '3.5.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {

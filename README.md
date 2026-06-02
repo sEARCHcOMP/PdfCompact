@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.4.1** · 2026-05-28
+> **Version 3.4.2** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.4.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.4.2)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,12 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.4.2 (2026-06-02) — Patch (Critical Fix)
+- **スマホでツールに触れない致命バグ修正**: ドック幅 480px が viewport を超えてツール側が完全に隠れていた
+  - モバイル(viewport < 720px)では強制全画面モーダル化、ドックモード無効
+  - 起動時の自動表示もモバイルではスキップ(ユーザーが「使い方」押下時のみ全画面表示)
+  - PC でドック開いた状態でブラウザをモバイル幅に縮めても自動でドック解除
 
 ### v3.4.1 (2026-05-28) — Patch (バグハント結果 続き)
 v3.4.0 で先送りした残バグを処理:

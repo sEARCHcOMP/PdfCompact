@@ -7937,7 +7937,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.4.1';
+  const APP_VERSION = '3.4.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8047,6 +8047,9 @@
   // × で閉じたら sessionStorage に記録、当セッション内は再表示しない
   const GUIDE_AUTO_OPEN_DISMISS_KEY = 'pdfCompact.guideAutoOpenDismissed';
   function autoOpenGuide() {
+    // スマホでは自動表示しない (全画面モーダルが立ち上がってツール触れない問題回避)
+    // ユーザーが「使い方」ボタン押下した時のみ全画面表示する
+    if (window.innerWidth < 720) return;
     try {
       // 当セッションで × を押されてたらスキップ
       if (sessionStorage.getItem(GUIDE_AUTO_OPEN_DISMISS_KEY) === '1') return;
@@ -8213,6 +8216,11 @@
   const GUIDE_DOCK_KEY = 'pdfCompact.guideDocked.v2'; // v3.3.2: 旧キーが auto-save で汚染されてたので刷新
   const GUIDE_DOCK_W_KEY = 'pdfCompact.guideDockWidth';
   const GUIDE_DOCK_MIN = 320;
+  // スマホ・狭画面ではドック禁止 (ドック幅 > viewport で tool が完全に隠れる)
+  const GUIDE_DOCK_MIN_VIEWPORT = 720;
+  function isMobileViewport() {
+    return window.innerWidth < GUIDE_DOCK_MIN_VIEWPORT;
+  }
   // 旧キー (v3.3.0/3.3.1) を削除 (新規ユーザーは影響なし、旧ユーザーはリセット)
   try { localStorage.removeItem('pdfCompact.guideDocked'); } catch(e) {}
   function getGuideDockMax() {
@@ -8234,6 +8242,10 @@
     if (persist === undefined) persist = true;
     const modal = document.getElementById('guideModal');
     if (!modal) return;
+    // スマホ・狭画面では強制的に全画面モーダル化 (docked を許可するとツール側が完全に隠れる)
+    if (docked && isMobileViewport()) {
+      docked = false;
+    }
     const btn = document.getElementById('guideDockBtn');
     if (docked) {
       modal.classList.add('docked');
@@ -8317,8 +8329,14 @@
   })();
 
   // ウィンドウリサイズ時にドック幅を再 clamp (ブラウザ縮めた時のはみ出し防止)
+  // モバイル幅に縮んだ時はドックを強制解除して全画面モーダル化
   window.addEventListener('resize', () => {
     if (!document.body.classList.contains('guide-docked')) return;
+    // モバイル幅になったらドック解除 (ツール側が完全に隠れるのを防ぐ)
+    if (isMobileViewport()) {
+      setGuideDocked(false, false);
+      return;
+    }
     const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--guide-dock-w'), 10) || 480;
     applyGuideDockWidth(cur);
   });

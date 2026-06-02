@@ -1,5 +1,5 @@
 {
-  "version": "3.4.1",
-  "notes": "v3.4.0 残バグ修正: 軽量化/変換の全エラー時 UX 改善 / AVIF onerror に通知追加 / ピンチ3本目ガード / 取説 closure 修正 / 定数とリテラル統一 / ページ複数選択削除の早期 return クリア",
+  "version": "3.4.2",
+  "notes": "スマホで取説ドックが viewport を超えてツール側が完全に隠れていた致命バグ修正。モバイル(<720px)では強制全画面モーダル化、自動表示も無効に。",
   "download_path": "pdf_compact_bundle.html"
 }

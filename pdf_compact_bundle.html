@@ -1816,6 +1816,49 @@
     .success-particle { display: none; }
   }
 
+  /* ===== 設定モーダル (success-modal の作法を踏襲: overlay blur + 中央カード) ===== */
+  .settings-modal { position: fixed; inset: 0; background: rgba(10, 12, 18, 0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .settings-modal.open { display: flex; animation: settings-overlay-in 0.3s cubic-bezier(.2,.8,.2,1); }
+  @keyframes settings-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+  .settings-card { position: relative; background: var(--surface); border-radius: var(--r-xl, 20px); padding: 30px 28px 22px; text-align: left; max-width: 460px; width: 100%; max-height: calc(100vh - 40px); overflow-y: auto; box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.04); transform: scale(0.92) translateY(14px); opacity: 0; animation: settings-card-pop 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) 0.05s forwards; }
+  @keyframes settings-card-pop { to { transform: scale(1) translateY(0); opacity: 1; } }
+  .settings-close-x { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: 50%; background: var(--surface-2); color: var(--ink-muted); border: 1px solid var(--line); cursor: pointer; display: grid; place-items: center; transition: all 0.18s ease; font-family: inherit; z-index: 2; }
+  .settings-close-x:hover { background: var(--ink); color: #fff; border-color: var(--ink); transform: rotate(90deg); }
+  .settings-close-x svg { transition: transform 0.2s ease; }
+  .settings-head { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; padding-right: 36px; }
+  .settings-head-icon { flex: 0 0 auto; width: 42px; height: 42px; border-radius: var(--r-md, 10px); background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+  .settings-head-text { min-width: 0; }
+  .settings-title { font-family: 'Archivo', 'Noto Sans JP', sans-serif; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); line-height: 1.2; }
+  .settings-subtitle { font-size: 12.5px; color: var(--ink-muted); margin-top: 3px; line-height: 1.5; }
+  .settings-section { border: 1px solid var(--line); border-radius: var(--r-lg, 14px); background: var(--surface-2); padding: 6px 16px 10px; margin-bottom: 18px; }
+  .settings-section-head { padding: 12px 0 10px; border-bottom: 1px dashed var(--line); margin-bottom: 4px; }
+  .settings-section-title { display: block; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+  .settings-section-note { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; line-height: 1.5; }
+  .settings-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 2px; cursor: pointer; border-bottom: 1px dashed var(--line); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-text { flex: 1 1 auto; min-width: 0; }
+  .settings-row-label { font-size: 14.5px; font-weight: 700; color: var(--ink); letter-spacing: -0.005em; }
+  .settings-row-desc { font-size: 12px; color: var(--ink-muted); margin-top: 4px; line-height: 1.6; }
+  /* iOS 風トグルスイッチ */
+  .settings-switch { position: relative; flex: 0 0 auto; margin-top: 1px; }
+  .settings-switch-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+  .settings-switch-track { display: block; width: 46px; height: 28px; border-radius: 100px; background: #cfd3dc; transition: background 0.22s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+  .settings-switch-thumb { display: block; width: 22px; height: 22px; margin: 3px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 1px 1px rgba(0,0,0,0.1); transform: translateX(0); transition: transform 0.24s cubic-bezier(.34,1.4,.64,1); }
+  .settings-switch-input:checked + .settings-switch-track { background: var(--accent); }
+  .settings-switch-input:checked + .settings-switch-track .settings-switch-thumb { transform: translateX(18px); }
+  .settings-switch-input:focus-visible + .settings-switch-track { box-shadow: 0 0 0 3px var(--accent-glow); }
+  /* 将来の透かし用サブ入力 (今はコメントアウト中) */
+  .settings-subfield { padding: 4px 2px 14px; border-bottom: 1px dashed var(--line); }
+  .settings-subfield-label { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-muted); margin-bottom: 6px; }
+  .settings-text-input { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--r-sm, 6px); background: var(--surface); font-family: inherit; font-size: 13.5px; color: var(--ink); transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+  .settings-text-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .settings-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 2px; }
+  .settings-foot-note { font-size: 11px; color: var(--ink-faint); line-height: 1.5; flex: 1 1 auto; }
+  .settings-done-btn { flex: 0 0 auto; background: var(--ink); color: #fff; border: none; padding: 11px 22px; border-radius: var(--r-sm, 6px); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s ease; letter-spacing: -0.005em; }
+  .settings-done-btn:hover { background: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-glow); }
+  @media (max-width: 560px) { .settings-card { padding: 26px 20px 18px; } .settings-foot { flex-direction: column; align-items: stretch; } .settings-done-btn { width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .settings-modal.open { animation: none; } .settings-card { animation: none !important; opacity: 1 !important; transform: none !important; } .settings-switch-track, .settings-switch-thumb { transition: none; } }
+
   /* ============ FILENAME INPUT (unobtrusive inline) ============ */
   .filename-bar {
     display: flex;
@@ -3726,6 +3769,13 @@
           <span class="help-q">?</span>
           <span>使い方</span>
         </button>
+        <button class="help-btn settings-btn" id="settingsBtn" onclick="openSettings()" aria-label="設定を開く" title="設定">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>設定</span>
+        </button>
         <div class="status-pill">
           <span class="status-dot"></span>
           LOCAL PROCESSING
@@ -4627,6 +4677,74 @@
     <p class="success-subtitle" id="successSubtitle">処理が終わりました</p>
     <div class="success-stats" id="successStats"></div>
     <button class="success-close" onclick="closeSuccess()">閉じる</button>
+  </div>
+</div>
+
+<!-- ===== 設定モーダル (success-modal パターン踏襲: 中央表示 / 背景クリック・ESC・×で閉じる) ===== -->
+<div class="settings-modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+  <div class="settings-card" role="document">
+    <button class="settings-close-x" onclick="closeSettings()" aria-label="閉じる" title="閉じる">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="settings-head">
+      <div class="settings-head-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+      <div class="settings-head-text">
+        <h2 class="settings-title" id="settingsModalTitle">設定</h2>
+        <p class="settings-subtitle">出力するPDFの扱いをここで決められます</p>
+      </div>
+    </div>
+    <!-- ===== セクション: 配布前サニタイズ ===== -->
+    <div class="settings-section">
+      <div class="settings-section-head">
+        <span class="settings-section-title">配布前サニタイズ</span>
+        <span class="settings-section-note">どのモードで作ったPDFにも自動でかかります</span>
+      </div>
+      <!-- メタデータ除去トグル (rank1) -->
+      <label class="settings-row" for="setMetaStrip">
+        <div class="settings-row-text">
+          <div class="settings-row-label">メタデータを消す</div>
+          <div class="settings-row-desc">作成者・タイトル・作成日などの隠れた情報を空にして、PDFから身元がバレるのを防ぎます。基本はオンのままで大丈夫です。</div>
+        </div>
+        <span class="settings-switch">
+          <input type="checkbox" id="setMetaStrip" class="settings-switch-input" role="switch" aria-label="メタデータを消す" checked>
+          <span class="settings-switch-track" aria-hidden="true"><span class="settings-switch-thumb"></span></span>
+        </span>
+      </label>
+      <!-- ============================================================ -->
+      <!-- 将来の透かし (rank2) 用の枠。v3.7.0 で有効化予定。            -->
+      <!-- 下記をコメント解除し、wiring 側の WATERMARK ブロックも合わせて  -->
+      <!-- 解除すれば動く想定 (window.PdfSanitize._steps に step を追加)。 -->
+      <!-- ------------------------------------------------------------ -->
+      <!--
+      <label class="settings-row" for="setWatermark">
+        <div class="settings-row-text">
+          <div class="settings-row-label">透かしを入れる</div>
+          <div class="settings-row-desc">「社外秘」などの薄い文字を全ページに重ねて、流出してもどこ由来か分かるようにします。</div>
+        </div>
+        <span class="settings-switch">
+          <input type="checkbox" id="setWatermark" class="settings-switch-input" role="switch" aria-label="透かしを入れる">
+          <span class="settings-switch-track" aria-hidden="true"><span class="settings-switch-thumb"></span></span>
+        </span>
+      </label>
+      <div class="settings-subfield" id="setWatermarkTextWrap">
+        <label class="settings-subfield-label" for="setWatermarkText">透かしの文字</label>
+        <input type="text" id="setWatermarkText" class="settings-text-input" placeholder="社外秘" maxlength="20">
+      </div>
+      -->
+      <!-- ============================================================ -->
+    </div>
+    <div class="settings-foot">
+      <span class="settings-foot-note">設定はこの端末に保存され、次に開いた時もそのままです</span>
+      <button class="settings-done-btn" onclick="closeSettings()">閉じる</button>
+    </div>
   </div>
 </div>
 
@@ -7823,6 +7941,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v3.6.0 (2026-06-02) — 🛡 配布前サニタイズ (メタデータ除去)</summary>
+        <div class="faq-body">
+          <p><strong>出力するPDFから「隠れた個人情報」を自動で消す機能。</strong>右上の⚙️設定で ON/OFF。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>作成者・タイトル・作成日・使用ソフト名などのメタデータを、PDF出力時に自動でクリア(デフォルトON)</li>
+            <li>「前の客先名が作成者欄に残ってた」「社内テンプレ流用がバレる」といった<strong>うっかり情報漏洩を防止</strong></li>
+            <li>全モード(軽量化 / 画像→PDF / 変換 / PDF編集 / 画像配置)の出力すべてに適用</li>
+            <li>画像出力(PNG/JPG等)には影響なし。暗号化PDFは安全のため素通し(平文化しない)</li>
+            <li>設定はこの端末に保存され次回も有効。「社外送信ゼロ」に「配布前の事故防止」が加わりました</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.5.x シリーズ (2026-06-02) — iPad 対応</summary>
         <div class="faq-body">
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -7997,7 +8128,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.5.1';
+  const APP_VERSION = '3.6.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8015,6 +8146,183 @@
     if (manifest && manifest.download_url) return manifest.download_url;
     return b + 'pdf_compact_bundle.html';
   }
+
+/* ===================================================================
+ * window.PdfSanitize  (v3.6.0 rank1: メタデータ除去)
+ * -------------------------------------------------------------------
+ * 全PDF出力点から呼ぶ共通サニタイザ。top-level スコープ(メインscript直下)に
+ * 置き、各エンジン(jsPDF / pdf-lib)の IIFE からも window 経由で叩ける。
+ *
+ * 使い方(各出力点に最小挿入):
+ *   blob = await window.PdfSanitize.process(blob);   // PDF blob のみ通す
+ *
+ * 設計:
+ *   - 設定の真実源は UI 側 window.PdfSanitizeSettings (localStorage pdfc_settings_v1)。
+ *     未ロード時のフォールバックのみ自前 localStorage / デフォルトON を見る。
+ *   - 設定OFF時は完全パススルー(渡された blob をそのまま返す)
+ *   - ONなら pdf-lib で load → 情報辞書8項目 delete → XMP実体ごと削除 → save
+ *   - 暗号化PDFは絶対に平文化しない: load を ignoreEncryption 無しで呼び、
+ *     失敗(EncryptedPDFError/破損)時は元 blob をそのまま返すフォールバック。
+ *     その際 _lastSkippedEncrypted=true を立て、呼び出し側(setStatus が
+ *     スコープにあるモード)が任意に可視化できるようにする。
+ *   - rank2(透かし)を後で足せるよう、処理を _steps パイプラインに分割。
+ * =================================================================== */
+window.PdfSanitize = (function () {
+  'use strict';
+
+  var LS_KEY = 'pdfc_settings_v1';   // UI と同一キー(単一真実源)。helper は通常 UI 窓口経由で読む
+
+  // ---- 設定読み取り ---------------------------------------------------
+  // 優先順: api.opts.enabled(実行時上書き) > window.PdfSanitizeSettings(UI真実源)
+  //         > 自前 localStorage(UI未ロード時の保険) > デフォルトON
+  function isEnabled() {
+    try {
+      if (api.opts && typeof api.opts.enabled === 'boolean') return api.opts.enabled;
+    } catch (_e) {}
+    // ★ 単一真実源: UI wiring が公開する窓口を最優先で見る
+    try {
+      if (window.PdfSanitizeSettings &&
+          typeof window.PdfSanitizeSettings.metadataEnabled === 'function') {
+        return window.PdfSanitizeSettings.metadataEnabled();
+      }
+    } catch (_e) {}
+    // フォールバック: UI 未ロードでも安全側に倒す(同じ JSON キーを直接読む)
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw === null) return true;            // 未設定はデフォルトON(漏洩防止を既定に)
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && 'stripMetadata' in parsed) {
+        return parsed.stripMetadata !== false;
+      }
+      return true;
+    } catch (_e) {
+      return true;                              // 読めない環境でも安全側(ON)
+    }
+  }
+
+  // 設定の書き込みは UI(window.PdfSanitizeSettings / トグル)が一元管理する。
+  // helper からの直接書き込み口は実行時上書き opts.enabled のみ提供。
+  function setEnabled(on) {
+    try { api.opts.enabled = !!on; } catch (_e) {}
+  }
+
+  // ---- pdf-lib 参照(遅延取得: 読込前に呼ばれても落とさない) -----------
+  function getPDFLib() {
+    return (typeof window !== 'undefined' && window.PDFLib) ? window.PDFLib : null;
+  }
+
+  // ---- blob → Uint8Array ---------------------------------------------
+  async function blobToBytes(blob) {
+    if (blob && typeof blob.arrayBuffer === 'function') {
+      return new Uint8Array(await blob.arrayBuffer());
+    }
+    return await new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(new Uint8Array(fr.result)); };
+      fr.onerror = reject;
+      fr.readAsArrayBuffer(blob);
+    });
+  }
+
+  // =====================================================================
+  // 処理ステップ(パイプライン)。各 step は (pdfDoc, PDFLib) を受け取り
+  // pdfDoc を破壊的に編集する。rank2 透かしはここに step を1つ足すだけ。
+  // =====================================================================
+
+  // step: メタデータ8項目クリア + XMP削除
+  function stepStripMetadata(pdfDoc, PDFLib) {
+    var PDFName = PDFLib.PDFName;
+    // --- 情報辞書(Document Info)から8項目を物理削除 ---
+    // setXxx('') だと空文字 () が残るので、辞書から直接 delete する
+    var FIELDS = ['Title', 'Author', 'Subject', 'Keywords',
+                  'Producer', 'Creator', 'CreationDate', 'ModDate'];
+    try {
+      var info = pdfDoc.getInfoDict();      // 無ければ pdf-lib が生成して返す
+      if (info && typeof info.delete === 'function') {
+        for (var i = 0; i < FIELDS.length; i++) {
+          info.delete(PDFName.of(FIELDS[i]));
+        }
+      }
+    } catch (_e) { /* 情報辞書なしでも続行 */ }
+
+    // --- XMP メタデータストリームを削除 ---
+    // catalog の /Metadata 参照を外し、さらに context から実体を消さないと
+    // 孤立オブジェクトとして出力バイトに残り XMP(作成者名等)が漏れる
+    try {
+      var catalog = pdfDoc.catalog;
+      var xmpRef = catalog.get(PDFName.of('Metadata'));
+      if (xmpRef) {
+        catalog.delete(PDFName.of('Metadata'));
+        if (xmpRef.constructor && xmpRef.constructor.name === 'PDFRef'
+            && typeof pdfDoc.context.delete === 'function') {
+          pdfDoc.context.delete(xmpRef);    // 孤立ストリーム漏洩対策
+        }
+      }
+    } catch (_e) { /* XMP なしでも続行 */ }
+  }
+
+  // 実行順パイプライン。将来 rank2 はここに push する:
+  //   window.PdfSanitize._steps.push(stepDrawWatermark)
+  var _steps = [stepStripMetadata];
+
+  // =====================================================================
+  // メイン: process(blob) -> Promise<Blob>
+  // =====================================================================
+  async function process(blob) {
+    api._lastSkippedEncrypted = false;   // 毎回リセット(呼び出し側が直後に読む)
+
+    // 入力ガード: blob でない / PDF でないものは触らない(png/jpg等は素通し)
+    if (!blob) return blob;
+    if (blob.type && blob.type.indexOf('pdf') === -1) return blob;
+
+    // 設定OFF → 完全パススルー
+    if (!isEnabled()) return blob;
+
+    var PDFLib = getPDFLib();
+    if (!PDFLib || !PDFLib.PDFDocument) return blob; // ライブラリ未読込でも壊さない
+
+    var bytes;
+    try {
+      bytes = await blobToBytes(blob);
+    } catch (_e) {
+      return blob; // 読めなければ原本返す
+    }
+
+    var pdfDoc;
+    try {
+      // ★ ignoreEncryption は付けない。暗号化PDFはここで throw → catch で原本返す
+      //    = 平文化しない安全策(他モードの ignoreEncryption:true とは意図的に逆)
+      pdfDoc = await PDFLib.PDFDocument.load(bytes, { updateMetadata: false });
+    } catch (_e) {
+      // 暗号化 or 破損 → サニタイズ不可。原本を無加工で返す + フラグで通知
+      api._lastSkippedEncrypted = true;
+      return blob;
+    }
+
+    try {
+      for (var i = 0; i < _steps.length; i++) {
+        await _steps[i](pdfDoc, PDFLib); // step は同期だが将来の非同期に備え await
+      }
+      // ★ updateMetadata:false 必須。true だと pdf-lib が Producer/ModDate を再注入する
+      var outBytes = await pdfDoc.save({ updateMetadata: false });
+      return new Blob([outBytes], { type: 'application/pdf' });
+    } catch (_e) {
+      // 加工/保存で想定外エラー → 安全側で原本を返す(出力を止めない)
+      return blob;
+    }
+  }
+
+  var api = {
+    process: process,
+    isEnabled: isEnabled,
+    setEnabled: setEnabled,
+    _steps: _steps,                 // rank2 拡張用に公開
+    _lastSkippedEncrypted: false,   // 直近 process で暗号化スキップしたか(mode側が可視化に使う)
+    LS_KEY: LS_KEY,
+    opts: { /* enabled: true/false で実行時上書き可 */ }
+  };
+  return api;
+})();
 
   // semver 比較: a > b なら true
   function semverGt(a, b) {
@@ -8696,10 +9004,15 @@
     render();
   };
 
-  window.downloadFile = (id) => {
+  window.downloadFile = async (id) => {
     const f = files.find(x => x.id == id);
     if (!f || !f.result) return;
-    triggerDownload(f.result, makeOutputName(f.file.name));
+    let blob = f.result;
+    // v3.6.0: 出力前メタデータ除去 (compress出力は常にPDFだが型ガード)
+    if (blob.type === 'application/pdf' && window.PdfSanitize) {
+      blob = await window.PdfSanitize.process(blob);
+    }
+    triggerDownload(blob, makeOutputName(f.file.name));
   };
 
   // Filename input wiring (compress mode — custom prefix)
@@ -8756,7 +9069,14 @@
   downloadAllBtn.addEventListener('click', () => {
     const doneFiles = files.filter(f => f.status === 'done');
     doneFiles.forEach((f, i) => {
-      setTimeout(() => triggerDownload(f.result, makeOutputName(f.file.name)), i * 300);
+      setTimeout(async () => {
+        let blob = f.result;
+        // v3.6.0: 出力前メタデータ除去 (型ガード付き)
+        if (blob.type === 'application/pdf' && window.PdfSanitize) {
+          blob = await window.PdfSanitize.process(blob);
+        }
+        triggerDownload(blob, makeOutputName(f.file.name));
+      }, i * 300);
     });
     // 全DL終了後に保持ファイルをクリア (連続作業しやすく)
     if (doneFiles.length > 0) {
@@ -9877,7 +10197,9 @@
 
         const now = new Date();
         const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-        const pdfBlob = doc.output('blob');
+        let pdfBlob = doc.output('blob');
+        // v3.6.0: 出力前メタデータ除去 (imgtopdf は常にPDF・ガード不要)
+        if (window.PdfSanitize) pdfBlob = await window.PdfSanitize.process(pdfBlob);
         const sizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
         const qLabel = { light: '軽量', standard: '標準', high: '高画質', original: '無圧縮' }[qualityKey];
 
@@ -10479,6 +10801,17 @@
 
         if (outputs.length === 0) {
           throw new Error('出力0件');
+        }
+
+        // v3.6.0: 出力前メタデータ除去 (PDF限定ガード — 画像形式は素通し)
+        if (outputFormat === 'pdf' && window.PdfSanitize) {
+          setStatus('PDFメタデータ除去中...', 'info');
+          let _encSkipped = false;
+          for (let i = 0; i < outputs.length; i++) {
+            outputs[i].blob = await window.PdfSanitize.process(outputs[i].blob);
+            if (window.PdfSanitize._lastSkippedEncrypted) _encSkipped = true;
+          }
+          if (_encSkipped) setStatus('暗号化PDFはメタデータ除去をスキップしました', 'info');
         }
 
         const now = new Date();
@@ -11179,6 +11512,13 @@
           // Replace outputBlobs
           outputBlobs.length = 0;
           outputBlobs.push(...compressedBlobs);
+        }
+
+        // v3.6.0: 出力前メタデータ除去 — 単一/ZIP/自動軽量化済みの全経路を一括カバー
+        if (window.PdfSanitize) {
+          for (let _i = 0; _i < outputBlobs.length; _i++) {
+            outputBlobs[_i] = await window.PdfSanitize.process(outputBlobs[_i]);
+          }
         }
 
         const now = new Date();
@@ -15990,7 +16330,9 @@
           setStatus('PDF生成中…');
           exportPdfBtn.disabled = true;
           const bytes = await generatePdfOutput();
-          const blob = new Blob([bytes], { type: 'application/pdf' });
+          let blob = new Blob([bytes], { type: 'application/pdf' });
+          // v3.6.0: 出力前メタデータ除去 (imgPlace は常にPDF・ガード不要)
+          if (window.PdfSanitize) blob = await window.PdfSanitize.process(blob);
           await downloadOrShare(blob, finalName);
           setStatus('PDF出力完了: ' + finalName + '（画像 ' + placements.length + ' 個焼き込み済）');
         } catch (err) {
@@ -16069,6 +16411,95 @@
     if (typeof setupTimestampToggle === 'function') {
       setupTimestampToggle('imgPlaceFilenameTs', 'imgPlaceFilenameTsPreview');
     }
+  })();
+
+  /* ===== 設定モーダル wiring (success-modal と同じ開閉作法) ===== */
+  var PDFC_SETTINGS_KEY = 'pdfc_settings_v1';
+  var PDFC_SETTINGS_DEFAULTS = {
+    stripMetadata: true   // rank1: 出力PDFのメタデータを消す (既定ON)
+    // , watermark: false        // rank2 (v3.7.0): 透かし ON/OFF
+    // , watermarkText: '社外秘'  // rank2: 透かし文言
+  };
+  var pdfcSettings = (function loadPdfcSettings() {
+    var s = {};
+    for (var k in PDFC_SETTINGS_DEFAULTS) {
+      if (Object.prototype.hasOwnProperty.call(PDFC_SETTINGS_DEFAULTS, k)) s[k] = PDFC_SETTINGS_DEFAULTS[k];
+    }
+    try {
+      var raw = localStorage.getItem(PDFC_SETTINGS_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          for (var key in s) {
+            if (Object.prototype.hasOwnProperty.call(parsed, key)) s[key] = parsed[key];
+          }
+        }
+      }
+    } catch (e) { console.debug('pdfc settings load failed, using defaults:', e); }
+    return s;
+  })();
+  function savePdfcSettings() {
+    try { localStorage.setItem(PDFC_SETTINGS_KEY, JSON.stringify(pdfcSettings)); }
+    catch (e) { console.warn('pdfc settings save failed:', e); }
+  }
+  /* グローバル公開: 各モードIIFE / window.PdfSanitize から設定を読む唯一の窓口 */
+  window.PdfSanitizeSettings = {
+    get: function (key) { return pdfcSettings[key]; },
+    all: function () { var c = {}; for (var k in pdfcSettings) c[k] = pdfcSettings[k]; return c; },
+    metadataEnabled: function () { return pdfcSettings.stripMetadata !== false; }
+    // , watermarkEnabled: function () { return pdfcSettings.watermark === true; }
+    // , watermarkText: function () { return pdfcSettings.watermarkText || '社外秘'; }
+  };
+  function syncSettingsUiFromState() {
+    var meta = document.getElementById('setMetaStrip');
+    if (meta) meta.checked = (pdfcSettings.stripMetadata !== false);
+    // ===== WATERMARK (rank2) 有効化時に解除 =====
+    // var wm = document.getElementById('setWatermark');
+    // if (wm) wm.checked = (pdfcSettings.watermark === true);
+    // var wmt = document.getElementById('setWatermarkText');
+    // if (wmt) wmt.value = pdfcSettings.watermarkText || '';
+    // var wrap = document.getElementById('setWatermarkTextWrap');
+    // if (wrap) wrap.style.display = (pdfcSettings.watermark === true) ? '' : 'none';
+  }
+  function openSettings() {
+    var modal = document.getElementById('settingsModal');
+    if (!modal) { console.error('settingsModal missing'); return; }
+    syncSettingsUiFromState();
+    modal.classList.add('open');
+  }
+  function closeSettings() {
+    var modal = document.getElementById('settingsModal');
+    if (modal) modal.classList.remove('open');
+  }
+  window.openSettings = openSettings;
+  window.closeSettings = closeSettings;
+  /* トグル変更 → 即 state 反映 + 即保存 (おっちゃんが「保存」を押し忘れても効く) */
+  (function bindSettingsControls() {
+    var meta = document.getElementById('setMetaStrip');
+    if (meta) {
+      meta.addEventListener('change', function () {
+        pdfcSettings.stripMetadata = !!meta.checked;
+        savePdfcSettings();
+      });
+    }
+    // ===== WATERMARK (rank2) 有効化時に解除 =====
+    // var wm = document.getElementById('setWatermark');
+    // if (wm) { wm.addEventListener('change', function () { pdfcSettings.watermark = !!wm.checked; var wrap = document.getElementById('setWatermarkTextWrap'); if (wrap) wrap.style.display = wm.checked ? '' : 'none'; savePdfcSettings(); }); }
+    // var wmt = document.getElementById('setWatermarkText');
+    // if (wmt) { wmt.addEventListener('input', function () { pdfcSettings.watermarkText = wmt.value; savePdfcSettings(); }); }
+  })();
+  /* 閉じる作法: 背景クリック + ESC (success-modal と同一パターン) */
+  (function bindSettingsClose() {
+    var modal = document.getElementById('settingsModal');
+    if (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target.id === 'settingsModal') closeSettings();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      var m = document.getElementById('settingsModal');
+      if (e.key === 'Escape' && m && m.classList.contains('open')) closeSettings();
+    });
   })();
 
 </script>

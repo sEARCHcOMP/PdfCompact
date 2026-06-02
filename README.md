@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.5.1** · 2026-06-02
+> **Version 3.6.0** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.5.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.6.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,15 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.6.0 (2026-06-02) — Minor (🛡 配布前サニタイズ)
+並列エージェント9名のワークフローで設計・検証した新機能:
+- **メタデータ除去を全PDF出力に統合**: 出力時に作成者・タイトル・作成日・使用ソフト名等を自動クリアし、うっかり情報漏洩を防止
+- 右上に**⚙️設定**ボタン追加 → モーダルで ON/OFF 切替(デフォルトON、localStorage 永続化)
+- 全5モード(軽量化/画像→PDF/変換/PDF編集/画像配置)の出力に適用、画像出力(PNG/JPG等)は対象外
+- 暗号化PDFは安全のため平文化せず素通し(`updateMetadata:false` でメタデータ再注入も防止)
+- 共通ヘルパー `window.PdfSanitize` を pdf-lib で実装、将来の透かし機能(rank2)を `_steps` パイプラインで拡張可能に
+- adversarial 検証で致命3点(pdfedit分割ZIP素通り / compress全DL async漏れ / localStorageキー二重化)を事前に潰してから実装
 
 ### v3.5.1 (2026-06-02) — Docs
 - 取説内の「更新履歴」セクションが v3.1.5 までで止まっていたので v3.1.6 / v3.2.x / v3.3.x / v3.4.x / v3.5.x を追記

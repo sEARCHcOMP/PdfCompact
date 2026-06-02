@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.6.0** · 2026-06-02
+> **Version 3.7.0** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.6.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,16 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.0 (2026-06-02) — Minor (🔏 透かし)
+並列エージェント6名のワークフローで設計・検証した新機能(v3.6.0 のサニタイズ基盤を拡張):
+- **透かし(ウォーターマーク)を全PDF出力に追加**: 「社外秘 / 複製禁止 / DRAFT / カスタム文字」を全ページに斜め45度・薄いグレー(不透明度18%)で重ねる
+- 右上**⚙️設定**にトグル追加(既定OFF=opt-in)、プリセットはチップ選択 + カスタム入力 + ライブプレビュー
+- 日本語フォント(NotoSansJP)を **subset 埋込**で軽量化(「社外秘」3文字なら +18KB のみ、4.5MB 丸ごとは乗らない)
+- **メタデータ除去(v3.6.0)と同時適用OK** — 共通の `_steps` パイプラインに透かしステップを追加
+- 回転ページ(90/180/270度)でも文字が紙面内に収まる座標変換(CTM行列)対応
+- フォント取得失敗時は透かしのみスキップしメタ除去済みPDFは必ず出力、画像出力・暗号化PDFは対象外
+- adversarial 検証で致命3点(helperスコープ / UI二重定義 / _steps二重push)を事前に潰してから実装
 
 ### v3.6.0 (2026-06-02) — Minor (🛡 配布前サニタイズ)
 並列エージェント9名のワークフローで設計・検証した新機能:

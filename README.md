@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.4.2** · 2026-06-02
+> **Version 3.5.0** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.4.2)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.5.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,16 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.5.0 (2026-06-02) — Minor (iPad対応)
+- **iPad で PC と同じドック表示が使えるように**:
+  - ドック許可閾値 720→700px(iPad portrait 768 もギリギリ通る)
+  - ドック幅を viewport 適応:`min(480, viewport × 0.45)`
+    - iPad portrait(768)→ 345px / iPad landscape(1024)→ 460px / PC → 480px
+- **iOS PWA 対応**: 「ホーム画面に追加」でアドレスバーなしのアプリ風表示
+  - apple-mobile-web-app-capable / status-bar-style / title 等のメタタグ追加
+  - theme-color で iPad のステータスバーもブランドカラーに
+- README.txt に iPad 利用手順を追記
 
 ### v3.4.2 (2026-06-02) — Patch (Critical Fix)
 - **スマホでツールに触れない致命バグ修正**: ドック幅 480px が viewport を超えてツール側が完全に隠れていた

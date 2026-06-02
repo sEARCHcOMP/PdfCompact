@@ -2,8 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>PDF Compact — 軽量化 · OCR · 画像→PDF</title>
+<!-- iOS PWA: 「ホーム画面に追加」でアドレスバーなしのアプリ風表示 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PDF Compact">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0040ff">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'><stop offset='.45' stop-color='%230040ff' stop-opacity='0'/><stop offset='1' stop-color='%230040ff' stop-opacity='.75'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%230a0c12'/><rect width='32' height='32' rx='7' fill='url(%23s)'/><g stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 20 14 20 14 28'/><polyline points='26 12 18 12 18 4'/><line x1='18' y1='12' x2='28' y2='2'/><line x1='4' y1='30' x2='14' y2='20'/></g></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'><stop offset='.45' stop-color='%230040ff' stop-opacity='0'/><stop offset='1' stop-color='%230040ff' stop-opacity='.75'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%230a0c12'/><rect width='32' height='32' rx='7' fill='url(%23s)'/><g stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 20 14 20 14 28'/><polyline points='26 12 18 12 18 4'/><line x1='18' y1='12' x2='28' y2='2'/><line x1='4' y1='30' x2='14' y2='20'/></g></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7937,7 +7943,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.4.2';
+  const APP_VERSION = '3.5.0';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8049,7 +8055,8 @@
   function autoOpenGuide() {
     // スマホでは自動表示しない (全画面モーダルが立ち上がってツール触れない問題回避)
     // ユーザーが「使い方」ボタン押下した時のみ全画面表示する
-    if (window.innerWidth < 720) return;
+    // iPad portrait (768px) はドック可能なので自動表示する
+    if (window.innerWidth < 700) return;
     try {
       // 当セッションで × を押されてたらスキップ
       if (sessionStorage.getItem(GUIDE_AUTO_OPEN_DISMISS_KEY) === '1') return;
@@ -8217,9 +8224,14 @@
   const GUIDE_DOCK_W_KEY = 'pdfCompact.guideDockWidth';
   const GUIDE_DOCK_MIN = 320;
   // スマホ・狭画面ではドック禁止 (ドック幅 > viewport で tool が完全に隠れる)
-  const GUIDE_DOCK_MIN_VIEWPORT = 720;
+  // iPad portrait (768px) はギリギリ通すため 700px 閾値
+  const GUIDE_DOCK_MIN_VIEWPORT = 700;
   function isMobileViewport() {
     return window.innerWidth < GUIDE_DOCK_MIN_VIEWPORT;
+  }
+  // viewport 適応のデフォルトドック幅 (iPad portrait 768 → 345px, iPad landscape 1024 → 460px, PC → 480px)
+  function getGuideDockDefault() {
+    return Math.min(480, Math.max(GUIDE_DOCK_MIN, Math.floor(window.innerWidth * 0.45)));
   }
   // 旧キー (v3.3.0/3.3.1) を削除 (新規ユーザーは影響なし、旧ユーザーはリセット)
   try { localStorage.removeItem('pdfCompact.guideDocked'); } catch(e) {}
@@ -8255,7 +8267,7 @@
       if (btn) btn.title = '全画面表示に戻す';
       // 保存された幅を適用 (この中で body の padding-right も inline 設定される)
       let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
-      if (!saved || isNaN(saved)) saved = 480;
+      if (!saved || isNaN(saved)) saved = getGuideDockDefault();
       applyGuideDockWidth(saved);
       if (persist) { try { localStorage.setItem(GUIDE_DOCK_KEY, '1'); } catch(e) {} }
     } else {
@@ -8322,7 +8334,7 @@
   // 起動時: 保存された ドック幅を CSS var に反映 (即用意しないと初回ガクッと動く)
   (function restoreGuideDockWidth() {
     let saved = parseInt(localStorage.getItem(GUIDE_DOCK_W_KEY) || '0', 10);
-    if (!saved || isNaN(saved)) saved = 480;
+    if (!saved || isNaN(saved)) saved = getGuideDockDefault();
     // 大画面で保存 → 小画面で起動した時、視窗の 70% を超えないよう clamp
     const clamped = Math.max(GUIDE_DOCK_MIN, Math.min(getGuideDockMax(), saved));
     document.documentElement.style.setProperty('--guide-dock-w', clamped + 'px');
@@ -8337,7 +8349,7 @@
       setGuideDocked(false, false);
       return;
     }
-    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--guide-dock-w'), 10) || 480;
+    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--guide-dock-w'), 10) || getGuideDockDefault();
     applyGuideDockWidth(cur);
   });
   window.addEventListener('message', (e) => {

@@ -1,5 +1,5 @@
 {
-  "version": "3.4.2",
-  "notes": "スマホで取説ドックが viewport を超えてツール側が完全に隠れていた致命バグ修正。モバイル(<720px)では強制全画面モーダル化、自動表示も無効に。",
+  "version": "3.5.0",
+  "notes": "iPad で PC と同じドック表示で使えるように: ドック閾値 720→700px / ドック幅を viewport 適応 (iPad portrait 345px / landscape 460px / PC 480px) / iOS PWA メタタグ追加で『ホーム画面に追加』対応",
   "download_path": "pdf_compact_bundle.html"
 }

@@ -707,11 +707,25 @@
   .update-banner-notes {
     display: block;
     font-size: 11px;
-    opacity: 0.85;
+    opacity: 0.9;
     margin-top: 3px;
-    max-height: 40px;
+    max-height: 3.4em;       /* 約3行ぶん。超えたら自動スクロール */
     overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.45;
+  }
+  .update-banner-notes .un-inner { display: block; }
+  /* 長文は上→下→上へゆっくり往復スクロール(自動送り)。ホバーで一時停止 */
+  .update-banner-notes.scrolling .un-inner {
+    animation: un-vscroll var(--un-dur, 10s) ease-in-out infinite alternate;
+  }
+  .update-banner-notes.scrolling:hover .un-inner { animation-play-state: paused; }
+  @keyframes un-vscroll {
+    0%, 14%   { transform: translateY(0); }
+    86%, 100% { transform: translateY(var(--un-shift, 0px)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .update-banner-notes { max-height: none; }
+    .update-banner-notes.scrolling .un-inner { animation: none; }
   }
   .update-banner-dl-btn {
     padding: 7px 14px;
@@ -8240,7 +8254,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.1';
+  const APP_VERSION = '3.7.2';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8667,7 +8681,25 @@ window.PdfSanitize = (function () {
     const dlBtn = document.getElementById('updateDlBtn');
     const closeBtn = document.getElementById('updateCloseBtn');
     if (versionLabel) versionLabel.textContent = manifest.version;
-    if (notes) notes.textContent = manifest.notes || '';
+    if (notes) {
+      notes.textContent = '';
+      notes.classList.remove('scrolling');
+      notes.style.removeProperty('--un-shift');
+      notes.style.removeProperty('--un-dur');
+      var _inner = document.createElement('span');
+      _inner.className = 'un-inner';
+      _inner.textContent = manifest.notes || '';
+      notes.appendChild(_inner);
+      // レイアウト確定後に溢れ量を測り、溢れてたらゆっくり往復スクロール
+      requestAnimationFrame(function(){
+        var ov = _inner.scrollHeight - notes.clientHeight;
+        if (ov > 4) {
+          notes.style.setProperty('--un-shift', (-ov) + 'px');
+          notes.style.setProperty('--un-dur', Math.max(7, Math.round(ov / 10) + 6) + 's');
+          notes.classList.add('scrolling');
+        }
+      });
+    }
     if (dlBtn) {
       dlBtn.onclick = () => {
         downloadUpdate(_downloadUrl(manifest), dlBtn);

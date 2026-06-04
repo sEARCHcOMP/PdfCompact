@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.1** · 2026-06-02
+> **Version 3.7.2** · 2026-06-04
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.2)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.2 (2026-06-04) — Patch (UX)
+- **更新通知バナーの長い内容文が見切れる問題を修正**: 3行を超える更新ノートは上下にゆっくり自動スクロール(往復)して全文読めるように。マウスを乗せると一時停止、短文はスクロールせず据え置き(`prefers-reduced-motion` も尊重)
 
 ### v3.7.1 (2026-06-02) — Patch (発見性向上)
 - **⚙️設定の存在に気づきやすく**: 設定を一度も開いてないユーザーに、ギアボタンの脈打つドット + 初回コーチマーク「設定が増えました(メタデータ除去・透かし)」を表示

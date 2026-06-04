@@ -716,12 +716,13 @@
   .update-banner-notes .un-inner { display: block; }
   /* 長文は上→下→上へゆっくり往復スクロール(自動送り)。ホバーで一時停止 */
   .update-banner-notes.scrolling .un-inner {
-    animation: un-vscroll var(--un-dur, 10s) ease-in-out infinite alternate;
+    animation: un-vscroll var(--un-dur, 10s) ease-in-out infinite;
   }
   .update-banner-notes.scrolling:hover .un-inner { animation-play-state: paused; }
+  /* 上で待機 → 下までスクロール → 下で少し待つ → 先頭へ瞬間リセットして繰り返し */
   @keyframes un-vscroll {
-    0%, 14%   { transform: translateY(0); }
-    86%, 100% { transform: translateY(var(--un-shift, 0px)); }
+    0%, 12%   { transform: translateY(0); }
+    68%, 100% { transform: translateY(var(--un-shift, 0px)); }
   }
   @media (prefers-reduced-motion: reduce) {
     .update-banner-notes { max-height: none; }
@@ -8254,7 +8255,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.2';
+  const APP_VERSION = '3.7.3';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {

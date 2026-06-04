@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.2** · 2026-06-04
+> **Version 3.7.3** · 2026-06-04
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.2)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.3)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,9 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.3 (2026-06-04) — Patch (UX)
+- **更新通知バナーの自動スクロールをループ式に変更**: 往復(下→上に戻る)から「一番下まで→少し待つ→先頭から再スクロール」のループに。ニュースティッカー的で読みやすい
 
 ### v3.7.2 (2026-06-04) — Patch (UX)
 - **更新通知バナーの長い内容文が見切れる問題を修正**: 3行を超える更新ノートは上下にゆっくり自動スクロール(往復)して全文読めるように。マウスを乗せると一時停止、短文はスクロールせず据え置き(`prefers-reduced-motion` も尊重)

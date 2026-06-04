@@ -1959,6 +1959,26 @@
   }
   .redact-cell-delete:hover { transform: scale(1.15); }
 
+  /* 文字選択モード用レイヤー + モード切替UI (v3.8.0 Phase1.5) */
+  .redact-stage { overflow-x: auto; text-align: center; padding-bottom: 4px; }
+  .redact-canvas-wrap { position: relative; display: inline-block; box-shadow: var(--shadow-md); border-radius: 4px; background: #fff; }
+  .redact-canvas-wrap canvas { display: block; }
+  .redact-textlayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; }
+  .redact-textlayer span { color: transparent; position: absolute; white-space: pre; transform-origin: 0 0; }
+  .redact-textlayer ::selection { background: rgba(0,64,255,.35); }
+  .redact-textlayer ::-moz-selection { background: rgba(0,64,255,.35); }
+  #redactCanvasWrap.mode-text .redact-textlayer { pointer-events: auto; cursor: text; }
+  #redactCanvasWrap.mode-rect .redact-textlayer { pointer-events: none; }
+  #redactCanvasWrap.mode-text .redact-overlay { pointer-events: none; }
+  #redactCanvasWrap.mode-rect .redact-overlay { pointer-events: auto; cursor: crosshair; }
+  .redact-cells { position: absolute; inset: 0; pointer-events: none; }
+  .redact-cells .redact-cell { pointer-events: none; }
+  .redact-cells .redact-cell-delete { pointer-events: auto; }
+  .redact-modetoggle { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: 0 0 auto; }
+  .redact-modebtn { padding: 7px 13px; background: var(--surface-2); border: none; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--ink-muted); font-family: inherit; transition: all .12s ease; }
+  .redact-modebtn + .redact-modebtn { border-left: 1px solid var(--line); }
+  .redact-modebtn.active { background: var(--accent); color: #fff; }
+  .redact-modehint { font-size: 12px; color: var(--ink-muted); margin: 0 0 12px; padding: 0 2px; }
   .redact-warn {
     margin-top: 14px; padding: 12px 16px; border-radius: var(--r-md,10px);
     background: var(--warn-soft, #fde8dc); border: 1px solid var(--warn, #cc5520);
@@ -4787,16 +4807,20 @@
           <span class="redact-pageinfo" id="redactPageInfo">1 / 1</span>
           <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
-        <div class="redact-toolbar-hint">
-          <span class="dot"></span>ページ上をドラッグして黒塗り範囲を描く ・ × で削除
+        <div class="redact-modetoggle" role="group" aria-label="黒塗りの方法">
+          <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
+          <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
         </div>
-        <button class="redact-clearbtn" id="redactClearPage" type="button">このページの黒塗りを全消去</button>
+        <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
+      <div class="redact-modehint" id="redactModeHint">文字をなぞって選ぶと、その文字の上に黒塗りが付きます。</div>
 
-      <div style="text-align:center;">
-        <div class="redact-canvas-wrap" id="redactCanvasWrap">
+      <div class="redact-stage">
+        <div class="redact-canvas-wrap mode-text" id="redactCanvasWrap">
           <canvas id="redactCanvas"></canvas>
+          <div class="redact-textlayer" id="redactTextLayer"></div>
           <div class="redact-overlay" id="redactOverlay"></div>
+          <div class="redact-cells" id="redactCells"></div>
         </div>
       </div>
 
@@ -16833,17 +16857,43 @@ window.PdfSanitize = (function () {
     var upload = document.getElementById('redactUpload');
     var fileInput = document.getElementById('redactFileInput');
     var editor = document.getElementById('redactEditor');
+    var wrap = document.getElementById('redactCanvasWrap');
     var canvas = document.getElementById('redactCanvas');
+    var textLayer = document.getElementById('redactTextLayer');
     var overlay = document.getElementById('redactOverlay');
+    var cellsLayer = document.getElementById('redactCells');
     var pageInfo = document.getElementById('redactPageInfo');
     var prevBtn = document.getElementById('redactPrev');
     var nextBtn = document.getElementById('redactNext');
     var clearBtn = document.getElementById('redactClearPage');
     var resetBtn = document.getElementById('redactResetBtn');
-    if (!upload || !canvas || !overlay) return;   // パネル未挿入なら何もしない
+    var modeTextBtn = document.getElementById('redactModeText');
+    var modeRectBtn = document.getElementById('redactModeRect');
+    var modeHint = document.getElementById('redactModeHint');
+    if (!upload || !canvas || !overlay || !textLayer || !cellsLayer) return;
 
-    var st = { pdf:null, numPages:0, pageIndex:0, rects:{}, renderTask:null };
-    var MIN_PCT = 0.01;  // 極小矩形は無視(誤タップ)
+    var st = { pdf:null, numPages:0, pageIndex:0, rects:{}, mode:'text', prefMode:'text', pageHasText:false,
+               renderTask:null, textTask:null };
+    var MIN_PCT = 0.008;
+
+    // ---- モード切替 (文字を選ぶ / 自由に四角) ----
+    function setMode(m){
+      st.prefMode = m;   // ユーザーの希望(text/rect)を保持。実効modeは下で算出
+      // 文字レイヤーが無いページで text を選んだら rect に矯正
+      if (m === 'text' && !st.pageHasText){
+        m = 'rect';
+        if (modeHint) modeHint.textContent = 'このページは文字データが無いので「自由に四角」で囲ってください(スキャンPDF等)。';
+      } else if (modeHint) {
+        modeHint.textContent = (m === 'text')
+          ? '文字をなぞって選ぶと、その文字の上に黒塗りが付きます。'
+          : 'ページ上をドラッグして黒塗り範囲を四角で描きます。';
+      }
+      st.mode = m;
+      wrap.classList.toggle('mode-text', m === 'text');
+      wrap.classList.toggle('mode-rect', m === 'rect');
+      if (modeTextBtn) modeTextBtn.classList.toggle('active', m === 'text');
+      if (modeRectBtn) modeRectBtn.classList.toggle('active', m === 'rect');
+    }
 
     // ---- PDF 読込 ----
     async function loadPdf(file){
@@ -16852,8 +16902,7 @@ window.PdfSanitize = (function () {
         var buf = await file.arrayBuffer();
         st.pdf = await L.getDocument({ data: buf }).promise;
         st.numPages = st.pdf.numPages;
-        st.pageIndex = 0;
-        st.rects = {};
+        st.pageIndex = 0; st.rects = {};
         upload.style.display = 'none';
         editor.classList.add('active');
         await renderPage(0);
@@ -16863,132 +16912,156 @@ window.PdfSanitize = (function () {
       }
     }
 
-    // ---- ページ描画 ----
+    // ---- ページ描画 (canvas + テキストレイヤー + 黒塗りセル) ----
     async function renderPage(idx){
       if (!st.pdf) return;
       idx = Math.max(0, Math.min(st.numPages-1, idx));
       st.pageIndex = idx;
-      if (st.renderTask) { try { st.renderTask.cancel(); } catch(_){} st.renderTask = null; }
+      if (st.renderTask){ try{ st.renderTask.cancel(); }catch(_){ } st.renderTask=null; }
+      if (st.textTask){ try{ st.textTask.cancel(); }catch(_){ } st.textTask=null; }
       var page = await st.pdf.getPage(idx+1);
-      // 表示は最大幅 1000px 相当でレンダ(高すぎないスケール)
       var vp1 = page.getViewport({ scale: 1 });
-      var scale = Math.min(2, Math.max(1, 1000 / vp1.width));
+      var scale = Math.min(2, Math.max(1, 920 / vp1.width));
       var vp = page.getViewport({ scale: scale });
-      canvas.width = Math.ceil(vp.width);
-      canvas.height = Math.ceil(vp.height);
+      var W = Math.ceil(vp.width), H = Math.ceil(vp.height);
+      // canvas を実寸表示(CSS縮小しない=テキストレイヤーと完全一致)
+      canvas.width = W; canvas.height = H;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      wrap.style.width = W + 'px'; wrap.style.height = H + 'px';
       var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
       st.renderTask = page.render({ canvasContext: ctx, viewport: vp });
       try { await st.renderTask.promise; } catch(e){ if (e && e.name === 'RenderingCancelledException') return; }
       st.renderTask = null;
+      // テキストレイヤー構築
+      await buildTextLayer(page, vp, scale);
       pageInfo.textContent = (idx+1) + ' / ' + st.numPages;
       prevBtn.disabled = (idx === 0);
       nextBtn.disabled = (idx === st.numPages-1);
-      renderRects();
+      renderCells();
     }
 
-    // ---- 矩形の DOM 再描画(現ページ分) ----
-    function renderRects(){
-      // 既存の cell を消す(overlay 直下のみ)
-      var olds = overlay.querySelectorAll('.redact-cell');
-      for (var i=0;i<olds.length;i++) olds[i].remove();
+    // ---- テキストレイヤー(選択可能なspan群)を canvas に重ねる ----
+    async function buildTextLayer(page, vp, scale){
+      textLayer.innerHTML = '';
+      textLayer.style.setProperty('--scale-factor', String(scale));  // pdf.js 3.x の文字サイズ基準
+      var tc;
+      try { tc = await page.getTextContent(); } catch(_) { tc = { items: [] }; }
+      var divs = [];
+      try {
+        st.textTask = L.renderTextLayer({ textContentSource: tc, container: textLayer, viewport: vp, textDivs: divs });
+        await st.textTask.promise;
+      } catch(e){ /* テキスト無し等は無視 */ }
+      st.textTask = null;
+      st.pageHasText = textLayer.querySelectorAll('span').length > 0;
+      // 希望モードを再適用(文字有りページなら text に復帰、無ければ rect 矯正)
+      setMode(st.prefMode);
+    }
+
+    // ---- 黒塗りセル(確定分)を描画。× は常にクリック可 ----
+    function renderCells(){
+      cellsLayer.innerHTML = '';
       var list = st.rects[st.pageIndex] || [];
       list.forEach(function(r, ri){
         var cell = document.createElement('div');
         cell.className = 'redact-cell';
-        cell.style.left = (r.x*100)+'%';
-        cell.style.top = (r.y*100)+'%';
-        cell.style.width = (r.w*100)+'%';
-        cell.style.height = (r.h*100)+'%';
+        cell.style.left=(r.x*100)+'%'; cell.style.top=(r.y*100)+'%';
+        cell.style.width=(r.w*100)+'%'; cell.style.height=(r.h*100)+'%';
         var del = document.createElement('button');
-        del.className = 'redact-cell-delete';
-        del.type = 'button';
-        del.textContent = '×';
+        del.className='redact-cell-delete'; del.type='button'; del.textContent='×';
         del.setAttribute('aria-label','この黒塗りを削除');
         del.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
-        del.addEventListener('click', function(e){
-          e.stopPropagation();
-          list.splice(ri,1);
-          renderRects();
-        });
+        del.addEventListener('click', function(e){ e.stopPropagation(); list.splice(ri,1); renderCells(); });
         cell.appendChild(del);
-        overlay.appendChild(cell);
+        cellsLayer.appendChild(cell);
       });
     }
 
-    // ---- ドラッグで新規矩形を描く ----
+    function pushRect(x,y,w,h){
+      if (w < MIN_PCT || h < MIN_PCT) return;
+      x=Math.max(0,Math.min(1,x)); y=Math.max(0,Math.min(1,y));
+      w=Math.min(w,1-x); h=Math.min(h,1-y);
+      if (!st.rects[st.pageIndex]) st.rects[st.pageIndex]=[];
+      st.rects[st.pageIndex].push({x:x,y:y,w:w,h:h});
+    }
+
+    // ---- 文字選択 → 黒塗り (text モード) ----
+    function commitTextSelection(){
+      if (st.mode !== 'text') return;
+      var sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+      var range = sel.getRangeAt(0);
+      // 選択がテキストレイヤー内か確認
+      if (!textLayer.contains(range.startContainer) && !textLayer.contains(range.commonAncestorContainer)) return;
+      var cw = wrap.getBoundingClientRect();
+      if (cw.width === 0) return;
+      var rects = range.getClientRects();
+      var added = 0;
+      for (var i=0;i<rects.length;i++){
+        var rc = rects[i];
+        if (rc.width < 2 || rc.height < 2) continue;
+        var padY = rc.height * 0.12;   // 行の上下に少し余白(グリフ完全被覆)
+        var x = (rc.left - cw.left) / cw.width;
+        var y = (rc.top - cw.top - padY) / cw.height;
+        var w = rc.width / cw.width;
+        var h = (rc.height + padY*2) / cw.height;
+        pushRect(x,y,w,h); added++;
+      }
+      sel.removeAllRanges();
+      if (added) renderCells();
+    }
+    document.addEventListener('mouseup', function(){ if (st.pdf && st.mode==='text') setTimeout(commitTextSelection, 0); });
+
+    // ---- 自由に四角 (rect モード, overlay 上でドラッグ) ----
     var draw = null;
     overlay.addEventListener('pointerdown', function(e){
-      if (e.target !== overlay) return;            // cell や × の上では新規描画しない
-      var rect = overlay.getBoundingClientRect();
-      var x = (e.clientX - rect.left) / rect.width;
-      var y = (e.clientY - rect.top) / rect.height;
-      draw = { x0:x, y0:y, el:null, rect:rect };
-      overlay.setPointerCapture(e.pointerId);
+      if (st.mode !== 'rect') return;
+      var r = overlay.getBoundingClientRect();
+      draw = { x0:(e.clientX-r.left)/r.width, y0:(e.clientY-r.top)/r.height, el:null, rect:r };
+      try{ overlay.setPointerCapture(e.pointerId); }catch(_){ }
       e.preventDefault();
     });
     overlay.addEventListener('pointermove', function(e){
       if (!draw) return;
-      var x = (e.clientX - draw.rect.left) / draw.rect.width;
-      var y = (e.clientY - draw.rect.top) / draw.rect.height;
-      x = Math.max(0, Math.min(1, x)); y = Math.max(0, Math.min(1, y));
-      var lx = Math.min(draw.x0, x), ly = Math.min(draw.y0, y);
-      var w = Math.abs(x - draw.x0), h = Math.abs(y - draw.y0);
-      if (!draw.el){
-        draw.el = document.createElement('div');
-        draw.el.className = 'redact-cell';
-        draw.el.style.pointerEvents = 'none';
-        overlay.appendChild(draw.el);
-      }
-      draw.el.style.left=(lx*100)+'%'; draw.el.style.top=(ly*100)+'%';
-      draw.el.style.width=(w*100)+'%'; draw.el.style.height=(h*100)+'%';
+      var x=Math.max(0,Math.min(1,(e.clientX-draw.rect.left)/draw.rect.width));
+      var y=Math.max(0,Math.min(1,(e.clientY-draw.rect.top)/draw.rect.height));
+      var lx=Math.min(draw.x0,x), ly=Math.min(draw.y0,y), w=Math.abs(x-draw.x0), h=Math.abs(y-draw.y0);
+      if (!draw.el){ draw.el=document.createElement('div'); draw.el.className='redact-cell'; draw.el.style.pointerEvents='none'; overlay.appendChild(draw.el); }
+      draw.el.style.left=(lx*100)+'%'; draw.el.style.top=(ly*100)+'%'; draw.el.style.width=(w*100)+'%'; draw.el.style.height=(h*100)+'%';
     });
     function endDraw(e){
       if (!draw) return;
-      try { overlay.releasePointerCapture(e.pointerId); } catch(_){}
-      var x = (e.clientX - draw.rect.left) / draw.rect.width;
-      var y = (e.clientY - draw.rect.top) / draw.rect.height;
-      x = Math.max(0, Math.min(1, x)); y = Math.max(0, Math.min(1, y));
-      var lx = Math.min(draw.x0, x), ly = Math.min(draw.y0, y);
-      var w = Math.abs(x - draw.x0), h = Math.abs(y - draw.y0);
+      try{ overlay.releasePointerCapture(e.pointerId); }catch(_){ }
+      var x=Math.max(0,Math.min(1,(e.clientX-draw.rect.left)/draw.rect.width));
+      var y=Math.max(0,Math.min(1,(e.clientY-draw.rect.top)/draw.rect.height));
+      var lx=Math.min(draw.x0,x), ly=Math.min(draw.y0,y), w=Math.abs(x-draw.x0), h=Math.abs(y-draw.y0);
       if (draw.el) draw.el.remove();
       draw = null;
-      if (w < MIN_PCT || h < MIN_PCT) { return; }   // 極小は無視
-      if (!st.rects[st.pageIndex]) st.rects[st.pageIndex] = [];
-      st.rects[st.pageIndex].push({ x:lx, y:ly, w:w, h:h });
-      renderRects();
+      pushRect(lx,ly,w,h); renderCells();
     }
     overlay.addEventListener('pointerup', endDraw);
     overlay.addEventListener('pointercancel', endDraw);
 
-    // ---- ページ送り / クリア / リセット ----
+    // ---- ボタン配線 ----
+    if (modeTextBtn) modeTextBtn.addEventListener('click', function(){ setMode('text'); });
+    if (modeRectBtn) modeRectBtn.addEventListener('click', function(){ setMode('rect'); });
     prevBtn.addEventListener('click', function(){ renderPage(st.pageIndex-1); });
     nextBtn.addEventListener('click', function(){ renderPage(st.pageIndex+1); });
-    clearBtn.addEventListener('click', function(){
-      if (st.rects[st.pageIndex] && st.rects[st.pageIndex].length){
-        st.rects[st.pageIndex] = [];
-        renderRects();
-      }
-    });
+    clearBtn.addEventListener('click', function(){ if (st.rects[st.pageIndex] && st.rects[st.pageIndex].length){ st.rects[st.pageIndex]=[]; renderCells(); } });
     resetBtn.addEventListener('click', function(){
       st.pdf=null; st.rects={}; st.pageIndex=0; st.numPages=0;
-      editor.classList.remove('active');
-      upload.style.display = '';
-      fileInput.value = '';
+      textLayer.innerHTML=''; cellsLayer.innerHTML='';
+      editor.classList.remove('active'); upload.style.display=''; fileInput.value='';
     });
 
-    // ---- アップロード配線 ----
     upload.addEventListener('click', function(){ fileInput.click(); });
     fileInput.addEventListener('change', function(e){ if (e.target.files[0]) loadPdf(e.target.files[0]); });
     upload.addEventListener('dragover', function(e){ e.preventDefault(); upload.classList.add('dragover'); });
     upload.addEventListener('dragleave', function(){ upload.classList.remove('dragover'); });
-    upload.addEventListener('drop', function(e){
-      e.preventDefault(); upload.classList.remove('dragover');
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) loadPdf(e.dataTransfer.files[0]);
-    });
+    upload.addEventListener('drop', function(e){ e.preventDefault(); upload.classList.remove('dragover'); if (e.dataTransfer.files && e.dataTransfer.files[0]) loadPdf(e.dataTransfer.files[0]); });
 
-    // 出力は Phase2 (window.__redactState を残してデバッグ/次版が拾えるように)
-    window.__redactState = st;
+    setMode('text');                 // 初期は文字選択モード
+    window.__redactState = st;       // 出力は Phase2
   })();
 
   /* ===== 設定モーダル wiring (success-modal と同じ開閉作法) ===== */

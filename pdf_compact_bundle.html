@@ -1071,6 +1071,42 @@
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
   }
+  /* ===== 設定の新機能コーチマーク + 気づきドット (v3.7.1) ===== */
+  .settings-btn { position: relative; }
+  .settings-new-dot {
+    display: none; position: absolute; top: -2px; right: -2px;
+    width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  body.settings-unseen .settings-new-dot {
+    display: block; animation: settings-dot-pulse 1.7s ease-in-out infinite;
+  }
+  @keyframes settings-dot-pulse {
+    0%,100% { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--accent-glow); }
+    50%     { box-shadow: 0 0 0 2px var(--surface), 0 0 0 9px rgba(0,64,255,0); }
+  }
+  .settings-coachmark {
+    display: none; position: fixed; z-index: 1500; max-width: 278px;
+    background: var(--ink); color: #fff; border-radius: 12px; padding: 13px 30px 13px 15px;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.32); font-size: 12.5px; line-height: 1.65;
+  }
+  .settings-coachmark.show { display: block; animation: settings-coach-in 0.32s cubic-bezier(.2,.8,.2,1); }
+  .settings-coachmark .cm-title { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
+  .settings-coachmark .cm-sub { color: rgba(255,255,255,.82); }
+  .settings-coachmark .cm-close {
+    position: absolute; top: 7px; right: 9px; width: 22px; height: 22px;
+    background: none; border: none; color: rgba(255,255,255,.7); font-size: 16px;
+    cursor: pointer; line-height: 1; border-radius: 50%;
+  }
+  .settings-coachmark .cm-close:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .settings-coachmark::after {
+    content: ''; position: absolute; top: -7px; right: 22px;
+    border-left: 7px solid transparent; border-right: 7px solid transparent;
+    border-bottom: 7px solid var(--ink);
+  }
+  @keyframes settings-coach-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 720px) { .settings-coachmark { display: none !important; } }
+
   .help-btn .help-q {
     width: 16px;
     height: 16px;
@@ -3803,7 +3839,13 @@
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
           <span>設定</span>
+          <span class="settings-new-dot" aria-hidden="true"></span>
         </button>
+        <div class="settings-coachmark" id="settingsCoachmark" role="status">
+          <button class="cm-close" type="button" id="settingsCoachClose" aria-label="閉じる">×</button>
+          <div class="cm-title">⚙️ 設定が増えました</div>
+          <div class="cm-sub">出力するPDFの<b>メタデータ除去</b>や<b>透かし(社外秘など)</b>をここで設定できます。</div>
+        </div>
         <div class="status-pill">
           <span class="status-dot"></span>
           LOCAL PROCESSING
@@ -8198,7 +8240,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.0';
+  const APP_VERSION = '3.7.1';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8685,11 +8727,13 @@ window.PdfSanitize = (function () {
       setTimeout(checkForUpdate, 2000);
       // ページレンダリング完了後に取説オープン (少し遅らせて他の init を邪魔しない)
       setTimeout(autoOpenGuide, 100);
+      setTimeout(initSettingsHint, 800);
     });
   } else {
     showVersionLabel();
     setTimeout(checkForUpdate, 2000);
     setTimeout(autoOpenGuide, 100);
+    setTimeout(initSettingsHint, 800);
   }
 
   // Defensive: wrap in try so a missing library doesn't block function declarations below
@@ -16767,6 +16811,7 @@ window.PdfSanitize = (function () {
   function openSettings() {
     var modal = document.getElementById('settingsModal');
     if (!modal) { console.error('settingsModal missing'); return; }
+    markSettingsSeen();
     syncSettingsUiFromState();
     modal.classList.add('open');
   }
@@ -16776,6 +16821,30 @@ window.PdfSanitize = (function () {
   }
   window.openSettings = openSettings;
   window.closeSettings = closeSettings;
+  /* 設定の新機能コーチマーク (v3.7.1): 一度開いたら二度と出さない */
+  var SETTINGS_SEEN_KEY = 'pdfCompact.settingsSeen';
+  function markSettingsSeen() {
+    try { localStorage.setItem(SETTINGS_SEEN_KEY, '1'); } catch(_) {}
+    document.body.classList.remove('settings-unseen');
+    var cm = document.getElementById('settingsCoachmark'); if (cm) cm.classList.remove('show');
+  }
+  function initSettingsHint() {
+    var seen = false; try { seen = localStorage.getItem(SETTINGS_SEEN_KEY) === '1'; } catch(_) {}
+    if (seen) return;
+    document.body.classList.add('settings-unseen');
+    var closeBtn = document.getElementById('settingsCoachClose');
+    if (closeBtn && !closeBtn.__bound) { closeBtn.__bound = true; closeBtn.addEventListener('click', markSettingsSeen); }
+    if (window.innerWidth >= 720) {
+      var btn = document.getElementById('settingsBtn'); var cm = document.getElementById('settingsCoachmark');
+      if (btn && cm) {
+        var r = btn.getBoundingClientRect();
+        cm.style.top = (r.bottom + 10) + 'px';
+        cm.style.right = Math.max(8, (window.innerWidth - r.right)) + 'px';
+        cm.classList.add('show');
+        setTimeout(function(){ cm.classList.remove('show'); }, 12000);
+      }
+    }
+  }
   /* トグル変更 → 即 state 反映 + 即保存 (おっちゃんが「保存」を押し忘れても効く) */
   /* 透かしUI 変更 → state へ即保存 (閉じ忘れても効く) */
   function bindWatermarkControls() {

@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.0** · 2026-06-02
+> **Version 3.7.1** · 2026-06-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.1)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,11 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.1 (2026-06-02) — Patch (発見性向上)
+- **⚙️設定の存在に気づきやすく**: 設定を一度も開いてないユーザーに、ギアボタンの脈打つドット + 初回コーチマーク「設定が増えました(メタデータ除去・透かし)」を表示
+- 一度設定を開けば二度と出ない(localStorage `pdfCompact.settingsSeen`)。スマホでは吹き出し非表示(ドットのみ)
+- 機能追加はなし。v3.6/3.7 で増えた設定の発見性改善だけ
 
 ### v3.7.0 (2026-06-02) — Minor (🔏 透かし)
 並列エージェント6名のワークフローで設計・検証した新機能(v3.6.0 のサニタイズ基盤を拡張):

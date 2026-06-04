@@ -100,3 +100,34 @@ setGuideDocked(!current, true); // 保存する
 **実装**: `data-mode` → guide section id のマッピングテーブル + `iframe.contentDocument.getElementById(sectionId).scrollIntoView({behavior:'smooth'})`。
 
 **応用**: ユーザーが触ってる UI と関連ドキュメントを同期させる発想は、教育目的のツールで強い体験。
+
+---
+
+## 黒塗り 文字選択改善シリーズの教訓 (2026-06-04)
+
+### 8. プレビュー劣化で renderPage が cancel ループ → buildTextLayer 未完走
+
+**症状**: 重い pdf.js ページで preview_eval を何十回も叩いた後、合成PDFをロードしても黒塗りの no-text バナーや頁情報が更新されない。canvas は描画されてるのに `renderPage` の末尾(頁番号更新・ボタン活性・テキストレイヤー構築)が走ってない状態になる。
+
+**原因**: `renderPage` 冒頭で前回の renderTask を cancel する設計のため、短時間に renderPage が連打されると最後以外が `RenderingCancelledException` で早期 return し、`buildTextLayer` まで到達しない。プレビューが劣化すると描画が詰まってこの競合が常態化する。
+
+**診断シグネチャ(これ見たら未完走を疑え)**:
+- 頁情報が HTML 既定値のまま(例 `<span id="redactPageInfo">1 / 1</span>` の "1 / 1")
+- prev/next ボタンが両方 enabled(本来 1頁目なら prev は disabled になるはず)
+- canvas は描画済みなのに上記が更新されてない
+
+**対策**: `location.reload()` では不十分。**preview サーバごと再起動**(preview_stop → preview_start)してクリーンなブラウザインスタンスで検証する。再起動後は同じ手順で一発で通った。
+
+### 9. 出力検証は「サニタイズ後 blob」を見てる事を忘れるな
+
+**症状**: 黒塗り出力を独立 pdf.js で読むと、消したはずのページに 3 文字残ってて一瞬「漏れた!?」と焦った。
+
+**真相**: 残ってたのは透かし設定 ON の「社外秘」。出力 blob は `verifyRedaction`(文字0確認)を通った**後**に `PdfSanitize.process` で透かしを全頁付与してるので、捕捉した blob には透かし文字が乗ってる。`verifyRedaction` はサニタイズ前 bytes を見てるので 0 で正しい。
+
+**対策**: 出力の文字残存チェックは「秘密文字列そのものが残ってないか」で判定する(生バイト走査 + getTextContent の中身確認)。文字数ゼロを期待すると透かしで誤判定する。
+
+### 10. blob.arrayBuffer() は読むと detach されうる → 永続コピー
+
+**症状**: 捕捉した blob を 2 回目に読んだら outputSize 0 / InvalidPDFException。
+
+**対策**: `URL.createObjectURL` をフックした所で即 `b.arrayBuffer().then(buf => window.__bytes = new Uint8Array(buf))` と永続 Uint8Array に写しておき、以降はそれを使う。eval を跨いで何度も検査できる。

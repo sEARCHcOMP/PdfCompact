@@ -4830,8 +4830,8 @@
       </div>
 
       <div class="redact-actions">
-        <button class="redact-export-btn" id="redactExportBtn" type="button" disabled>🖤 黒塗りして出力</button>
-        <span class="redact-export-note" id="redactExportNote">出力機能は次のアップデートで実装予定です(現在は黒塗りの描画まで)。</span>
+        <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
+        <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
       </div>
     </div>
@@ -16900,6 +16900,7 @@ window.PdfSanitize = (function () {
       if (!file || file.type !== 'application/pdf') { alert('PDFファイルを選んでください'); return; }
       try {
         var buf = await file.arrayBuffer();
+        st.bytes = buf.slice(0);                               // pdf-lib(出力)用に原本バイト保持
         st.pdf = await L.getDocument({ data: buf }).promise;
         st.numPages = st.pdf.numPages;
         st.pageIndex = 0; st.rects = {};
@@ -17049,7 +17050,7 @@ window.PdfSanitize = (function () {
     nextBtn.addEventListener('click', function(){ renderPage(st.pageIndex+1); });
     clearBtn.addEventListener('click', function(){ if (st.rects[st.pageIndex] && st.rects[st.pageIndex].length){ st.rects[st.pageIndex]=[]; renderCells(); } });
     resetBtn.addEventListener('click', function(){
-      st.pdf=null; st.rects={}; st.pageIndex=0; st.numPages=0;
+      st.pdf=null; st.bytes=null; st.rects={}; st.pageIndex=0; st.numPages=0;
       textLayer.innerHTML=''; cellsLayer.innerHTML='';
       editor.classList.remove('active'); upload.style.display=''; fileInput.value='';
     });
@@ -17060,8 +17061,122 @@ window.PdfSanitize = (function () {
     upload.addEventListener('dragleave', function(){ upload.classList.remove('dragover'); });
     upload.addEventListener('drop', function(e){ e.preventDefault(); upload.classList.remove('dragover'); if (e.dataTransfer.files && e.dataTransfer.files[0]) loadPdf(e.dataTransfer.files[0]); });
 
+    // ===== 出力エンジン (本物の不可逆消去) — v3.8.0 Phase2 =====
+    function rdStatus(msg, isErr){
+      var note = document.getElementById('redactExportNote');
+      if (note){ note.textContent = msg || ''; note.style.color = isErr ? 'var(--warn, #cc5520)' : ''; }
+    }
+    function rdTriggerDownload(blob, name){
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(_){ } }, 1500);
+    }
+    function rdTotalRects(){ var n=0; for (var k in st.rects){ if (st.rects[k]) n += st.rects[k].length; } return n; }
+    function rdAffectedPages(){ return Object.keys(st.rects).filter(function(k){ return st.rects[k] && st.rects[k].length; }); }
+
+    // 影響ページを高DPIラスタ化(canvasで黒焼き=テキスト物理消滅)、非影響はベクター温存
+    async function generateRedactedPdf(){
+      var PDFLib = window.PDFLib;
+      var srcDoc = await PDFLib.PDFDocument.load(st.bytes);   // 暗号化PDFはここでthrow→runExportでハンドル
+      var outDoc = await PDFLib.PDFDocument.create();
+      var affected = [];
+      var RDPI = 200;
+      for (var i = 0; i < st.numPages; i++){
+        var rects = st.rects[i] || [];
+        if (rects.length){
+          affected.push(i);
+          rdStatus('黒塗りページを画像化中… (ページ ' + (i+1) + ')');
+          await new Promise(function(r){ setTimeout(r, 0); });   // 進捗をUIへ反映
+          var page = await st.pdf.getPage(i+1);
+          var vp = page.getViewport({ scale: RDPI / 72 });
+          var cv = document.createElement('canvas');
+          cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+          var ctx = cv.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+          // ★黒は必ず canvas の fillRect でのみ焼く。pdf-lib drawRectangle で被せる
+          //   「偽リダクション(下の文字が残る)」は構造的に作らない。
+          ctx.fillStyle = '#000';
+          for (var j = 0; j < rects.length; j++){
+            var r = rects[j];
+            ctx.fillRect(Math.round(r.x*cv.width), Math.round(r.y*cv.height),
+                         Math.round(r.w*cv.width), Math.round(r.h*cv.height));
+          }
+          var jpg = cv.toDataURL('image/jpeg', 0.85);
+          var bytes = Uint8Array.from(atob(jpg.split(',')[1]), function(c){ return c.charCodeAt(0); });
+          var img = await outDoc.embedJpg(bytes);
+          var vp1 = page.getViewport({ scale: 1 });   // 出力ページは元のpt寸法(回転適用後)
+          var op = outDoc.addPage([vp1.width, vp1.height]);
+          op.drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+          cv.width = 0; cv.height = 0;   // 大きいcanvasを解放
+        } else {
+          var copied = await outDoc.copyPages(srcDoc, [i]);   // ベクター温存コピー
+          outDoc.addPage(copied[0]);
+        }
+      }
+      // create() ベースなので元の作成者/タイトル等は乗らない。updateMetadata:false で
+      // pdf-lib の Producer/ModDate 再注入も防ぐ。
+      var outBytes = await outDoc.save({ updateMetadata: false });
+      return { outBytes: outBytes, affected: affected };
+    }
+
+    // ★出力前の本物消去検証(fail-safe): 影響ページのテキストがゼロである事を機械確認。
+    //   1文字でも残っていたらDLさせない。
+    async function verifyRedaction(outBytes, affected){
+      if (!affected.length) return { ok: true };
+      var doc = await L.getDocument({ data: outBytes.slice(0) }).promise;
+      for (var k = 0; k < affected.length; k++){
+        var page = await doc.getPage(affected[k] + 1);
+        var tc = await page.getTextContent();
+        var len = 0; for (var m = 0; m < tc.items.length; m++){ len += (tc.items[m].str || '').length; }
+        if (len > 0) return { ok: false, page: affected[k] + 1, residual: len };
+      }
+      return { ok: true };
+    }
+
+    async function runExport(){
+      if (!st.pdf) return;
+      if (rdTotalRects() === 0){ alert('黒塗りが1つもありません。隠したい所をなぞる、または四角で囲ってください。'); return; }
+      var affN = rdAffectedPages().length;
+      var ok = confirm(
+        affN + ' ページが画像に変換されます。\n\n' +
+        '・そのページは文字のコピー/検索ができなくなり、解像度はやや下がります(情報を物理的に消すための仕様です)\n' +
+        '・黒塗りの無いページは高画質のまま残ります\n\n' +
+        '出力しますか?'
+      );
+      if (!ok) return;
+      var btn = document.getElementById('redactExportBtn');
+      if (btn) btn.disabled = true;
+      try {
+        rdStatus('処理を開始しています…');
+        var gen = await generateRedactedPdf();
+        rdStatus('本当に消えたか検証中…');
+        var v = await verifyRedaction(gen.outBytes, gen.affected);
+        if (!v.ok){
+          rdStatus('❌ ページ' + v.page + ' に文字が残っていました。安全のため出力を中止しました(不具合報告をお願いします)。', true);
+          if (btn) btn.disabled = false;
+          return;
+        }
+        var blob = new Blob([gen.outBytes], { type: 'application/pdf' });
+        if (window.PdfSanitize){ try { blob = await window.PdfSanitize.process(blob); } catch(_){ } }  // 設定のメタ除去/透かしも適用
+        var now = new Date();
+        var ymd = '' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+        rdTriggerDownload(blob, '墨消し_' + ymd + '.pdf');
+        rdStatus('✓ 出力しました(' + gen.affected.length + 'ページを画像化して文字を物理消去)。配布前に必ず中身をご確認ください。');
+      } catch(e){
+        console.error('redact export failed', e);
+        var enc = e && /encrypt/i.test(String(e.message || e));
+        rdStatus('❌ ' + (enc ? '暗号化されたPDFは黒塗りできません(パスワードを解除してから読み込んでください)。'
+                              : '出力に失敗しました: ' + (e && e.message ? e.message : e)), true);
+        if (btn) btn.disabled = false;
+        return;
+      }
+      if (btn) btn.disabled = false;
+    }
+    var _rdExportBtn = document.getElementById('redactExportBtn');
+    if (_rdExportBtn){ _rdExportBtn.disabled = false; _rdExportBtn.addEventListener('click', runExport); }
     setMode('text');                 // 初期は文字選択モード
-    window.__redactState = st;       // 出力は Phase2
+    window.__redactState = st;
   })();
 
   /* ===== 設定モーダル wiring (success-modal と同じ開閉作法) ===== */

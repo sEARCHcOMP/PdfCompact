@@ -1967,6 +1967,17 @@
   .redact-textlayer span { color: transparent; position: absolute; white-space: pre; transform-origin: 0 0; }
   .redact-textlayer ::selection { background: rgba(0,64,255,.35); }
   .redact-textlayer ::-moz-selection { background: rgba(0,64,255,.35); }
+  /* ホバー可視化(v3.8.x): text モードで span に乗ると薄青く光る=黒塗りできる合図。光らなければ文字データ無し→四角へ。box-shadowリングは隣接spanへ滲むので付けない(背景のみ) */
+  #redactCanvasWrap.mode-text .redact-textlayer span { cursor: pointer; border-radius: 2px; transition: background-color .08s ease; }
+  #redactCanvasWrap.mode-text .redact-textlayer span:hover { background: rgba(0,64,255,.15); }
+  /* rect モード/文字無しページではホバー演出を消して誤解を防ぐ */
+  #redactCanvasWrap.mode-rect .redact-textlayer span,
+  #redactCanvasWrap.no-text  .redact-textlayer span { cursor: default; }
+  #redactCanvasWrap.mode-rect .redact-textlayer span:hover,
+  #redactCanvasWrap.no-text  .redact-textlayer span:hover { background: transparent; }
+  /* 文字データ無しバナー(span 0個ページで JS が .show を付けた時だけ表示) */
+  .redact-notext-banner { display: none; align-items: center; gap: 8px; margin: 0 0 12px; padding: 9px 13px; border-radius: var(--r-md, 10px); background: var(--warn-soft, #fde8dc); border: 1px solid var(--warn, #cc5520); color: #8a3a16; font-size: 12.5px; line-height: 1.6; }
+  .redact-notext-banner.show { display: flex; }
   #redactCanvasWrap.mode-text .redact-textlayer { pointer-events: auto; cursor: text; }
   #redactCanvasWrap.mode-rect .redact-textlayer { pointer-events: none; }
   #redactCanvasWrap.mode-text .redact-overlay { pointer-events: none; }
@@ -4813,7 +4824,8 @@
         </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
-      <div class="redact-modehint" id="redactModeHint">文字をなぞって選ぶと、その文字の上に黒塗りが付きます。</div>
+      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(重なりは自動でまとめます)。</div>
+      <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
 
       <div class="redact-stage">
         <div class="redact-canvas-wrap mode-text" id="redactCanvasWrap">
@@ -16882,11 +16894,11 @@ window.PdfSanitize = (function () {
       // 文字レイヤーが無いページで text を選んだら rect に矯正
       if (m === 'text' && !st.pageHasText){
         m = 'rect';
-        if (modeHint) modeHint.textContent = 'このページは文字データが無いので「自由に四角」で囲ってください(スキャンPDF等)。';
+        if (modeHint) modeHint.textContent = 'このページは文字データが無いので「自由に四角」で囲ってください(スキャン画像/CAD出力など)。';
       } else if (modeHint) {
         modeHint.textContent = (m === 'text')
-          ? '文字をなぞって選ぶと、その文字の上に黒塗りが付きます。'
-          : 'ページ上をドラッグして黒塗り範囲を四角で描きます。';
+          ? '文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(重なりは自動でまとめます)。'
+          : 'ページ上をドラッグして、黒塗りする範囲を四角で描きます。';
       }
       st.mode = m;
       wrap.classList.toggle('mode-text', m === 'text');
@@ -16955,9 +16967,48 @@ window.PdfSanitize = (function () {
       } catch(e){ /* テキスト無し等は無視 */ }
       st.textTask = null;
       st.pageHasText = textLayer.querySelectorAll('span').length > 0;
+      // 文字データ無しページは見た目で誘導(ホバー無効化 + バナー表示)。頁送りごとに再評価されるので混在PDFでも頁単位で正しく出る。
+      wrap.classList.toggle('no-text', !st.pageHasText);
+      var _bn = document.getElementById('redactNoTextBanner');
+      if (_bn) _bn.classList.toggle('show', !st.pageHasText);
       // 希望モードを再適用(文字有りページなら text に復帰、無ければ rect 矯正)
       setMode(st.prefMode);
     }
+
+    // ---- クリックで一発黒塗り (text モード) + 移動量ガード ----
+    // ドラッグ(範囲選択)は commitTextSelection に任せ、純クリックだけここで span 全体を黒塗り。
+    // 二重発火は『直近 mousedown→click のポインタ移動量 < CLICK_MOVE_PX なら純クリック』で判定(setTimeout 順序や isCollapsed に依存しない)。
+    st.suppressNextCommit = false;
+    var CLICK_MOVE_PX = 6;
+    var _downXY = null;
+    textLayer.addEventListener('mousedown', function(e){ _downXY = { x:e.clientX, y:e.clientY }; });
+    function rectFromSpan(span){
+      var cw = wrap.getBoundingClientRect();
+      if (cw.width === 0 || cw.height === 0) return null;
+      var rc = span.getBoundingClientRect();
+      if (rc.width < 2 || rc.height < 2) return null;       // 空白/潰れ span は無視
+      var padY = rc.height * 0.12;                          // ドラッグ側と同じ12%余白でグリフ完全被覆
+      return { x:(rc.left-cw.left)/cw.width, y:(rc.top-cw.top-padY)/cw.height, w:rc.width/cw.width, h:(rc.height+padY*2)/cw.height };
+    }
+    textLayer.addEventListener('click', function(e){
+      if (st.mode !== 'text' || !st.pageHasText) return;    // rectモードは pointer-events:none、文字無しは触らせない
+      // ドラッグだったら降りる(移動量で判定)。これがドラッグ後 click の二重発火を止める要。
+      if (_downXY){
+        var dx = e.clientX - _downXY.x, dy = e.clientY - _downXY.y;
+        if ((dx*dx + dy*dy) > (CLICK_MOVE_PX*CLICK_MOVE_PX)){ _downXY = null; return; }
+      }
+      _downXY = null;
+      var span = e.target.closest('span');                  // ★closest('span'): 入れ子ノードに強い。container ではなく span を掴む
+      if (!span || !textLayer.contains(span)) return;
+      var r = rectFromSpan(span);
+      if (!r) return;
+      pushRect(r.x, r.y, r.w, r.h);                         // pushRect 内で MIN_PCT/clamp 済み
+      dedupeRects(st.pageIndex);                            // 既存セルと重なれば即 union(二重黒塗り防止)
+      var sel = window.getSelection(); if (sel) sel.removeAllRanges();
+      st.suppressNextCommit = true;                         // 保険: 直後の mouseup commit を1回スキップ
+      renderCells();
+      e.preventDefault(); e.stopPropagation();
+    });
 
     // ---- 黒塗りセル(確定分)を描画。× は常にクリック可 ----
     function renderCells(){
@@ -16986,9 +17037,49 @@ window.PdfSanitize = (function () {
       st.rects[st.pageIndex].push({x:x,y:y,w:w,h:h});
     }
 
+    // ---- 重複黒塗りの自動マージ(dedup) — EDGE-GAP 方式(唯一の実装) ----
+    // rect は {x,y,w,h} すべて 0..1。X方向は微小ギャップ(EPS_X)まで接触扱いで断片(fill+stroke二度描き・複数clientRects)を畳む。
+    // Y方向は EPS_Y=0(交差必須)。text モードが行ごとに上下12%余白を足す設計に乗り、別行の誤統合を防ぐ。
+    // union は必ずバウンディングボックス=元矩形を完全包含 → 黒塗り漏れ(露出)は起きない。出力 fillRect は冪等なので結果不変。
+    var DEDUPE_EPS_X = 0.004;   // 約0.4%幅まで横の隙間を『接触』とみなす(カーニング/サブピクセル境界を繋ぐ)
+    var DEDUPE_EPS_Y = 0.0;     // 縦は交差必須(別行を守る)
+    function rectsOverlap(a, b){
+      var oxRaw = Math.min(a.x+a.w, b.x+b.w) - Math.max(a.x, b.x); // 正=交差,0=接点,負=隙間
+      var oyRaw = Math.min(a.y+a.h, b.y+b.h) - Math.max(a.y, b.y);
+      return (oxRaw >= -DEDUPE_EPS_X) && (oyRaw >= -DEDUPE_EPS_Y);
+    }
+    function unionRect(a, b){
+      var x1 = Math.min(a.x, b.x), y1 = Math.min(a.y, b.y);
+      var x2 = Math.max(a.x+a.w, b.x+b.w), y2 = Math.max(a.y+a.h, b.y+b.h);
+      return { x:x1, y:y1, w:x2-x1, h:y2-y1 };
+    }
+    // ページ pi の矩形配列を、重なる/接触するものどうし union で統合。union が第三の矩形を呼び込む連鎖も収束まで反復。
+    function dedupeRects(pi){
+      var src = st.rects[pi];
+      if (!src || src.length < 2) return;            // 0/1個は不要(早期return)
+      var rects = src.slice();
+      var safety = rects.length + 4;                 // 無限ループ保険
+      for (var pass = 0; pass < safety; pass++){
+        var merged = false, out = [], used = new Array(rects.length);
+        for (var i = 0; i < rects.length; i++){
+          if (used[i]) continue;
+          var cur = rects[i];
+          for (var j = i + 1; j < rects.length; j++){
+            if (used[j]) continue;
+            if (rectsOverlap(cur, rects[j])){ cur = unionRect(cur, rects[j]); used[j] = true; merged = true; }
+          }
+          out.push(cur);
+        }
+        rects = out;
+        if (!merged) break;                          // 統合ゼロ=収束
+      }
+      st.rects[pi] = rects;
+    }
+
     // ---- 文字選択 → 黒塗り (text モード) ----
     function commitTextSelection(){
       if (st.mode !== 'text') return;
+      if (st.suppressNextCommit){ st.suppressNextCommit = false; return; } // 保険: クリック黒塗り直後の1回を握りつぶす(主役は move-guard 側)
       var sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
       var range = sel.getRangeAt(0);
@@ -17009,7 +17100,7 @@ window.PdfSanitize = (function () {
         pushRect(x,y,w,h); added++;
       }
       sel.removeAllRanges();
-      if (added) renderCells();
+      if (added){ dedupeRects(st.pageIndex); renderCells(); }  // ★renderCells の前に重複マージ
     }
     document.addEventListener('mouseup', function(){ if (st.pdf && st.mode==='text') setTimeout(commitTextSelection, 0); });
 
@@ -17038,7 +17129,7 @@ window.PdfSanitize = (function () {
       var lx=Math.min(draw.x0,x), ly=Math.min(draw.y0,y), w=Math.abs(x-draw.x0), h=Math.abs(y-draw.y0);
       if (draw.el) draw.el.remove();
       draw = null;
-      pushRect(lx,ly,w,h); renderCells();
+      pushRect(lx,ly,w,h); dedupeRects(st.pageIndex); renderCells();
     }
     overlay.addEventListener('pointerup', endDraw);
     overlay.addEventListener('pointercancel', endDraw);

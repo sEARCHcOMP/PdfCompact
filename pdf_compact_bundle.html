@@ -4846,6 +4846,8 @@
         <div class="wm-custom-wrap" id="setWatermarkCustomWrap" hidden>
           <label class="settings-subfield-label" for="setWatermarkText" style="margin-top:10px;">入れたい文字 (全角10文字くらいまでが読みやすい)</label>
           <input type="text" id="setWatermarkText" class="settings-text-input" placeholder="例: マル秘・部外秘・氏名 など" maxlength="20" autocomplete="off" inputmode="text">
+          <!-- 絵文字除去の注記 (M14): 除去が起きた時だけ JS が表示 -->
+          <span class="settings-subfield-label" id="setWatermarkEmojiNote" style="margin-top:6px; margin-bottom:0; color:var(--warn);" hidden>絵文字は透かしに使えないため除去しました</span>
         </div>
 
         <div class="wm-preview" id="setWatermarkPreview" aria-live="polite">
@@ -7222,7 +7224,8 @@
         多くのPDF編集ツールは、内部でページを画像に変換してから再構築するため、<strong style="color:var(--warn);">テキストが画像になってしまう</strong>・<strong style="color:var(--warn);">ファイルサイズが膨らむ</strong>・<strong style="color:var(--warn);">検索性が失われる</strong>といった問題が起きます。
       </p>
       <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:12px;">
-        PDF Compactの編集モードは、pdf-libの<code>copyPages()</code>技術を使って<strong style="color:var(--accent);">ページをオブジェクトとしてそのままコピー</strong>しています。元のテキスト、フォント、ベクター線、画像、注釈すべてがオリジナルのまま保持されます。
+        PDF Compactの編集モードは、pdf-libの<code>copyPages()</code>技術を使って<strong style="color:var(--accent);">ページをオブジェクトとしてそのままコピー</strong>しています。元のテキスト、フォント、ベクター線、画像、注釈がオリジナルのまま保持されます。<br>
+        ※<strong style="color:var(--warn);">しおり(目次)と入力フォームは、複数PDFの結合では引き継がれません</strong>。
       </p>
       <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:20px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
         <strong style="color:var(--ink);">保持されるもの</strong><br>
@@ -7230,8 +7233,9 @@
         &nbsp;&nbsp;✓ フォント<br>
         &nbsp;&nbsp;✓ 図面のベクター線(CAD図面もくっきり)<br>
         &nbsp;&nbsp;✓ 画像の解像度<br>
-        &nbsp;&nbsp;✓ 注釈・ブックマーク<br>
-        &nbsp;&nbsp;✓ 回転情報
+        &nbsp;&nbsp;✓ 注釈<br>
+        &nbsp;&nbsp;✓ 回転情報<br>
+        <span style="color:var(--warn);">△ しおり(目次)・入力フォームは、複数PDFの結合では引き継がれません</span>
       </div>
     </div>
   </section>
@@ -7901,7 +7905,8 @@
         <summary class="faq-summary">編集すると画質は落ちますか?</summary>
         <div class="faq-body">
           <p><strong>劣化ゼロです。</strong>PDF編集モードはページを画像化せず、元のPDFオブジェクトをそのままコピーする方式を使っています。</p>
-          <p>テキスト・フォント・図面のベクター線・埋め込み画像・注釈すべてオリジナルのまま保持されます。編集後もCtrl+Fで文字検索も可能です。</p>
+          <p>テキスト・フォント・図面のベクター線・埋め込み画像・注釈はオリジナルのまま保持されます。編集後もCtrl+Fで文字検索も可能です。</p>
+          <p>※しおり(目次)と入力フォームは、複数PDFの結合では引き継がれません。</p>
         </div>
       </details>
       <details class="faq-item">
@@ -8255,7 +8260,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.5';
+  const APP_VERSION = '3.7.6';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8458,12 +8463,20 @@ window.PdfSanitize = (function () {
     } catch (_e) { return false; }            // 読めなければ OFF (安全側)
   }
 
+  // 絵文字(サロゲートペア=U+10000以上)は NotoSansJP にグリフが無く出力で欠落する。
+  // UI側でも除去するが、過去に保存済みの絵文字入り設定への防御としてここでも除去する (M14)。
+  // 除去で空になったら既定の「社外秘」に倒す。
+  function sanitizeWatermarkText(t) {
+    var s = String(t == null ? '' : t).replace(/[\u{10000}-\u{10FFFF}]/gu, '').trim();
+    return s || '社外秘';
+  }
+
   function getWatermarkText() {
-    try { if (api.opts && typeof api.opts.watermarkText === 'string' && api.opts.watermarkText) return api.opts.watermarkText; } catch (_e) {}
+    try { if (api.opts && typeof api.opts.watermarkText === 'string' && api.opts.watermarkText) return sanitizeWatermarkText(api.opts.watermarkText); } catch (_e) {}
     try {
       if (window.PdfSanitizeSettings && typeof window.PdfSanitizeSettings.watermarkText === 'function') {
         var t = window.PdfSanitizeSettings.watermarkText();
-        if (t && String(t).trim()) return String(t);
+        if (t && String(t).trim()) return sanitizeWatermarkText(t);
       }
     } catch (_e) {}
     try {
@@ -8471,7 +8484,7 @@ window.PdfSanitize = (function () {
       if (raw !== null) {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object' && parsed.watermarkText && String(parsed.watermarkText).trim()) {
-          return String(parsed.watermarkText);
+          return sanitizeWatermarkText(parsed.watermarkText);
         }
       }
     } catch (_e) {}
@@ -9454,6 +9467,23 @@ window.PdfSanitize = (function () {
     const ocrEnabled = ocrToggle.checked;
     const ocrLangValue = ocrLang.value;
 
+    // 全件処理済みでの再クリック = 設定変更後の再圧縮とみなし、全件を未処理に戻す
+    // (未処理・エラーが1件でも残っていれば従来どおりその分だけ処理)
+    if (files.length > 0 && files.every(f => f.status === 'done')) {
+      for (const f of files) {
+        f.status = 'pending';
+        f.progress = 0;
+        f.result = null;
+        f.newSize = null;
+        f.currentStep = '';
+        f.mode = null;
+        f.note = null;
+        f.ocrApplied = false;
+        f.error = null;
+      }
+      render();
+    }
+
     compressBtn.disabled = true;
     clearBtn.disabled = true;
 
@@ -9499,7 +9529,13 @@ window.PdfSanitize = (function () {
       } catch (err) {
         console.error(err);
         f.status = 'error';
-        f.error = err.message || '不明';
+        let errMsg = err.message || '不明';
+        // 保護付き(編集制限)PDFは書類モードの load (ignoreEncryption:false) で
+        // 英語の生エラーになるため、日本語の説明と回避策に差し替える
+        if (/encrypt/i.test(errMsg)) {
+          errMsg = '保護付き(編集制限)のPDFのため書類モードで処理できません。圧縮モードを「写真」にすると処理できます';
+        }
+        f.error = errMsg;
         render();
       }
     }
@@ -9650,8 +9686,9 @@ window.PdfSanitize = (function () {
           newDict.set(PDFName.of('Height'), PDFNumber.of(newH));
           newDict.set(PDFName.of('Length'), PDFNumber.of(newBytes.length));
           newDict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
-          newDict.set(PDFName.of('ColorSpace'),
-            dict.get(PDFName.of('ColorSpace')) || PDFName.of('DeviceRGB'));
+          // canvas再エンコードJPEGは常にRGB(3成分)。元のColorSpace
+          // (DeviceGray/DeviceCMYK等)をコピーすると色化けするため常にDeviceRGB
+          newDict.set(PDFName.of('ColorSpace'), PDFName.of('DeviceRGB'));
           newDict.set(PDFName.of('BitsPerComponent'), PDFNumber.of(8));
 
           const newStream = PDFRawStream.of(newDict, newBytes);
@@ -9794,6 +9831,15 @@ window.PdfSanitize = (function () {
       const ocrPdfBytes = new Uint8Array(ocrResult.data.pdf);
       const ocrPdf = await PDFDocument.load(ocrPdfBytes);
       const [copiedPage] = await outDoc.copyPages(ocrPdf, [0]);
+      // Tesseract はDPI不明のJPEGを70dpi扱いするため、OCR結果PDFのページ寸法が
+      // 元より膨張する (px × 72/70)。元ページのpt寸法 (72dpi基準) に戻す。
+      // scale() はコンテンツ・MediaBox・注釈を一括スケールするので透明テキスト層の位置関係も保たれる
+      const baseVp = page.getViewport({ scale: 1 });
+      const sx = baseVp.width / copiedPage.getWidth();
+      const sy = baseVp.height / copiedPage.getHeight();
+      if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) {
+        copiedPage.scale(sx, sy);
+      }
       outDoc.addPage(copiedPage);
 
       // cleanup
@@ -10410,6 +10456,48 @@ window.PdfSanitize = (function () {
       });
     }
 
+    // v3.7.6 (H4): JPEG の EXIF Orientation タグ (1-8) を読む軽量パーサ。
+    // SOI → セグメント走査 → APP1 "Exif" → TIFF ヘッダ → IFD0 の 0x0112 を探す。
+    // JPEG以外・タグ無し・解析失敗時は 1 (補正不要) を返す = 従来どおり生パススルーに倒す。
+    async function readJpegOrientation(file) {
+      try {
+        const buf = await file.slice(0, 256 * 1024).arrayBuffer();
+        const view = new DataView(buf);
+        if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return 1; // SOI が無い = JPEGでない
+        let offset = 2;
+        while (offset + 4 <= view.byteLength) {
+          const marker = view.getUint16(offset);
+          if ((marker & 0xFF00) !== 0xFF00) return 1;  // マーカー列が壊れている
+          if (marker === 0xFFDA) return 1;             // SOS (画像データ) 以降に EXIF は無い
+          const size = view.getUint16(offset + 2);
+          if (size < 2) return 1;                      // 不正サイズ (無限ループ防止)
+          if (marker === 0xFFE1 && offset + 18 <= view.byteLength &&
+              view.getUint32(offset + 4) === 0x45786966) { // "Exif"
+            const tiff = offset + 10;                  // TIFF ヘッダ先頭
+            const endianMark = view.getUint16(tiff);
+            if (endianMark !== 0x4949 && endianMark !== 0x4D4D) return 1;
+            const little = endianMark === 0x4949;      // "II" = リトルエンディアン
+            const ifd = tiff + view.getUint32(tiff + 4, little);
+            if (ifd + 2 > view.byteLength) return 1;
+            const count = view.getUint16(ifd, little);
+            for (let i = 0; i < count; i++) {
+              const entry = ifd + 2 + i * 12;
+              if (entry + 12 > view.byteLength) return 1;
+              if (view.getUint16(entry, little) === 0x0112) { // 0x0112 = Orientation
+                const val = view.getUint16(entry + 8, little);
+                return (val >= 1 && val <= 8) ? val : 1;
+              }
+            }
+            return 1;                                  // Orientation タグ無し
+          }
+          offset += 2 + size;
+        }
+      } catch (e) {
+        // 解析失敗は「補正不要」扱い (従来どおり生パススルー)
+      }
+      return 1;
+    }
+
     // Rasterize one PDF page at a target quality; returns {dataUrl, nativeW, nativeH}
     async function renderPdfPageToJpeg(page, preset, qKey) {
       const native = page.getViewport({ scale: 1 });
@@ -10452,10 +10540,13 @@ window.PdfSanitize = (function () {
         // To unify, caller should convert beforehand. See callers below.
         const pw = nativeW;
         const ph = nativeH;
+        // v3.7.6 (H3): jsPDF 2.5.1 は format:[w,h] で w>h だと既定 orientation 'p' が勝って
+        // 縦横を強制スワップする → 横長が縦ページに化けるため orientation を明示する
+        const fitOrient = pw > ph ? 'l' : 'p';
         if (isFirst) {
-          doc = new jsPDF({ unit: 'mm', format: [pw, ph] });
+          doc = new jsPDF({ orientation: fitOrient, unit: 'mm', format: [pw, ph] });
         } else {
-          doc.addPage([pw, ph]);
+          doc.addPage([pw, ph], fitOrient);
         }
         doc.addImage(imgData, 'JPEG', 0, 0, pw, ph);
         return doc;
@@ -10503,6 +10594,7 @@ window.PdfSanitize = (function () {
         const preset = QUALITY_PRESETS[qualityKey];
         let doc = null;
         let isFirst = true;
+        const genFailedNames = [];   // v3.7.6 (M3): 変換に失敗した画像名 (1枚の失敗でバッチ全滅させない)
 
         const totalOutputPages = files.reduce((sum, f) => sum + (f.type === 'pdf' ? f.numPages : 1), 0);
         let completedPages = 0;
@@ -10538,24 +10630,49 @@ window.PdfSanitize = (function () {
             setStatus(`画像処理中... (${i+1}/${files.length}) ${it.name}`, 'info');
             await new Promise(r => setTimeout(r, 0));
 
-            const imgData = qualityKey === 'original'
-              ? await loadImageData(it.file)
-              : await compressImage(it.file, preset.maxPx, preset.jpegQuality);
+            // v3.7.6 (M3): 1枚の失敗でバッチ全体を道連れにしない per-item catch
+            // (PDF入力ページのレンダ失敗は従来どおり外側 catch で全体エラーになる = 既知の限界)
+            try {
+              // v3.7.6 (H4/M3): 無圧縮でも canvas 経由が必要なケースを判定
+              //  - AVIF: jsPDF 2.5.1 は AVIF を埋め込めない → 常に canvas で JPEG 化
+              //  - EXIF Orientation≠1 の JPEG: jsPDF は EXIF を無視して横倒しになる
+              //    → 回転写真だけ高品質(0.95)再エンコードに落とす (canvas が EXIF 回転を適用)
+              //  orientation=1 の JPEG と PNG は従来どおり生パススルー (無圧縮の約束を守る)
+              let viaCanvas = qualityKey !== 'original';
+              if (!viaCanvas) {
+                const ext = (it.file.name || it.name || '').toLowerCase().split('.').pop();
+                if (ext === 'avif' || it.file.type === 'image/avif') {
+                  viaCanvas = true;
+                } else if (ext === 'jpg' || ext === 'jpeg' || it.file.type === 'image/jpeg') {
+                  const exifOri = await readJpegOrientation(it.file);
+                  if (exifOri !== 1) viaCanvas = true;
+                }
+              }
+              const imgData = viaCanvas
+                ? await compressImage(it.file, preset.maxPx, qualityKey === 'original' ? 0.95 : preset.jpegQuality)
+                : await loadImageData(it.file);
 
-            // For "fit" mode with image, use px at 96dpi → mm
-            let pageW = it.width, pageH = it.height;
-            if (pageSizeKey === 'fit') {
-              pageW = it.width * 25.4 / 96;
-              pageH = it.height * 25.4 / 96;
+              // For "fit" mode with image, use px at 96dpi → mm
+              let pageW = it.width, pageH = it.height;
+              if (pageSizeKey === 'fit') {
+                pageW = it.width * 25.4 / 96;
+                pageH = it.height * 25.4 / 96;
+              }
+              doc = addPageToDoc(doc, imgData, pageW, pageH, isFirst);
+              isFirst = false;
+            } catch (imgErr) {
+              console.error('画像の変換に失敗:', it.name, imgErr);
+              genFailedNames.push(it.name);
             }
-            doc = addPageToDoc(doc, imgData, pageW, pageH, isFirst);
-            isFirst = false;
             completedPages++;
             if (progressBar) {
               progressBar.style.width = Math.round(completedPages / totalOutputPages * 100) + '%';
             }
           }
         }
+
+        // v3.7.6 (M3): 全ファイル失敗時は doc が null のまま → 分かる言葉で止める
+        if (!doc) throw new Error(`すべてのファイルの変換に失敗しました: ${genFailedNames.join(' / ')}`);
 
         const now = new Date();
         const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
@@ -10588,7 +10705,13 @@ window.PdfSanitize = (function () {
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 200);
 
-        setStatus(`✓ ${totalOutputPages}ページ · ${sizeMB} MB (${qLabel}) · ダウンロード完了`, 'success');
+        // v3.7.6 (M3): 失敗分を除いた実ページ数で表示し、失敗があれば消えないまとめ表示にする
+        const okPages = totalOutputPages - genFailedNames.length;
+        if (genFailedNames.length) {
+          setStatus(`✓ ${okPages}ページ · ${sizeMB} MB (${qLabel}) · ダウンロード完了 / ⚠ ${genFailedNames.length}件は変換できず除外: ${genFailedNames.join(' / ')}`, 'error');
+        } else {
+          setStatus(`✓ ${okPages}ページ · ${sizeMB} MB (${qLabel}) · ダウンロード完了`, 'success');
+        }
 
         // Celebrate!
         const imgCnt = files.filter(f => f.type === 'image').length;
@@ -10598,7 +10721,7 @@ window.PdfSanitize = (function () {
         if (pdfCnt > 0) inputParts.push(`PDF ${pdfCnt}`);
         const stats = [
           { label: '入力', value: inputParts.join(' + ') },
-          { label: '出力ページ', value: `${totalOutputPages} ページ`, highlight: true },
+          { label: '出力ページ', value: `${okPages} ページ`, highlight: true },
           { label: 'ファイルサイズ', value: `${sizeMB} MB` },
           { label: '画質', value: qLabel }
         ];
@@ -10642,6 +10765,7 @@ window.PdfSanitize = (function () {
     let outputFormat = 'jpg';
     let quality = 'standard';
     let outputMode = 'individual';
+    let isConverting = false;   // 実行中ガード: ✕削除・追加で変換ループの添字がズレるのを防ぐ
 
     const $ = (id) => document.getElementById(id);
     const dropzone = $('convDropzone');
@@ -10852,16 +10976,20 @@ window.PdfSanitize = (function () {
         const url = URL.createObjectURL(loadFile);
         const img = new Image();
         img.onload = () => {
+          // Chrome系のcanvas上限(長辺16384px・面積制限)超過で toBlob/toDataURL が壊れるため、
+          // 長辺 8192px を超える巨大画像は縦横比を保って縮小する
+          const MAX_DIM = 8192;
+          const dimScale = Math.min(1, MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
           const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
+          canvas.width = Math.max(1, Math.round(img.naturalWidth * dimScale));
+          canvas.height = Math.max(1, Math.round(img.naturalHeight * dimScale));
           const ctx = canvas.getContext('2d');
           // For transparent-capable formats, don't fill white unless going to JPG/BMP
           if (outputFormat === 'jpg' || outputFormat === 'bmp') {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
-          ctx.drawImage(img, 0, 0);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
           resolve([{ canvas, baseName }]);
         };
@@ -10874,6 +11002,10 @@ window.PdfSanitize = (function () {
       const arr = [...fileList].filter(isValidInput);
       if (arr.length === 0) {
         setStatus('⚠ PNG / JPG / HEIC / BMP / TIFF / AVIF / PDF のみ対応しています', 'error');
+        return;
+      }
+      if (isConverting) {
+        setStatus('変換中はファイルを追加できません', 'error');
         return;
       }
       setStatus('');
@@ -11015,6 +11147,7 @@ window.PdfSanitize = (function () {
       fileGrid.querySelectorAll('[data-remove]').forEach(btn => {
         btn.addEventListener('click', ev => {
           ev.stopPropagation();
+          if (isConverting) { setStatus('変換中はファイルを変更できません', 'error'); return; }
           const idx = +btn.dataset.remove;
           const it = files[idx];
           if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
@@ -11033,7 +11166,18 @@ window.PdfSanitize = (function () {
     };
 
     // ---- Output helpers ----
+    // 透過部を白で埋める (JPEG/BMP/PDF は透過を保持できず黒化けするため)。
+    // destination-over で既存描画の「下」に白を敷くので、コピーcanvasを作らずメモリ増なしで合成できる
+    function flattenWhite(canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+      return canvas;
+    }
     function canvasToJpegBlob(canvas) {
+      flattenWhite(canvas);   // TIFF入力など読込時に白埋めされない経路の保険
       return new Promise(r => canvas.toBlob(r, 'image/jpeg', QUALITY[quality]));
     }
     function canvasToPngBlob(canvas) {
@@ -11041,6 +11185,7 @@ window.PdfSanitize = (function () {
     }
     // BMP: hand-rolled 32bpp uncompressed encoder
     function canvasToBmpBlob(canvas) {
+      flattenWhite(canvas);   // 透過は白背景に変換 (多くのビューアは32bpp BMPのアルファを無視して黒くなるため)
       const ctx = canvas.getContext('2d');
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const w = canvas.width;
@@ -11087,6 +11232,8 @@ window.PdfSanitize = (function () {
     }
     // PDF: 1 canvas = 1 PDF page (sized to canvas)
     function canvasToPdfBlob(canvas) {
+      // 透過PNG/AVIF/TIFF→PDF の黒化け防止: JPEG化の前に透過部を白で埋める (FAQ「PDFは白背景に変換」と整合)
+      flattenWhite(canvas);
       const jpegData = canvas.toDataURL('image/jpeg', QUALITY[quality]);
       // Use mm with 96dpi conversion
       const wMm = canvas.width * 25.4 / 96;
@@ -11105,6 +11252,19 @@ window.PdfSanitize = (function () {
         bmp: 'bmp',
         tiff: 'tiff'
       }[format];
+    }
+
+    // 出力名が重複したら「name (2).ext」形式の連番を振る (JSZip.file は同名上書きで無言消失するため)
+    function uniqueFilename(name, usedNames) {
+      if (!usedNames.has(name)) { usedNames.add(name); return name; }
+      const dot = name.lastIndexOf('.');
+      const stem = dot > 0 ? name.slice(0, dot) : name;
+      const ext = dot > 0 ? name.slice(dot) : '';
+      let n = 2;
+      while (usedNames.has(`${stem} (${n})${ext}`)) n++;
+      const result = `${stem} (${n})${ext}`;
+      usedNames.add(result);
+      return result;
     }
 
     async function canvasToOutputBlob(canvas, format) {
@@ -11128,7 +11288,8 @@ window.PdfSanitize = (function () {
     }
 
     async function convertAll() {
-      if (files.length === 0) return;
+      if (files.length === 0 || isConverting) return;
+      isConverting = true;
       generateBtn.disabled = true;
       clearBtn.disabled = true;
       if (progressWrap) progressWrap.classList.add('active');
@@ -11137,6 +11298,8 @@ window.PdfSanitize = (function () {
       await new Promise(r => setTimeout(r, 50));
 
       const outputs = []; // {blob, filename}
+      const usedNames = new Set();   // ZIP内の同名上書き(無言消失)防止用
+      const failedNames = [];        // 変換失敗ファイル(1件の失敗で全滅させない)
       const totalOutputs = files.reduce((s, f) => s + f.pageCount, 0);
       let completed = 0;
       let totalSize = 0;
@@ -11148,23 +11311,31 @@ window.PdfSanitize = (function () {
           setStatus(`変換中 (${fi + 1}/${files.length}) ${f.name}`, 'info');
           await new Promise(r => setTimeout(r, 0));
 
-          const canvasList = await loadToCanvases(f.file);
-          for (const { canvas, baseName } of canvasList) {
-            const blob = await canvasToOutputBlob(canvas, outputFormat);
-            const filename = `${baseName}.${extFor(outputFormat)}`;
-            outputs.push({ blob, filename });
-            totalSize += blob.size;
-            completed++;
-            if (progressBar) {
-              progressBar.style.width = Math.round(completed / totalOutputs * 100) + '%';
+          // 1ファイルの失敗(巨大画像のcanvas上限超過・破損等)は記録して続行する
+          try {
+            const canvasList = await loadToCanvases(f.file);
+            for (const { canvas, baseName } of canvasList) {
+              const blob = await canvasToOutputBlob(canvas, outputFormat);
+              // canvas上限超過などで toBlob が null を返すことがある → このファイルだけ失敗扱いにする
+              if (!blob) throw new Error('エンコード失敗(画像が大きすぎる可能性)');
+              const filename = uniqueFilename(`${baseName}.${extFor(outputFormat)}`, usedNames);
+              outputs.push({ blob, filename });
+              totalSize += blob.size;
+              completed++;
+              if (progressBar) {
+                progressBar.style.width = Math.round(completed / totalOutputs * 100) + '%';
+              }
+              // Free memory
+              canvas.width = 0; canvas.height = 0;
             }
-            // Free memory
-            canvas.width = 0; canvas.height = 0;
+          } catch (perFileErr) {
+            console.error('Conv error:', f.name, perFileErr);
+            failedNames.push(f.name);
           }
         }
 
         if (outputs.length === 0) {
-          throw new Error('出力0件');
+          throw new Error(failedNames.length ? `全${failedNames.length}件の変換に失敗しました` : '出力0件');
         }
 
         // v3.6.0: 出力前メタデータ除去 (PDF限定ガード — 画像形式は素通し)
@@ -11243,6 +11414,10 @@ window.PdfSanitize = (function () {
             ]
           });
         }
+        // 失敗ファイルがあれば成功表示を上書きして必ず知らせる(完走分はダウンロード済み)
+        if (failedNames.length) {
+          setStatus(`⚠ ${failedNames.length}件失敗: ${failedNames.join(' / ')}(他の ${outputs.length} 枚は変換・ダウンロード済み)`, 'error');
+        }
         successFlag = true;
       } catch (err) {
         console.error(err);
@@ -11251,6 +11426,7 @@ window.PdfSanitize = (function () {
         setStatus(`✕ ${progressInfo} エラー: ${err.message}`, 'error');
       }
 
+      isConverting = false;   // 成功・失敗どちらでも必ず解除 (catch後にここへ到達する)
       generateBtn.disabled = false;
       clearBtn.disabled = false;
       // 変換成功時のみ保持ファイルを破棄 (次の作業に備えてリセット)
@@ -11446,8 +11622,12 @@ window.PdfSanitize = (function () {
       let _perms = null;
       try { _perms = await pdfDoc.getPermissions(); } catch (_e) { /* 判定不能は通す(誤遮断防止) */ }
       if (_perms !== null) throw new Error('PROTECTED_PDF');
+      // しおり(目次)の有無を記録 — 複数PDF結合 (copyPages) ではしおりが引き継がれないため、生成時の通知に使う。
+      // getOutline() はしおり無しなら null、有りなら配列を返す (pdf.js)
+      let _outline = null;
+      try { _outline = await pdfDoc.getOutline(); } catch (_e) { /* 取得失敗は「しおり無し」扱い(誤通知防止) */ }
       const sourceId = 'src_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-      sources.push({ id: sourceId, name: file.name, buffer: buffer });
+      sources.push({ id: sourceId, name: file.name, buffer: buffer, hasOutline: !!(_outline && _outline.length > 0) });
 
       const numPages = pdfDoc.numPages;
       for (let p = 1; p <= numPages; p++) {
@@ -11653,7 +11833,11 @@ window.PdfSanitize = (function () {
           if (dragIdx !== null && dragIdx !== toIdx) {
             const item = pages.splice(dragIdx, 1)[0];
             pages.splice(toIdx, 0, item);
+            // 並び替えると分割位置の意味が変わるため解除する。無言で消すと
+            // 「3分割のつもりが1本の結合PDF」事故になるので、消した時だけ告知する
+            const hadSplits = splits.size > 0;
             splits.clear();
+            if (hadSplits) setStatus('並び替えたため、分割ポイント(✂)を解除しました。必要なら付け直してください', 'info');
             render();
           }
         });
@@ -11723,6 +11907,9 @@ window.PdfSanitize = (function () {
         const allSourceIds = new Set();
         workingPages.forEach(p => allSourceIds.add(p.sourceId));
         const singleSource = allSourceIds.size === 1;
+        // 複数ソース結合 (戦略B) では copyPages がしおり(目次)を引き継がない。
+        // 元PDFのいずれかにしおりがある場合だけ、完了時に一言通知する (単一ソースのクローン方式では保持されるので出さない)
+        const outlineLost = !singleSource && sources.some(src => allSourceIds.has(src.id) && src.hasOutline);
 
         for (let s = 0; s < segments.length; s++) {
           const seg = segments[s];
@@ -11908,10 +12095,10 @@ window.PdfSanitize = (function () {
             finalName = `${defaultPrefix}_${ts}.pdf`;
           }
           triggerDownload(blob, finalName);
-          setStatus(`✓ ${workingPages.length}ページ · ${sizeMB} MB · DL完了`, 'success');
+          setStatus(`✓ ${workingPages.length}ページ · ${sizeMB} MB · DL完了${outlineLost ? ' — ※しおり(目次)は結合では引き継がれません' : ''}`, 'success');
           showSuccess({
             title: onlySelected ? 'ページ抽出完了' : 'PDF編集完了',
-            subtitle: 'ダウンロードが始まりました',
+            subtitle: outlineLost ? 'ダウンロードが始まりました ※しおり(目次)は結合では引き継がれません' : 'ダウンロードが始まりました',
             stats: [
               { label: '出力ページ', value: `${workingPages.length} ページ`, highlight: true },
               { label: 'ファイルサイズ', value: `${sizeMB} MB` },
@@ -11936,7 +12123,7 @@ window.PdfSanitize = (function () {
             zipName = `edited_split_${ts}.zip`;
           }
           triggerDownload(zipBlob, zipName);
-          setStatus(`✓ ${outputBlobs.length}個のPDFに分割 · ZIP ${sizeMB} MB · DL完了`, 'success');
+          setStatus(`✓ ${outputBlobs.length}個のPDFに分割 · ZIP ${sizeMB} MB · DL完了${outlineLost ? ' — ※しおり(目次)は結合では引き継がれません' : ''}`, 'success');
           const editStats = [
             { label: '分割数', value: `${outputBlobs.length} 個`, highlight: true },
             { label: '総ページ', value: `${workingPages.length} ページ` },
@@ -11952,7 +12139,7 @@ window.PdfSanitize = (function () {
           }
           showSuccess({
             title: 'PDF分割完了',
-            subtitle: compressedInfo ? `${outputBlobs.length}個を軽量化してZIPでDL` : `${outputBlobs.length}個のPDFをZIPでDL`,
+            subtitle: (compressedInfo ? `${outputBlobs.length}個を軽量化してZIPでDL` : `${outputBlobs.length}個のPDFをZIPでDL`) + (outlineLost ? ' ※しおり(目次)は結合では引き継がれません' : ''),
             stats: editStats
           });
           successFlag = true;
@@ -11992,6 +12179,7 @@ window.PdfSanitize = (function () {
     let pageSizesMm = [];
     let currentPageIndex = 0;
     let isRendering = false;
+    let renderPending = false; // 描画中に来た再描画要求(後勝ちで1件だけ覚え、描画完了後に消化)
     // 画像ライブラリ: [{ id, filename, mimeType, dataUrl, originalWidthPx, originalHeightPx }]
     let imageLibrary = [];
     // 配置: [{ id, pageIndex, imageId, xMm, yMm, widthMm, heightMm, aspectLocked, caption }]
@@ -13195,7 +13383,10 @@ window.PdfSanitize = (function () {
 
     // ----- 現在ページのレンダリング -----
     async function renderCurrentPage() {
-      if (!pdfjsDoc || isRendering) return;
+      if (!pdfjsDoc) return;
+      // 描画中の要求は捨てずに「最後の1件」として覚える(サムネ連打で表示と配置先がズレる事故防止)。
+      // renderCurrentPage は常に最新の currentPageIndex を描くため、フラグ1個で後勝ちキューになる
+      if (isRendering) { renderPending = true; return; }
       isRendering = true;
       try {
         // レイアウト確定を待つ（初回 editorPanel 表示直後の clientWidth=0 対策）
@@ -13258,8 +13449,15 @@ window.PdfSanitize = (function () {
         }
       } catch (err) {
         console.error('[imgPlace] ページ描画失敗:', err);
+        // 白紙キャンバスのまま当てずっぽうで配置されるのを防ぐため、画面にも警告を出す
+        setStatus('⚠ ページの表示に失敗しました（ページが大きすぎる可能性）。このページへの配置は控えてください', 'error');
       } finally {
         isRendering = false;
+        // 描画中に溜まった要求を消化(最新の currentPageIndex を描き直す)
+        if (renderPending) {
+          renderPending = false;
+          renderCurrentPage();
+        }
       }
     }
 
@@ -16585,8 +16783,9 @@ window.PdfSanitize = (function () {
       }
 
       // キャプションを Canvas で描画→PNG bytes に変換し PDF に embed
+      // maxWidthMm: 最大幅mm(=配置幅)。超える長文はプレビュー(nowrap+overflow:hidden)と同様に切り詰める
       // 戻り値: { pdfImage, widthMm, heightMm }
-      async function captionToPdfImage(cap, sizeMm) {
+      async function captionToPdfImage(cap, sizeMm, maxWidthMm) {
         // 300dpi相当の解像度で crispness 確保（1mm ≈ 11.8px）
         const intFontPx = Math.max(48, Math.round(sizeMm * 12));
         const fontDecl = (cap.bold ? 'bold ' : '') + intFontPx + 'px ' + (captionFont || 'sans-serif');
@@ -16600,8 +16799,15 @@ window.PdfSanitize = (function () {
         const descent = metrics.actualBoundingBoxDescent || (intFontPx * 0.25);
         const totalH = Math.max(2, Math.ceil(ascent + descent));
         // 実描画用 canvas
+        // 配置幅(maxWidthMm)を超える長文はプレビューと同様に canvas 幅で切り詰める
+        // (px↔mm 換算: totalH px が sizeMm*1.15 mm に対応。左から描画し、はみ出しは自動クリップ)
+        let drawWidthPx = textW;
+        if (typeof maxWidthMm === 'number' && maxWidthMm > 0) {
+          const maxWidthPx = Math.max(2, Math.floor(totalH * (maxWidthMm / (sizeMm * 1.15))));
+          if (drawWidthPx > maxWidthPx) drawWidthPx = maxWidthPx;
+        }
         const canvas = document.createElement('canvas');
-        canvas.width = textW;
+        canvas.width = drawWidthPx;
         canvas.height = totalH;
         const ctx = canvas.getContext('2d');
         ctx.font = fontDecl;
@@ -16612,9 +16818,9 @@ window.PdfSanitize = (function () {
         const dataUrl = canvas.toDataURL('image/png');
         const bytes = base64ToArrayBuffer(dataUrl.split(',')[1]);
         const pdfImage = await pdfDoc.embedPng(bytes);
-        // mm 換算: テキスト高さ = sizeMm * 1.15（display と整合）
+        // mm 換算: テキスト高さ = sizeMm * 1.15（display と整合）。幅は切り詰め後の canvas 幅から算出
         const heightMm = sizeMm * 1.15;
-        const widthMm = (textW / totalH) * heightMm;
+        const widthMm = (canvas.width / totalH) * heightMm;
         return { pdfImage, widthMm, heightMm };
       }
 
@@ -16626,19 +16832,29 @@ window.PdfSanitize = (function () {
       // rotate は反時計回り(PDF標準)。/Rotate は時計回り表示なので同角の CCW 描画で正立する。
       // 回転0ではアンカー・角度とも旧計算と完全一致(既存PDFへの回帰なし)。
       function viewportRectToDrawOpts(page, xMm, yMm, wMm, hMm) {
-        const size = page.getSize();
-        const W = size.width, H = size.height;
+        // プレビュー(pdf.js viewport)は CropBox 基準のため、MediaBox(getSize)基準で写像すると
+        // CropBox≠MediaBox の図面PDF(CAD/プロッタ出力)で全配置が一定量ズレる。
+        // → CropBox 寸法で写像し、最後に CropBox 原点を加算してページ絶対座標へ平行移動する。
+        // pdf-lib の getCropBox() は CropBox 未定義なら MediaBox を返す。万一の例外・不正値は getSize にフォールバック(従来動作)。
+        let crop = null;
+        try { crop = page.getCropBox(); } catch (e) { crop = null; }
+        if (!crop || !(crop.width > 0) || !(crop.height > 0)) {
+          const size = page.getSize();
+          crop = { x: 0, y: 0, width: size.width, height: size.height };
+        }
+        const W = crop.width, H = crop.height;
         let rot = ((page.getRotation().angle % 360) + 360) % 360;
         if (rot !== 90 && rot !== 180 && rot !== 270) rot = 0;   // 90の倍数以外(仕様外)は回転なし扱い
         const a = xMm * PT_PER_MM, b = yMm * PT_PER_MM;
         const w = wMm * PT_PER_MM, h = hMm * PT_PER_MM;
-        // アンカー = 画像の「見た目の左下」(viewport 座標 (a, b+h)) を回転前ページ座標へ逆写像
+        // アンカー = 画像の「見た目の左下」(viewport 座標 (a, b+h)) を回転前 CropBox 相対座標へ逆写像
         let x, y;
         if (rot === 90)       { x = b + h;       y = a; }
         else if (rot === 180) { x = W - a;       y = b + h; }
         else if (rot === 270) { x = W - (b + h); y = H - a; }
         else                  { x = a;           y = H - (b + h); }
-        return { x: x, y: y, width: w, height: h, rotate: degrees(rot) };
+        // CropBox 原点を加算(CropBox=MediaBox 原点(0,0) の通常PDFでは +0 で従来と完全一致)
+        return { x: x + crop.x, y: y + crop.y, width: w, height: h, rotate: degrees(rot) };
       }
 
       const totalPages = pdfDoc.getPageCount();
@@ -16670,8 +16886,8 @@ window.PdfSanitize = (function () {
               topYMm = cursorBelow;
               cursorBelow += stackHMm + 1;
             }
-            // Canvas で画像化
-            const capImg = await captionToPdfImage(cap, sizeMm);
+            // Canvas で画像化(配置幅で切り詰め: プレビューの overflow:hidden と整合)
+            const capImg = await captionToPdfImage(cap, sizeMm, pl.widthMm);
             // 揃え: placement 幅内での配置(見た目のmmで計算)
             const align = cap.align || 'center';
             let xCapMm;
@@ -16817,6 +17033,27 @@ window.PdfSanitize = (function () {
     try { localStorage.setItem(PDFC_SETTINGS_KEY, JSON.stringify(pdfcSettings)); }
     catch (e) { console.warn('pdfc settings save failed:', e); }
   }
+  /* M13対策: 別タブでの設定変更を反映する。storage イベントは「他タブが書いた時」
+     だけ発火する(自タブの savePdfcSettings では発火しない)。これが無いと各タブが
+     起動時スナップショットを抱え続け、古いタブの全量上書き保存で設定が無言で巻き戻る。 */
+  function reloadPdfcSettingsFromStorage() {
+    try {
+      var raw = localStorage.getItem(PDFC_SETTINGS_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      for (var k in PDFC_SETTINGS_DEFAULTS) {
+        if (!Object.prototype.hasOwnProperty.call(PDFC_SETTINGS_DEFAULTS, k)) continue;
+        pdfcSettings[k] = (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, k))
+          ? parsed[k] : PDFC_SETTINGS_DEFAULTS[k];
+      }
+    } catch (e) { console.debug('pdfc settings reload failed:', e); }
+  }
+  window.addEventListener('storage', function (e) {
+    if (e.key !== null && e.key !== PDFC_SETTINGS_KEY) return;   // key=null は clear() による全消し
+    reloadPdfcSettingsFromStorage();
+    // 設定モーダルを開いていたらトグル・チップ・プレビュー表示も即同期する
+    var modal = document.getElementById('settingsModal');
+    if (modal && modal.classList.contains('open')) syncSettingsUiFromState();
+  });
   /* グローバル公開: 各モードIIFE / window.PdfSanitize から設定を読む唯一の窓口 */
   window.PdfSanitizeSettings = {
     get: function (key) { return pdfcSettings[key]; },
@@ -16831,12 +17068,23 @@ window.PdfSanitize = (function () {
   /* 透かしプリセット定義 (HTML のチップ value と一致させる) */
   var WM_PRESETS = ['社外秘', '複製禁止', 'DRAFT'];
 
+  /* 絵文字(サロゲートペア=U+10000以上)は透かしフォント(NotoSansJP)にグリフが無く、
+     プレビューでは見えても出力PDFで欠落する。UI側の保存/プレビュー経路で除去する (M14) */
+  function wmStripUnsupported(t) {
+    return String(t == null ? '' : t).replace(/[\u{10000}-\u{10FFFF}]/gu, '');
+  }
+  /* 除去が起きた時だけ入力欄下の注記を表示する */
+  function wmShowEmojiNote(show) {
+    var note = document.getElementById('setWatermarkEmojiNote');
+    if (note) note.hidden = !show;
+  }
+
   /* いま焼かれる実効テキスト (カスタム選択中はテキスト欄の値) */
   function wmEffectiveText() {
     var customChecked = document.querySelector('.wm-chip-input[data-custom]:checked');
     if (customChecked) {
       var inp = document.getElementById('setWatermarkText');
-      return inp ? inp.value.trim() : '';
+      return inp ? wmStripUnsupported(inp.value).trim() : '';
     }
     var presetChecked = document.querySelector('.wm-chip-input[data-preset]:checked');
     return presetChecked ? presetChecked.value : '';
@@ -16881,7 +17129,8 @@ window.PdfSanitize = (function () {
     }
     var custom = (targetVal === '__custom__');
     if (customWrap) customWrap.hidden = !custom;
-    if (inp) inp.value = custom ? saved : '';
+    if (inp) inp.value = custom ? wmStripUnsupported(saved) : '';   // 旧保存の絵文字も表示前に除去 (M14)
+    wmShowEmojiNote(false);   // 開き直し/同期時は注記をリセット
 
     wmRenderPreview();
   }
@@ -16971,7 +17220,15 @@ window.PdfSanitize = (function () {
 
     if (inp) {
       inp.addEventListener('input', function () {
-        pdfcSettings.watermarkText = inp.value.trim();
+        // 絵文字は透かしに焼けない → 入力時点で除去し、除去が起きた時だけ注記を出す (M14)
+        var cleaned = wmStripUnsupported(inp.value);
+        if (cleaned !== inp.value) {
+          inp.value = cleaned;
+          wmShowEmojiNote(true);
+        } else {
+          wmShowEmojiNote(false);
+        }
+        pdfcSettings.watermarkText = cleaned.trim();
         wmRenderPreview();
         savePdfcSettings();
       });

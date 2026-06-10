@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.4** · 2026-06-10
+> **Version 3.7.5** · 2026-06-10
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.4)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.5)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,12 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.5 (2026-06-10) — Patch (無言失敗の根絶)
+- **適用できなかった透かし/メタデータ除去を必ず警告表示**: フォント取得失敗(オフライン/プロキシ遮断)・保護付きPDF・想定外エラーのどの経路でも、無言スキップせず画面下にトーストで通知
+- **メタ除去OFF+透かしONで透かしが入らない問題を修正**: 仕上げ処理の入口ゲートがメタ除去設定しか見ていなかった
+- **読込失敗の無言スキップを解消(PDF編集/変換/画像→PDF)**: エラー表示が直後に消されていたのを、消えないまとめ表示に変更。「このまま生成すると含まれません」も明示
+- **PDF編集: 保護付き(編集制限)PDFを読込時に明確にお断り**: 従来は「成功」表示のまま中身の壊れたPDFが出力されていた
 
 ### v3.7.4 (2026-06-10) — Patch (不具合修正)
 - **PDF編集: 単一PDFのページ並び替えが必ず失敗する問題を修正**: pdf-lib に存在しない movePage を呼んでいた(複数PDF結合時は別経路のため無事)。removePage+insertPage による移動に置き換え

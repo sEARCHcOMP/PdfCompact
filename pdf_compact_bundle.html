@@ -8255,7 +8255,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.4';
+  const APP_VERSION = '3.7.5';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -8358,6 +8358,7 @@ window.PdfSanitize = (function () {
 
   // step: メタデータ8項目クリア + XMP削除
   function stepStripMetadata(pdfDoc, PDFLib) {
+    if (!isEnabled()) return;   // メタ除去OFF(透かしだけONで process が走った時)は何も消さない
     var PDFName = PDFLib.PDFName;
     // --- 情報辞書(Document Info)から8項目を物理削除 ---
     // setXxx('') だと空文字 () が残るので、辞書から直接 delete する
@@ -8392,6 +8393,28 @@ window.PdfSanitize = (function () {
   // 透かし (rank2 / v3.7.0) — 以下5関数 + フォントキャッシュは必ず IIFE 内
   // (isWatermarkEnabled / getWatermarkText が私有の api・LS_KEY を参照する)
   // ====================================================================
+
+  // ---- 利用者向け警告トースト (無言スキップ防止) ----
+  // メタ除去/透かしが適用できなかった事実を、どのモードからでも見える形で必ず可視化する。
+  // 従来は静かにスキップ=「✓完了」のまま透かし無し/メタ残りのPDFを配布する事故経路があった。
+  // トーストはサニタイズ層が自前で出すので、各モード側の配線は不要(全出力経路を一括カバー)。
+  function notifyWarn(msg) {
+    try {
+      var el = document.getElementById('pdfcSanitizeWarn');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'pdfcSanitizeWarn';
+        el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(640px,90vw);z-index:99999;background:#7a2e0e;color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;line-height:1.6;box-shadow:0 6px 24px rgba(0,0,0,.35);cursor:pointer;';
+        el.title = 'クリックで閉じる';
+        el.addEventListener('click', function () { el.style.display = 'none'; });
+        document.body.appendChild(el);
+      }
+      el.textContent = '⚠ ' + msg;
+      el.style.display = 'block';
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(function () { el.style.display = 'none'; }, 12000);
+    } catch (_e) { try { console.warn('[PdfSanitize] ' + msg); } catch (_e2) {} }
+  }
 
   // ---- 透かし用 日本語フォント (Noto Sans JP) 遅延ローダ ----
   // imgPlace IIFE 内 NOTO_REGULAR_URL は helper から見えない為、同一 URL を複製。
@@ -8479,7 +8502,11 @@ window.PdfSanitize = (function () {
 
     var fontBytes;
     try { fontBytes = await loadWatermarkFont(); }
-    catch (_e) { return; }                       // CDN失敗等 → スキップ (出力継続)
+    catch (_e) {
+      // CDN失敗等 → 透かし無しで出力は継続するが、必ず利用者に見える形で知らせる
+      notifyWarn('透かしを入れられませんでした(透かし用フォントを取得できません。ネット接続を確認してください)。今回の出力PDFに透かしは入っていません。');
+      return;
+    }
     if (!fontBytes) return;
 
     var rgb = PDFLib.rgb;
@@ -8489,7 +8516,11 @@ window.PdfSanitize = (function () {
     try {
       pdfDoc.registerFontkit(fontkit);           // 冪等。透かしが要る時だけ登録
       font = await pdfDoc.embedFont(fontBytes, { subset: true });
-    } catch (_e) { return; }                      // 埋込失敗 → スキップ
+    } catch (_e) {
+      // 埋込失敗 → 透かし無しで出力は継続するが、必ず利用者に知らせる
+      notifyWarn('透かしを入れられませんでした(フォントの埋め込みに失敗)。今回の出力PDFに透かしは入っていません。');
+      return;
+    }
 
     var OPACITY = 0.18;
     var GRAY = rgb(0.5, 0.5, 0.5);
@@ -8580,8 +8611,10 @@ window.PdfSanitize = (function () {
     if (!blob) return blob;
     if (blob.type && blob.type.indexOf('pdf') === -1) return blob;
 
-    // 設定OFF → 完全パススルー
-    if (!isEnabled()) return blob;
+    // 設定OFF → 完全パススルー(メタ除去と透かしの両方がOFFの時だけ)
+    // 従来は isEnabled()=メタ除去設定だけを見ていたため、「メタ除去OFF+透かしON」の組合せで
+    // 透かしが無言で入らないバグがあった(stepStripMetadata 側には G4c の内部ガードを追加)
+    if (!isEnabled() && !isWatermarkEnabled()) return blob;
 
     var PDFLib = getPDFLib();
     if (!PDFLib || !PDFLib.PDFDocument) return blob; // ライブラリ未読込でも壊さない
@@ -8599,8 +8632,9 @@ window.PdfSanitize = (function () {
       //    = 平文化しない安全策(他モードの ignoreEncryption:true とは意図的に逆)
       pdfDoc = await PDFLib.PDFDocument.load(bytes, { updateMetadata: false });
     } catch (_e) {
-      // 暗号化 or 破損 → サニタイズ不可。原本を無加工で返す + フラグで通知
+      // 暗号化 or 破損 → サニタイズ不可。原本を無加工で返す + 必ず利用者に知らせる
       api._lastSkippedEncrypted = true;
+      notifyWarn('このPDFは保護付き(または破損)のため、メタデータ除去/透かしを適用できませんでした。中身はそのまま出力しています。');
       return blob;
     }
 
@@ -8612,7 +8646,8 @@ window.PdfSanitize = (function () {
       var outBytes = await pdfDoc.save({ updateMetadata: false });
       return new Blob([outBytes], { type: 'application/pdf' });
     } catch (_e) {
-      // 加工/保存で想定外エラー → 安全側で原本を返す(出力を止めない)
+      // 加工/保存で想定外エラー → 安全側で原本を返す(出力は止めないが、必ず利用者に知らせる)
+      notifyWarn('出力の仕上げ処理(メタデータ除去/透かし)でエラーが発生したため、未適用のまま出力しました。');
       return blob;
     }
   }
@@ -10154,6 +10189,7 @@ window.PdfSanitize = (function () {
 
       let loaded = 0;
       const total = arr.length;
+      const failedNames = [];   // 読込失敗を覚えて最後にまとめて表示(直後の setStatus('') で消さない)
 
       for (const origFile of arr) {
         try {
@@ -10177,7 +10213,7 @@ window.PdfSanitize = (function () {
                   resolve();
                 };
                 img.onerror = () => {
-                  setStatus(`⚠ ${pf.name} (TIFF変換結果) の表示に失敗`, 'error');
+                  failedNames.push(`${pf.name} (TIFF変換結果の表示に失敗)`);
                   try { URL.revokeObjectURL(url); } catch(_) {}
                   resolve();
                 };
@@ -10209,7 +10245,7 @@ window.PdfSanitize = (function () {
               img.onerror = () => {
                 // ブラウザ未対応形式 (古い Firefox の AVIF 等) or 破損ファイル
                 const ext = (origFile.name.split('.').pop() || '').toUpperCase();
-                setStatus(`⚠ ${origFile.name} は読込めません (${ext} がブラウザ未対応 or 破損ファイル)`, 'error');
+                failedNames.push(`${origFile.name} (${ext} がブラウザ未対応 or 破損)`);
                 try { URL.revokeObjectURL(url); } catch(_) {}
                 resolve();
               };
@@ -10218,11 +10254,12 @@ window.PdfSanitize = (function () {
           }
         } catch (err) {
           console.error('Load error:', origFile.name, err);
-          setStatus(`⚠ ${origFile.name} の読込に失敗`, 'error');
+          failedNames.push(origFile.name);
         }
         loaded++;
       }
-      setStatus('');
+      // 失敗があれば消えないまとめ表示(従来は直後の setStatus('') で一瞬で消えて無言スキップになっていた)
+      setStatus(failedNames.length ? `⚠ ${failedNames.length}件を読み込めませんでした: ${failedNames.join(' / ')}` : '');
       render();
       // ドロップ後、結果が見える位置へ自動スクロール
       requestAnimationFrame(() => {
@@ -10844,6 +10881,7 @@ window.PdfSanitize = (function () {
       // Build thumbnails for preview
       let loaded = 0;
       const total = arr.length;
+      const failedNames = [];   // 読込失敗を覚えて最後にまとめて表示(直後の setStatus('') で消さない)
       for (const origFile of arr) {
         try {
           setStatus(`読込中... (${loaded + 1}/${total}) ${origFile.name}`, 'info');
@@ -10901,11 +10939,12 @@ window.PdfSanitize = (function () {
           });
         } catch (err) {
           console.error('Conv load error:', origFile.name, err);
-          setStatus(`⚠ ${origFile.name} 読込失敗`, 'error');
+          failedNames.push(origFile.name);
         }
         loaded++;
       }
-      setStatus('');
+      // 失敗があれば消えないまとめ表示(保護付きPDF・破損ファイルの無言スキップ防止)
+      setStatus(failedNames.length ? `⚠ ${failedNames.length}件を読み込めませんでした(保護付き/破損の可能性): ${failedNames.join(' / ')}` : '');
       render();
       // ドロップ後、結果が見える位置へ自動スクロール
       requestAnimationFrame(() => {
@@ -11375,17 +11414,19 @@ window.PdfSanitize = (function () {
       setStatus('');
       let loaded = 0;
       const total = arr.length;
+      const failedNames = [];   // 読込失敗を覚えて最後にまとめて表示(直後の setStatus('') で消さない)
       for (const file of arr) {
         try {
           setStatus(`PDF読込中... (${loaded+1}/${total}) ${file.name}`, 'info');
           await addPdf(file);
         } catch (err) {
           console.error('PDF load failed:', file.name, err);
-          setStatus(`⚠ ${file.name} 読込失敗`, 'error');
+          failedNames.push(file.name + (String(err && err.message).indexOf('PROTECTED_PDF') >= 0 ? '(保護付きPDFのため編集不可)' : ''));
         }
         loaded++;
       }
-      setStatus('');
+      // 失敗があれば消えないまとめ表示。このまま生成するとその分は入らない事も明示(無言欠落防止)
+      setStatus(failedNames.length ? `⚠ ${failedNames.length}件を読み込めませんでした: ${failedNames.join(' / ')} — このまま生成すると、その分は含まれません` : '');
       render();
       // ドロップ後、結果が見える位置へ自動スクロール
       requestAnimationFrame(() => {
@@ -11397,6 +11438,14 @@ window.PdfSanitize = (function () {
       const buffer = await file.arrayBuffer();
       const pdfJsBuf = buffer.slice(0);
       const pdfDoc = await pdfjsLib.getDocument({ data: pdfJsBuf }).promise;
+      // 保護付き(オーナーパスワード/編集制限)PDF は読込時点で弾く。
+      // pdf-lib 1.17.1 は復号できないため、ignoreEncryption:true で強行すると
+      // 「成功」表示のまま中身の壊れたPDFを出力してしまう(プレビューは pdf.js が
+      // 透過復号するので正常に見え、提出後に発覚する最悪パターン)。
+      // getPermissions() は暗号化なしなら null、保護付きなら権限配列を返す。
+      let _perms = null;
+      try { _perms = await pdfDoc.getPermissions(); } catch (_e) { /* 判定不能は通す(誤遮断防止) */ }
+      if (_perms !== null) throw new Error('PROTECTED_PDF');
       const sourceId = 'src_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
       sources.push({ id: sourceId, name: file.name, buffer: buffer });
 

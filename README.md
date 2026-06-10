@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.3** · 2026-06-04
+> **Version 3.7.4** · 2026-06-10
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.3)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.7.4)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,10 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.7.4 (2026-06-10) — Patch (不具合修正)
+- **PDF編集: 単一PDFのページ並び替えが必ず失敗する問題を修正**: pdf-lib に存在しない movePage を呼んでいた(複数PDF結合時は別経路のため無事)。removePage+insertPage による移動に置き換え
+- **PDFに画像配置: 回転ページ(/Rotate 90/180/270)で配置画像・キャプションの位置と向きが出力で狂う問題を修正**: スキャンPDF等でプレビューは正しいのに出力だけズレていた。回転前座標への逆写像+同角回転描画で「見た目どおり」に焼くよう実装(回転なしページは従来と完全に同一)
 
 ### v3.7.3 (2026-06-04) — Patch (UX)
 - **更新通知バナーの自動スクロールをループ式に変更**: 往復(下→上に戻る)から「一番下まで→少し待つ→先頭から再スクロール」のループに。ニュースティッカー的で読みやすい

@@ -8255,7 +8255,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.7.3';
+  const APP_VERSION = '3.7.4';
   // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
@@ -11717,24 +11717,22 @@ window.PdfSanitize = (function () {
                 page.setRotation(degrees((existing + p.rotation) % 360));
               }
             }
-            // Re-sort pages to match user's desired order
-            // We do this by getting current indices and reordering.
-            // Because of the complexity of moving pages, we take a simpler path:
-            // use movePage — pdf-lib provides this.
-            // Re-derive current index map after any move (pages shift)
+            // 並び順をユーザーの希望順に揃える。
+            // 注意: pdf-lib 1.17.1 に movePage は存在しない(呼ぶと TypeError で生成が必ず失敗していた)。
+            // removePage + insertPage の組で同じ「ページ移動」を行う(insertPage は同一文書の PDFPage を受け取れる)。
             const desiredOrder = seg.map(p => p.sourcePageIndex);
             // Only reorder if the current order differs from desired order
             const currentOrder = sortedKept.slice();
             if (desiredOrder.some((v, i) => v !== currentOrder[i])) {
-              // Use movePage: outDoc has pages in sortedKept order initially
-              // We want them in desiredOrder.
-              // For each target position, find page currently matching desired[i] and move it.
+              // outDoc のページは sortedKept 順で並んでいる → desiredOrder へ1枚ずつ移動
               const workingOrder = currentOrder.slice();
               for (let i = 0; i < desiredOrder.length; i++) {
                 const want = desiredOrder[i];
                 const curPos = workingOrder.indexOf(want);
                 if (curPos !== i && curPos >= 0) {
-                  outDoc.movePage(outDoc.getPage(curPos), i);
+                  const pg = outDoc.getPage(curPos);
+                  outDoc.removePage(curPos);
+                  outDoc.insertPage(i, pg);
                   // Update workingOrder to reflect move
                   const [moved] = workingOrder.splice(curPos, 1);
                   workingOrder.splice(i, 0, moved);
@@ -16518,7 +16516,7 @@ window.PdfSanitize = (function () {
     async function generatePdfOutput() {
       if (!basePdfBytes) throw new Error('ベースPDF未読込');
       if (!window.PDFLib) throw new Error('pdf-lib が読み込まれていません');
-      const { PDFDocument } = window.PDFLib;
+      const { PDFDocument, degrees } = window.PDFLib;
       const pdfDoc = await PDFDocument.load(basePdfBytes.slice(0), { ignoreEncryption: true });
 
       // 画像 embed をキャッシュ（同じ画像を複数配置時に再 embed 回避）
@@ -16571,31 +16569,43 @@ window.PdfSanitize = (function () {
         return { pdfImage, widthMm, heightMm };
       }
 
+      // ----- /Rotate 付きページ対応の座標変換 -----
+      // 配置座標 (pl.xMm/yMm) は pdf.js viewport(回転後の見た目・左上原点)基準、
+      // pdf-lib の描画は回転前のページ座標系(左下原点)。回転を無視すると
+      // スキャンPDF(/Rotate 90 等)でプレビューと全く違う場所・向きに焼かれるため、
+      // 見た目の矩形を回転前座標へ逆写像し、画像自体も同角だけ回して「見た目どおり」に焼く。
+      // rotate は反時計回り(PDF標準)。/Rotate は時計回り表示なので同角の CCW 描画で正立する。
+      // 回転0ではアンカー・角度とも旧計算と完全一致(既存PDFへの回帰なし)。
+      function viewportRectToDrawOpts(page, xMm, yMm, wMm, hMm) {
+        const size = page.getSize();
+        const W = size.width, H = size.height;
+        let rot = ((page.getRotation().angle % 360) + 360) % 360;
+        if (rot !== 90 && rot !== 180 && rot !== 270) rot = 0;   // 90の倍数以外(仕様外)は回転なし扱い
+        const a = xMm * PT_PER_MM, b = yMm * PT_PER_MM;
+        const w = wMm * PT_PER_MM, h = hMm * PT_PER_MM;
+        // アンカー = 画像の「見た目の左下」(viewport 座標 (a, b+h)) を回転前ページ座標へ逆写像
+        let x, y;
+        if (rot === 90)       { x = b + h;       y = a; }
+        else if (rot === 180) { x = W - a;       y = b + h; }
+        else if (rot === 270) { x = W - (b + h); y = H - a; }
+        else                  { x = a;           y = H - (b + h); }
+        return { x: x, y: y, width: w, height: h, rotate: degrees(rot) };
+      }
+
       const totalPages = pdfDoc.getPageCount();
       for (const pl of placements) {
         if (pl.pageIndex < 0 || pl.pageIndex >= totalPages) continue;
         const img = imageLibrary.find(im => im.id === pl.imageId);
         if (!img) continue;
         const page = pdfDoc.getPage(pl.pageIndex);
-        // TODO: ページが Rotation 90/180/270 を持つ PDF (スマホスキャナ等) で
-        // pl.xMm/yMm は pdf.js viewport (回転後) 座標、page.getSize() は回転前。
-        // 配置がズレるので将来 page.getRotation() で座標変換を実装する。
-        // 現在は回転 0 を前提とした計算 (CAD 出力 PDF は通常 0 なので大半は問題なし)
-        const pageSize = page.getSize();
         const embedded = await getEmbedded(img);
 
-        // 画像描画: mm/左上 → pt/左下
-        const xPt     = pl.xMm * PT_PER_MM;
-        const widthPt = pl.widthMm * PT_PER_MM;
-        const heightPt= pl.heightMm * PT_PER_MM;
-        const yPt     = pageSize.height - (pl.yMm * PT_PER_MM) - heightPt;
-        page.drawImage(embedded, { x: xPt, y: yPt, width: widthPt, height: heightPt });
+        // 画像描画: 見た目の矩形(mm/左上) → 回転補正込みの drawImage 引数
+        page.drawImage(embedded, viewportRectToDrawOpts(page, pl.xMm, pl.yMm, pl.widthMm, pl.heightMm));
 
-        // キャプション描画（renderPlacements と同じスタッキング）
+        // キャプション描画（renderPlacements と同じスタッキング。座標は全て見た目(viewport)のmmで組み、最後に同じ変換を通す）
         normalizeCaptions(pl);
         if (pl.captions && pl.captions.length > 0) {
-          const placementXPt     = pl.xMm * PT_PER_MM;
-          const placementWidthPt = pl.widthMm * PT_PER_MM;
           let cursorBelow = pl.yMm + pl.heightMm + 3;
           let cursorAbove = pl.yMm - 3;
           for (const cap of pl.captions) {
@@ -16613,22 +16623,13 @@ window.PdfSanitize = (function () {
             }
             // Canvas で画像化
             const capImg = await captionToPdfImage(cap, sizeMm);
-            const capWidthPt  = capImg.widthMm  * PT_PER_MM;
-            const capHeightPt = capImg.heightMm * PT_PER_MM;
-            // 揃え: placement 幅内での配置
+            // 揃え: placement 幅内での配置(見た目のmmで計算)
             const align = cap.align || 'center';
-            let xCapPt;
-            if (align === 'left')       xCapPt = placementXPt;
-            else if (align === 'right') xCapPt = placementXPt + placementWidthPt - capWidthPt;
-            else                        xCapPt = placementXPt + (placementWidthPt - capWidthPt) / 2;
-            // Y軸反転
-            const yCapPt = pageSize.height - (topYMm + capImg.heightMm) * PT_PER_MM;
-            page.drawImage(capImg.pdfImage, {
-              x: xCapPt,
-              y: yCapPt,
-              width: capWidthPt,
-              height: capHeightPt
-            });
+            let xCapMm;
+            if (align === 'left')       xCapMm = pl.xMm;
+            else if (align === 'right') xCapMm = pl.xMm + pl.widthMm - capImg.widthMm;
+            else                        xCapMm = pl.xMm + (pl.widthMm - capImg.widthMm) / 2;
+            page.drawImage(capImg.pdfImage, viewportRectToDrawOpts(page, xCapMm, topYMm, capImg.widthMm, capImg.heightMm));
           }
         }
       }

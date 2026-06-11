@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.7.6** · 2026-06-10
+> **Version 3.8.0** · 2026-06-11
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.7.6)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.8.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,14 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.8.0 (2026-06-11) — Minor (🖤 黒塗り/墨消し)
+- **新モード「黒塗り」を追加**: 契約書・施主情報・図面の機密箇所を本物の不可逆消去で隠す
+- 文字をクリック or なぞるだけで黒塗り(重複は自動マージ、小さい文字・CADの細字も対応)。文字データの無いスキャンPDFは「自由に四角」で囲んで指定
+- **偽リダクション構造排除**: 黒塗りページは200DPIで画像化し文字を物理消去(黒の下に文字が残らない)。出力前に「本当に消えたか」を機械検証し、1文字でも残れば出力中止
+- 黒塗りの無いページはベクター温存(高画質のまま)。タブレットのタップ/長押しにも対応
+- 大判図面(A3横/A1横)も画面幅にフィットして高精細表示。4K等の大画面では表示エリアを自動拡大、低解像度PCでも自動で収まる
+- ×削除は確認付き、出力中の編集ロック、保護付きPDFの明確な案内など安全設計
 
 ### v3.7.6 (2026-06-10) — Patch (総仕上げ: 監査残課題19件を全て修正)
 - **軽量化**: OCR有効時に出力ページが約2倍に膨張する問題(Tesseractの70dpi解釈)を元寸法へ補正/グレースケール・CMYK画像の再圧縮で他ビューアにて色化けする問題(ColorSpaceをDeviceRGBに統一)/保護付きPDFのエラーを日本語+回避策付きに/全件処理済みで「開始」再クリック時に設定変更が無視される問題(全件リセットして再圧縮)

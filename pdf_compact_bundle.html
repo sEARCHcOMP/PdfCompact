@@ -84,6 +84,10 @@
     position: relative;
     z-index: 1;
   }
+  /* 黒塗りタブ表示中はコンテナ幅の上限を解放: 紙面を見る作業なので大画面(4K等)では広く使う。
+     左右48pxの余白だけ残して画面いっぱいまで(取説ドック分は html の padding-right で既に差し引かれる)。
+     他のタブは従来の960px(読みもの幅)のまま。:has 未対応の古いブラウザでは単に従来幅に留まる(安全側) */
+  .container:has(#modeRedact.active) { max-width: calc(100% - 48px); }
 
   /* ============ HERO ============ */
   .hero { margin-bottom: 48px; }
@@ -17224,6 +17228,7 @@ window.PdfSanitize = (function () {
     var _redactResizeTimer = null;
     window.addEventListener('resize', function(){
       if (!st.pdf || st.exporting) return;
+      if (!wrap.offsetParent) return;   // 黒塗りタブ非表示中は再描画しない(隠れたパネルは幅0で誤フィットするため)
       if (_redactResizeTimer) clearTimeout(_redactResizeTimer);
       _redactResizeTimer = setTimeout(function(){ renderPage(st.pageIndex); }, 200);
     });

@@ -1,0 +1,13 @@
+{
+  "name": "pdf-compact-dev",
+  "private": true,
+  "description": "PDF Compact の開発用ツール(テスト/リリース)。配布物はpdf_compact_bundle.html単体でランタイム依存なし",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "serve": "node serve.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

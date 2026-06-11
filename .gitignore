@@ -1,0 +1,6 @@
+node_modules/
+test-results/
+playwright-report/
+.claude/
+# ZIP展開の残骸(ステージング用、成果物ではない)
+/PDF_Compact/

@@ -1962,6 +1962,9 @@
   .redact-canvas-wrap canvas { display: block; }
   .redact-textlayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; }
   .redact-textlayer span { color: transparent; position: absolute; white-space: pre; transform-origin: 0 0; }
+  /* pdf.js が行間に挿入する <br> を消す。複数行ドラッグ選択時、この br にも選択ハイライトが乗って
+     ページ中央に「縦に光るライン」が出る(+ getClientRects にゼロ幅ゴミ矩形が混ざる)。span は絶対配置なので br を消しても位置は不変 */
+  .redact-textlayer br { display: none; }
   .redact-textlayer ::selection { background: rgba(0,64,255,.35); }
   .redact-textlayer ::-moz-selection { background: rgba(0,64,255,.35); }
   /* ホバー可視化(v3.8.x): text モードで span に乗ると薄青く光る=黒塗りできる合図。光らなければ文字データ無し→四角へ。box-shadowリングは隣接spanへ滲むので付けない(背景のみ) */
@@ -16942,20 +16945,33 @@ window.PdfSanitize = (function () {
       if (gen !== st.renderGen) return;   // 待っている間に新しい頁送りが始まった→この呼び出しは捨てる(canvasを触らない)
       var vp1 = page.getViewport({ scale: 1 });
       st.pageWidthPt = vp1.width;   // 表示中ページの実幅(pt・回転込み)。dedupe の横ギャップ許容の実寸クランプに使う
-      var scale = Math.min(2, Math.max(1, 920 / vp1.width));
-      var vp = page.getViewport({ scale: scale });
-      var W = Math.ceil(vp.width), H = Math.ceil(vp.height);
-      // canvas を実寸表示(CSS縮小しない=テキストレイヤーと完全一致)
-      canvas.width = W; canvas.height = H;
-      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-      wrap.style.width = W + 'px'; wrap.style.height = H + 'px';
+      // 表示はステージ幅にフィット(A3横/A1横でも横スクロール不要)、レンダは高DPIで鮮明に。
+      // 旧 920/vp1.width 方式は A3横(幅1190pt)で scale=1 止まり → 画面外 + 72DPI相当で荒かった。
+      var stageEl = wrap.closest('.redact-stage');
+      var availW = stageEl ? stageEl.clientWidth : 0;
+      if (availW < 50) availW = 900;   // 非表示等で測れない時は標準幅(表示時に resize で再描画され正される)
+      availW -= 16;                     // 枠+スクロールバー分の安全マージン(確実に収める)
+      var displayScale = Math.min(2, availW / vp1.width);            // 大判は縮小、小さい紙は最大2倍まで
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var renderScale = Math.max(displayScale * dpr * 1.5, 1.5);     // 縮小表示でもCAD線/小文字をくっきり(最低1.5倍レンダ)
+      var MAXDIM = 4000;               // 巨大図面(A0等)で canvas がメモリ爆発しない上限
+      var maxRender = Math.max(vp1.width, vp1.height) * renderScale;
+      if (maxRender > MAXDIM) renderScale = renderScale * MAXDIM / maxRender;
+      var rvp = page.getViewport({ scale: renderScale });            // 高解像度レンダ用
+      var dvp = page.getViewport({ scale: displayScale });           // 表示・テキスト層用(canvasのCSSサイズと一致)
+      var RW = Math.ceil(rvp.width), RH = Math.ceil(rvp.height);
+      var DW = Math.floor(dvp.width), DH = Math.floor(dvp.height);   // 表示は切り捨て=ステージ幅を1pxも超えない
+      // canvas のバッキングは高解像度(RW×RH)、CSS表示はフィットサイズ(DW×DH)=ブラウザが縮小して鮮明に
+      canvas.width = RW; canvas.height = RH;
+      canvas.style.width = DW + 'px'; canvas.style.height = DH + 'px';
+      wrap.style.width = DW + 'px'; wrap.style.height = DH + 'px';
       var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
-      st.renderTask = page.render({ canvasContext: ctx, viewport: vp });
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,RW,RH);
+      st.renderTask = page.render({ canvasContext: ctx, viewport: rvp });
       try { await st.renderTask.promise; } catch(e){ if (e && e.name === 'RenderingCancelledException') return; }
       st.renderTask = null;
-      // テキストレイヤー構築(世代を渡し、追い越された旧呼び出しの span 書き込みを止める)
-      await buildTextLayer(page, vp, scale, gen);
+      // テキストレイヤー構築(表示ビューポートで配置=CSS表示サイズの canvas と完全一致。世代を渡し旧呼び出しの span 書き込みを止める)
+      await buildTextLayer(page, dvp, displayScale, gen);
       if (gen !== st.renderGen) return;   // 追い越されていたら頁番号・ボタン・セルを触らない(旧頁による上書き=表示の嘘を防ぐ)
       pageInfo.textContent = (idx+1) + ' / ' + st.numPages;
       prevBtn.disabled = (idx === 0);
@@ -17203,6 +17219,14 @@ window.PdfSanitize = (function () {
     }
     overlay.addEventListener('pointerup', endDraw);
     overlay.addEventListener('pointercancel', endDraw);
+
+    // ウィンドウ幅が変わったら表示倍率を取り直して再フィット(黒塗り矩形は比率保持なので残る)
+    var _redactResizeTimer = null;
+    window.addEventListener('resize', function(){
+      if (!st.pdf || st.exporting) return;
+      if (_redactResizeTimer) clearTimeout(_redactResizeTimer);
+      _redactResizeTimer = setTimeout(function(){ renderPage(st.pageIndex); }, 200);
+    });
 
     // ---- ボタン配線 ----
     if (modeTextBtn) modeTextBtn.addEventListener('click', function(){ setMode('text'); });

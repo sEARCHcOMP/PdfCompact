@@ -144,14 +144,8 @@
           statusEl.classList.toggle('error', type === 'error');
         }
       }
-      // ミラー: アクションバー中央 (罫線スナップなど検出結果が常時見える位置)
-      const abs = document.getElementById('imgPlaceActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      // ミラー: アクションバー中央 (罫線スナップなど検出結果が常時見える位置)。共有helperに委譲
+      setActionBarStatus(document.getElementById('imgPlaceActionBarStatus'), text, type);
     }
 
     // ----- クリア（やり直し） -----

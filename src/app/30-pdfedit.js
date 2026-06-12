@@ -35,19 +35,9 @@
       });
     }
 
+    // 00-core の共有 setModeStatus に委譲(プライマリ statusMsg + アクションバー・ミラー)
     function setStatus(text, type) {
-      if (statusMsg) {
-        statusMsg.textContent = text;
-        statusMsg.className = 'img-status-msg' + (type ? ' ' + type : '');
-      }
-      // ミラー: アクションバー中央 (常時見える位置)
-      const abs = document.getElementById('editActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      setModeStatus(statusMsg, document.getElementById('editActionBarStatus'), text, type);
     }
     // escapeHtml は 00-core の共有版を使う
 

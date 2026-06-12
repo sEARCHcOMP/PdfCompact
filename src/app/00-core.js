@@ -1267,6 +1267,27 @@ window.PdfSanitize = (function () {
     return 1;
   }
 
+  // 共有: アクションバー中央のステータス・ミラー(全モード共通の「常時見える位置」表示)。
+  // 各モードの setStatus が末尾でこれを呼ぶ。el が無ければ何もしない。
+  function setActionBarStatus(el, text, type) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('visible', !!text);
+    el.classList.toggle('error', type === 'error');
+    el.classList.toggle('success', type === 'success' || type === 'done');
+  }
+
+  // 共有: img-status-msg スタイル(className切替)の setStatus 本体 + アクションバー・ミラー。
+  // img2pdf/convert/pdfedit はプライマリ要素とミラー要素IDだけ違う完全同型なのでこれに委譲する。
+  // (imgPlace はプライマリが display 切替の別仕様のため、ミラー部分だけ setActionBarStatus を使う)
+  function setModeStatus(primaryEl, mirrorEl, text, type) {
+    if (primaryEl) {
+      primaryEl.textContent = text;
+      primaryEl.className = 'img-status-msg' + (type ? ' ' + type : '');
+    }
+    setActionBarStatus(mirrorEl, text, type);
+  }
+
   clearBtn.addEventListener('click', () => {
     files = [];
     render();

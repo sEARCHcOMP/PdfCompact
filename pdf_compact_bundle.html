@@ -9713,6 +9713,27 @@ window.PdfSanitize = (function () {
     return 1;
   }
 
+  // 共有: アクションバー中央のステータス・ミラー(全モード共通の「常時見える位置」表示)。
+  // 各モードの setStatus が末尾でこれを呼ぶ。el が無ければ何もしない。
+  function setActionBarStatus(el, text, type) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('visible', !!text);
+    el.classList.toggle('error', type === 'error');
+    el.classList.toggle('success', type === 'success' || type === 'done');
+  }
+
+  // 共有: img-status-msg スタイル(className切替)の setStatus 本体 + アクションバー・ミラー。
+  // img2pdf/convert/pdfedit はプライマリ要素とミラー要素IDだけ違う完全同型なのでこれに委譲する。
+  // (imgPlace はプライマリが display 切替の別仕様のため、ミラー部分だけ setActionBarStatus を使う)
+  function setModeStatus(primaryEl, mirrorEl, text, type) {
+    if (primaryEl) {
+      primaryEl.textContent = text;
+      primaryEl.className = 'img-status-msg' + (type ? ' ' + type : '');
+    }
+    setActionBarStatus(mirrorEl, text, type);
+  }
+
   clearBtn.addEventListener('click', () => {
     files = [];
     render();
@@ -10455,19 +10476,9 @@ window.PdfSanitize = (function () {
       return results;
     }
 
+    // 00-core の共有 setModeStatus に委譲(プライマリ statusMsg + アクションバー・ミラー)
     function setStatus(text, type) {
-      if (statusMsg) {
-        statusMsg.textContent = text;
-        statusMsg.className = 'img-status-msg' + (type ? ' ' + type : '');
-      }
-      // ミラー: アクションバー中央 (常時見える位置)
-      const abs = document.getElementById('imgActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      setModeStatus(statusMsg, document.getElementById('imgActionBarStatus'), text, type);
     }
 
     async function addPdfFile(file) {
@@ -11127,19 +11138,9 @@ window.PdfSanitize = (function () {
         || ['image/png', 'image/jpeg', 'image/jpg', 'image/avif'].includes(f.type);
     }
 
+    // 00-core の共有 setModeStatus に委譲(プライマリ statusMsg + アクションバー・ミラー)
     function setStatus(text, type) {
-      if (statusMsg) {
-        statusMsg.textContent = text;
-        statusMsg.className = 'img-status-msg' + (type ? ' ' + type : '');
-      }
-      // ミラー: アクションバー中央 (常時見える位置)
-      const abs = document.getElementById('convActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      setModeStatus(statusMsg, document.getElementById('convActionBarStatus'), text, type);
     }
 
     async function convertHeicToJpeg(file) {
@@ -11712,19 +11713,9 @@ window.PdfSanitize = (function () {
       });
     }
 
+    // 00-core の共有 setModeStatus に委譲(プライマリ statusMsg + アクションバー・ミラー)
     function setStatus(text, type) {
-      if (statusMsg) {
-        statusMsg.textContent = text;
-        statusMsg.className = 'img-status-msg' + (type ? ' ' + type : '');
-      }
-      // ミラー: アクションバー中央 (常時見える位置)
-      const abs = document.getElementById('editActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      setModeStatus(statusMsg, document.getElementById('editActionBarStatus'), text, type);
     }
     // escapeHtml は 00-core の共有版を使う
 
@@ -12531,14 +12522,8 @@ window.PdfSanitize = (function () {
           statusEl.classList.toggle('error', type === 'error');
         }
       }
-      // ミラー: アクションバー中央 (罫線スナップなど検出結果が常時見える位置)
-      const abs = document.getElementById('imgPlaceActionBarStatus');
-      if (abs) {
-        abs.textContent = text || '';
-        abs.classList.toggle('visible', !!text);
-        abs.classList.toggle('error', type === 'error');
-        abs.classList.toggle('success', type === 'success' || type === 'done');
-      }
+      // ミラー: アクションバー中央 (罫線スナップなど検出結果が常時見える位置)。共有helperに委譲
+      setActionBarStatus(document.getElementById('imgPlaceActionBarStatus'), text, type);
     }
 
     // ----- クリア（やり直し） -----

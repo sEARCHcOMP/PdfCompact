@@ -9562,8 +9562,9 @@ window.PdfSanitize = (function () {
     }
   }
 
+  // 全モード共通(script トップレベル)。String() で非文字列入力にも堅牢(旧モード版の挙動に統一)
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
   function formatSize(bytes) {
@@ -10514,9 +10515,7 @@ window.PdfSanitize = (function () {
       });
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // escapeHtml は 00-core の共有版を使う
 
     function render() {
       const imageCount = files.filter(f => f.type === 'image').length;
@@ -11293,9 +11292,7 @@ window.PdfSanitize = (function () {
       return url;
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // escapeHtml は 00-core の共有版を使う
 
     function render() {
       const convFbar = document.getElementById('convFilenameBar');
@@ -11683,9 +11680,7 @@ window.PdfSanitize = (function () {
         abs.classList.toggle('success', type === 'success' || type === 'done');
       }
     }
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // escapeHtml は 00-core の共有版を使う
 
     ['dragenter','dragover'].forEach(e => {
       dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); });

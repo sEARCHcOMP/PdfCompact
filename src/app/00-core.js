@@ -1116,8 +1116,9 @@ window.PdfSanitize = (function () {
     }
   }
 
+  // 全モード共通(script トップレベル)。String() で非文字列入力にも堅牢(旧モード版の挙動に統一)
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
   function formatSize(bytes) {

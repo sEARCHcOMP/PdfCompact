@@ -341,9 +341,7 @@
       return url;
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // escapeHtml は 00-core の共有版を使う
 
     function render() {
       const convFbar = document.getElementById('convFilenameBar');

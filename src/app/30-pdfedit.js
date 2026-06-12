@@ -49,9 +49,7 @@
         abs.classList.toggle('success', type === 'success' || type === 'done');
       }
     }
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // escapeHtml は 00-core の共有版を使う
 
     ['dragenter','dragover'].forEach(e => {
       dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); });

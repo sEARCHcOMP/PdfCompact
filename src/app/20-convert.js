@@ -517,16 +517,7 @@
       throw new Error('Unknown format: ' + format);
     }
 
-    function triggerDownload(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 200);
-    }
+    // download は 00-core の共有 triggerDownload(blob, name) を使う(script トップレベルで全モード共通)
 
     async function convertAll() {
       if (files.length === 0 || isConverting) return;

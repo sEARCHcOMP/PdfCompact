@@ -406,11 +406,8 @@
       var note = document.getElementById('redactExportNote');
       if (note){ note.textContent = msg || ''; note.style.color = isErr ? 'var(--warn, #cc5520)' : ''; }
     }
-    function rdTriggerDownload(blob, name){
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(_){ } }, 1500);
-    }
+    // 00-core の共有 triggerDownload に委譲(実装を一本化。rd-名は呼び出し側の都合で残す)
+    function rdTriggerDownload(blob, name){ triggerDownload(blob, name); }
     function rdTotalRects(){ var n=0; for (var k in st.rects){ if (st.rects[k]) n += st.rects[k].length; } return n; }
     function rdAffectedPages(){ return Object.keys(st.rects).filter(function(k){ return st.rects[k] && st.rects[k].length; }); }
 

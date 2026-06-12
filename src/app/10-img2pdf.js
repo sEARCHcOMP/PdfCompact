@@ -648,11 +648,7 @@
         const sizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
         const qLabel = { light: '軽量', standard: '標準', high: '高画質', original: '無圧縮' }[qualityKey];
 
-        // Trigger download
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        // Custom filename from user, or fall back to auto name
+        // ファイル名を決めて、download は 00-core の共有 triggerDownload に委譲
         const imgFilenameEl = document.getElementById('imgFilenameInput');
         const userName = (imgFilenameEl && imgFilenameEl.value || '').trim();
         const hasPdf = files.some(f => f.type === 'pdf');
@@ -665,11 +661,7 @@
         } else {
           finalBase = `${prefix}_${ts}`;
         }
-        a.download = `${finalBase}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 200);
+        triggerDownload(pdfBlob, `${finalBase}.pdf`);
 
         // v3.7.6 (M3): 失敗分を除いた実ページ数で表示し、失敗があれば消えないまとめ表示にする
         const okPages = totalOutputPages - genFailedNames.length;

@@ -10883,11 +10883,7 @@ window.PdfSanitize = (function () {
         const sizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
         const qLabel = { light: '軽量', standard: '標準', high: '高画質', original: '無圧縮' }[qualityKey];
 
-        // Trigger download
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        // Custom filename from user, or fall back to auto name
+        // ファイル名を決めて、download は 00-core の共有 triggerDownload に委譲
         const imgFilenameEl = document.getElementById('imgFilenameInput');
         const userName = (imgFilenameEl && imgFilenameEl.value || '').trim();
         const hasPdf = files.some(f => f.type === 'pdf');
@@ -10900,11 +10896,7 @@ window.PdfSanitize = (function () {
         } else {
           finalBase = `${prefix}_${ts}`;
         }
-        a.download = `${finalBase}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 200);
+        triggerDownload(pdfBlob, `${finalBase}.pdf`);
 
         // v3.7.6 (M3): 失敗分を除いた実ページ数で表示し、失敗があれば消えないまとめ表示にする
         const okPages = totalOutputPages - genFailedNames.length;
@@ -11477,16 +11469,7 @@ window.PdfSanitize = (function () {
       throw new Error('Unknown format: ' + format);
     }
 
-    function triggerDownload(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 200);
-    }
+    // download は 00-core の共有 triggerDownload(blob, name) を使う(script トップレベルで全モード共通)
 
     async function convertAll() {
       if (files.length === 0 || isConverting) return;
@@ -12045,16 +12028,7 @@ window.PdfSanitize = (function () {
       });
     }
 
-    function triggerDownload(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 200);
-    }
+    // download は 00-core の共有 triggerDownload(blob, name) を使う(script トップレベルで全モード共通)
 
     async function generateOutput(opts) {
       opts = opts || {};
@@ -17618,11 +17592,8 @@ window.PdfSanitize = (function () {
       var note = document.getElementById('redactExportNote');
       if (note){ note.textContent = msg || ''; note.style.color = isErr ? 'var(--warn, #cc5520)' : ''; }
     }
-    function rdTriggerDownload(blob, name){
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(_){ } }, 1500);
-    }
+    // 00-core の共有 triggerDownload に委譲(実装を一本化。rd-名は呼び出し側の都合で残す)
+    function rdTriggerDownload(blob, name){ triggerDownload(blob, name); }
     function rdTotalRects(){ var n=0; for (var k in st.rects){ if (st.rects[k]) n += st.rects[k].length; } return n; }
     function rdAffectedPages(){ return Object.keys(st.rects).filter(function(k){ return st.rects[k] && st.rects[k].length; }); }
 

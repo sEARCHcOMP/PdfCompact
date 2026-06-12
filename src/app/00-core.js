@@ -1189,6 +1189,47 @@ window.PdfSanitize = (function () {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }
 
+  // ============================================================
+  // 共有: ページ座標系の写像 (全モード共通・script トップレベル)
+  // ============================================================
+  // 「pdf.js viewport(回転・CropBox 適用後の見た目、左上原点・y下向き)」の矩形を、
+  // 「pdf-lib の drawImage/drawRectangle 引数(回転前ページ座標、左下原点・y上向き)」へ変換する。
+  // このプロジェクトで最も事故が多かった数学(v3.7.4 C2 / v3.7.6 H9)。テストは tests/geometry.spec.js
+  // (回転4方向 × CropBox 有無のゴールデン)が固定している。挙動を変えたら必ずそこで検証すること。
+  //
+  // 知識メモ:
+  // - 黒塗り(redact)は入力(クリック→ratio)も出力(ratio→ラスタ canvas)も viewport 空間で完結する
+  //   ため、この写像は不要(構造的に回転・CropBox と整合。geometry.spec.js で証明済み)。
+  // - 透かし(stepDrawWatermark)は buildPageOrientationMatrix(行列 push 方式)で同等の回転補正をしている。
+  //
+  // 引数は全て pt。anchor=矩形の「見た目の左上」(x,y) と幅 w・高さ h(見た目の軸)。
+  // 戻り値: { x, y, width, height, rotate } — pdf-lib drawImage にそのまま渡せる。
+  // rotate は反時計回り(PDF標準)。/Rotate は時計回り表示なので同角の CCW 描画で正立する。
+  function viewportRectToPageDrawOpts(page, xPt, yPt, wPt, hPt) {
+    // プレビュー(pdf.js viewport)は CropBox 基準。MediaBox(getSize)基準で写像すると
+    // CropBox≠MediaBox の図面PDF(CAD/プロッタ出力)で全配置が一定量ズレる。
+    // → CropBox 寸法で写像し、最後に CropBox 原点を加算してページ絶対座標へ平行移動する。
+    // pdf-lib の getCropBox() は CropBox 未定義なら MediaBox を返す。万一の例外・不正値は getSize にフォールバック。
+    let crop = null;
+    try { crop = page.getCropBox(); } catch (e) { crop = null; }
+    if (!crop || !(crop.width > 0) || !(crop.height > 0)) {
+      const size = page.getSize();
+      crop = { x: 0, y: 0, width: size.width, height: size.height };
+    }
+    const W = crop.width, H = crop.height;
+    let rot = ((page.getRotation().angle % 360) + 360) % 360;
+    if (rot !== 90 && rot !== 180 && rot !== 270) rot = 0;   // 90の倍数以外(仕様外)は回転なし扱い
+    const a = xPt, b = yPt, w = wPt, h = hPt;
+    // アンカー = 矩形の「見た目の左下」(viewport 座標 (a, b+h)) を回転前 CropBox 相対座標へ逆写像
+    let x, y;
+    if (rot === 90)       { x = b + h;       y = a; }
+    else if (rot === 180) { x = W - a;       y = b + h; }
+    else if (rot === 270) { x = W - (b + h); y = H - a; }
+    else                  { x = a;           y = H - (b + h); }
+    // CropBox 原点を加算(CropBox=MediaBox 原点(0,0) の通常PDFでは +0)
+    return { x: x + crop.x, y: y + crop.y, width: w, height: h, rotate: window.PDFLib.degrees(rot) };
+  }
+
   clearBtn.addEventListener('click', () => {
     files = [];
     render();

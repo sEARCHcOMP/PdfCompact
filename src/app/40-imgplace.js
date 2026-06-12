@@ -4654,36 +4654,11 @@
       }
 
       // ----- /Rotate 付きページ対応の座標変換 -----
-      // 配置座標 (pl.xMm/yMm) は pdf.js viewport(回転後の見た目・左上原点)基準、
-      // pdf-lib の描画は回転前のページ座標系(左下原点)。回転を無視すると
-      // スキャンPDF(/Rotate 90 等)でプレビューと全く違う場所・向きに焼かれるため、
-      // 見た目の矩形を回転前座標へ逆写像し、画像自体も同角だけ回して「見た目どおり」に焼く。
-      // rotate は反時計回り(PDF標準)。/Rotate は時計回り表示なので同角の CCW 描画で正立する。
-      // 回転0ではアンカー・角度とも旧計算と完全一致(既存PDFへの回帰なし)。
+      // 数学の本体は 00-core の共有 viewportRectToPageDrawOpts(pt単位)に一本化した。
+      // ここは mm→pt 換算するだけの薄いラッパー(配置座標 pl.* は mm 管理のため)。
+      // 検証は tests/geometry.spec.js(回転4方向 × CropBox 有無のゴールデン)。
       function viewportRectToDrawOpts(page, xMm, yMm, wMm, hMm) {
-        // プレビュー(pdf.js viewport)は CropBox 基準のため、MediaBox(getSize)基準で写像すると
-        // CropBox≠MediaBox の図面PDF(CAD/プロッタ出力)で全配置が一定量ズレる。
-        // → CropBox 寸法で写像し、最後に CropBox 原点を加算してページ絶対座標へ平行移動する。
-        // pdf-lib の getCropBox() は CropBox 未定義なら MediaBox を返す。万一の例外・不正値は getSize にフォールバック(従来動作)。
-        let crop = null;
-        try { crop = page.getCropBox(); } catch (e) { crop = null; }
-        if (!crop || !(crop.width > 0) || !(crop.height > 0)) {
-          const size = page.getSize();
-          crop = { x: 0, y: 0, width: size.width, height: size.height };
-        }
-        const W = crop.width, H = crop.height;
-        let rot = ((page.getRotation().angle % 360) + 360) % 360;
-        if (rot !== 90 && rot !== 180 && rot !== 270) rot = 0;   // 90の倍数以外(仕様外)は回転なし扱い
-        const a = xMm * PT_PER_MM, b = yMm * PT_PER_MM;
-        const w = wMm * PT_PER_MM, h = hMm * PT_PER_MM;
-        // アンカー = 画像の「見た目の左下」(viewport 座標 (a, b+h)) を回転前 CropBox 相対座標へ逆写像
-        let x, y;
-        if (rot === 90)       { x = b + h;       y = a; }
-        else if (rot === 180) { x = W - a;       y = b + h; }
-        else if (rot === 270) { x = W - (b + h); y = H - a; }
-        else                  { x = a;           y = H - (b + h); }
-        // CropBox 原点を加算(CropBox=MediaBox 原点(0,0) の通常PDFでは +0 で従来と完全一致)
-        return { x: x + crop.x, y: y + crop.y, width: w, height: h, rotate: degrees(rot) };
+        return viewportRectToPageDrawOpts(page, xMm * PT_PER_MM, yMm * PT_PER_MM, wMm * PT_PER_MM, hMm * PT_PER_MM);
       }
 
       const totalPages = pdfDoc.getPageCount();

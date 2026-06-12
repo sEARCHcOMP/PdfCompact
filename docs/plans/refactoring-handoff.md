@@ -171,7 +171,7 @@
 - 編集対象:
   - `src/styles.css` — CSS(3,906行)
   - `src/guide.html` — 取説(text/html 埋め込み、3,377行)
-  - `src/app.js` — アプリJS(9,550行。まだ1ファイル。次の増分で mode-*.js に分割予定)
+  - `src/app/*.js` — アプリJSを連番7分割: 00-core(version/update/sanitize/軽量化が混在)/ 10-img2pdf / 20-convert / 30-pdfedit / 40-imgplace(4,834行)/ 50-redact / 90-settings。build.js が連番ソート順で連結
   - `src/index.template.html` — 骨格(DOCTYPE/CDN/タブ/パネルHTML/閉じタグ。sentinel 3つを持つ)
 - ビルド: `node build.js`(src → bundle 生成、**連結のみ・CRLF維持・minifyしない**)
 - 検証: `node build.js --check`(bundle と src が byte一致か。書き換えない)

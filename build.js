@@ -15,29 +15,39 @@ const ROOT = __dirname;
 const TEMPLATE = path.join(ROOT, 'src', 'index.template.html');
 const OUT = path.join(ROOT, 'pdf_compact_bundle.html');
 
-// sentinel → 差し込むファイル。各 sentinel はテンプレート内にちょうど1回出現する。
-const INCLUDES = [
-  { sentinel: '/*@@INCLUDE:styles.css@@*/', file: 'src/styles.css' },
-  { sentinel: '@@INCLUDE:guide.html@@',     file: 'src/guide.html' },
-  { sentinel: '/*@@INCLUDE:app.js@@*/',     file: 'src/app.js' },
-];
+// アプリJS は src/app/*.js をファイル名のソート順に連結して1つの payload にする。
+//   00-core / 10-img2pdf / 20-convert / 30-pdfedit / 40-imgplace / 50-redact / 90-settings
+//   連番プレフィックスで順序を固定(連結のみ・区切り文字なし=byte一致)。
+function buildAppPayload() {
+  const dir = path.join(ROOT, 'src', 'app');
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort();
+  if (files.length === 0) throw new Error('src/app/ に .js が無い');
+  return files.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('');
+}
+
+// sentinel → 差し込むペイロード。各 sentinel はテンプレート内にちょうど1回出現する。
+function getIncludes() {
+  return [
+    { sentinel: '/*@@INCLUDE:styles.css@@*/', payload: fs.readFileSync(path.join(ROOT, 'src/styles.css'), 'utf8') },
+    { sentinel: '@@INCLUDE:guide.html@@',     payload: fs.readFileSync(path.join(ROOT, 'src/guide.html'), 'utf8') },
+    { sentinel: '/*@@INCLUDE:app.js@@*/',     payload: buildAppPayload() },
+  ];
+}
 
 function build() {
   let html = fs.readFileSync(TEMPLATE, 'utf8');
-  for (const inc of INCLUDES) {
+  for (const inc of getIncludes()) {
     const parts = html.split(inc.sentinel);
     if (parts.length !== 2) {
       throw new Error(`sentinel ${inc.sentinel} がテンプレに ${parts.length - 1} 回(1回であるべき)`);
     }
-    const payload = fs.readFileSync(path.join(ROOT, inc.file), 'utf8');
-    html = parts[0] + payload + parts[1];
+    html = parts[0] + inc.payload + parts[1];
   }
-  // ガード: 取説(text/html)以外に </script> が紛れていないか等の健全性チェック
-  //   guideSource の中に </script> があると外側が早期終了する(過去 v3.3.5 の事故)。
-  //   ここでは「app.js 内に </script> リテラルが無い」ことだけ機械チェックする。
-  const app = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
+  // ガード: guideSource(text/html)以外に </script> が紛れていないか。
+  //   <script> 内に </script> リテラルがあると外側が早期終了する(過去 v3.3.5 の事故)。
+  const app = buildAppPayload();
   if (/<\/script>/i.test(app)) {
-    throw new Error('app.js に </script> が含まれている(<script>が早期終了する)。エスケープが必要');
+    throw new Error('src/app/*.js に </script> が含まれている(<script>が早期終了する)。エスケープが必要');
   }
   return html;
 }

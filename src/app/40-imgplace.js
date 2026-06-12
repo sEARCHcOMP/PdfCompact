@@ -2786,48 +2786,10 @@
       return null;
     }
 
-    // JPEG の EXIF orientation タグ (0x0112) を読み取る (1=正、3=180°、6=90°CW、8=90°CCW、他)
+    // EXIF orientation は 00-core の共有 readExifOrientation に委譲(等価性は tests/exif.spec.js)。
+    // 1=正、3=180°、6=90°CW、8=90°CCW、他。範囲外/失敗は 1(下流の switch も 1 扱い)。
     function getJpegOrientation(buffer) {
-      try {
-        const view = new DataView(buffer);
-        if (view.byteLength < 4 || view.getUint16(0, false) !== 0xFFD8) return 1;
-        let offset = 2;
-        while (offset < view.byteLength - 1) {
-          if (view.getUint8(offset) !== 0xFF) return 1;
-          const marker = view.getUint16(offset, false);
-          offset += 2;
-          if (marker === 0xFFE1) { // APP1 (EXIF)
-            if (offset + 8 > view.byteLength) return 1;
-            const segLen = view.getUint16(offset, false);
-            if (view.getUint32(offset + 2, false) !== 0x45786966) { // "Exif"
-              offset += segLen;
-              continue;
-            }
-            const tiffOffset = offset + 8;
-            if (tiffOffset + 8 > view.byteLength) return 1;
-            const little = view.getUint16(tiffOffset, false) === 0x4949;
-            const ifdOffset = view.getUint32(tiffOffset + 4, little);
-            const tagsOffset = tiffOffset + ifdOffset;
-            if (tagsOffset + 2 > view.byteLength) return 1;
-            const numEntries = view.getUint16(tagsOffset, little);
-            for (let i = 0; i < numEntries; i++) {
-              const entryOffset = tagsOffset + 2 + i * 12;
-              if (entryOffset + 10 > view.byteLength) return 1;
-              if (view.getUint16(entryOffset, little) === 0x0112) {
-                return view.getUint16(entryOffset + 8, little);
-              }
-            }
-            return 1;
-          } else {
-            if ((marker & 0xFF00) !== 0xFF00) return 1;
-            const segLen = view.getUint16(offset, false);
-            offset += segLen;
-          }
-        }
-      } catch (e) {
-        console.warn('[imgPlace] EXIF parse error:', e);
-      }
-      return 1;
+      return readExifOrientation(buffer);
     }
 
     // 画像読込: 'from-image' で正規化済みbitmap取得、SOF寸法と比較して

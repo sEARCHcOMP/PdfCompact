@@ -420,46 +420,14 @@
       });
     }
 
-    // v3.7.6 (H4): JPEG の EXIF Orientation タグ (1-8) を読む軽量パーサ。
-    // SOI → セグメント走査 → APP1 "Exif" → TIFF ヘッダ → IFD0 の 0x0112 を探す。
-    // JPEG以外・タグ無し・解析失敗時は 1 (補正不要) を返す = 従来どおり生パススルーに倒す。
+    // EXIF Orientation は 00-core の共有 readExifOrientation に委譲(File の先頭256KBを読む)。
+    // 失敗時は 1(補正不要=従来どおり生パススルー)。等価性は tests/exif.spec.js が固定。
     async function readJpegOrientation(file) {
       try {
-        const buf = await file.slice(0, 256 * 1024).arrayBuffer();
-        const view = new DataView(buf);
-        if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return 1; // SOI が無い = JPEGでない
-        let offset = 2;
-        while (offset + 4 <= view.byteLength) {
-          const marker = view.getUint16(offset);
-          if ((marker & 0xFF00) !== 0xFF00) return 1;  // マーカー列が壊れている
-          if (marker === 0xFFDA) return 1;             // SOS (画像データ) 以降に EXIF は無い
-          const size = view.getUint16(offset + 2);
-          if (size < 2) return 1;                      // 不正サイズ (無限ループ防止)
-          if (marker === 0xFFE1 && offset + 18 <= view.byteLength &&
-              view.getUint32(offset + 4) === 0x45786966) { // "Exif"
-            const tiff = offset + 10;                  // TIFF ヘッダ先頭
-            const endianMark = view.getUint16(tiff);
-            if (endianMark !== 0x4949 && endianMark !== 0x4D4D) return 1;
-            const little = endianMark === 0x4949;      // "II" = リトルエンディアン
-            const ifd = tiff + view.getUint32(tiff + 4, little);
-            if (ifd + 2 > view.byteLength) return 1;
-            const count = view.getUint16(ifd, little);
-            for (let i = 0; i < count; i++) {
-              const entry = ifd + 2 + i * 12;
-              if (entry + 12 > view.byteLength) return 1;
-              if (view.getUint16(entry, little) === 0x0112) { // 0x0112 = Orientation
-                const val = view.getUint16(entry + 8, little);
-                return (val >= 1 && val <= 8) ? val : 1;
-              }
-            }
-            return 1;                                  // Orientation タグ無し
-          }
-          offset += 2 + size;
-        }
+        return readExifOrientation(await file.slice(0, 256 * 1024).arrayBuffer());
       } catch (e) {
-        // 解析失敗は「補正不要」扱い (従来どおり生パススルー)
+        return 1;
       }
-      return 1;
     }
 
     // Rasterize one PDF page at a target quality; returns {dataUrl, nativeW, nativeH}

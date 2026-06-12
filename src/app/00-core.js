@@ -1225,6 +1225,48 @@ window.PdfSanitize = (function () {
     return { x: x + crop.x, y: y + crop.y, width: w, height: h, rotate: window.PDFLib.degrees(rot) };
   }
 
+  // 共有: JPEG の EXIF Orientation タグ (1-8) を ArrayBuffer から読む(全モード共通)。
+  // SOI → セグメント走査 → APP1 "Exif" → TIFF → IFD0 の 0x0112 を探す。リトル/ビッグ両対応。
+  // JPEG以外・タグ無し・解析失敗・範囲外は 1(補正不要)。旧 img2pdf版/imgplace版と等価
+  // であることは tests/exif.spec.js(orientation 1-8 × 両エンディアン)が固定している。
+  function readExifOrientation(buffer) {
+    try {
+      const view = new DataView(buffer);
+      if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return 1; // SOI が無い = JPEGでない
+      let offset = 2;
+      while (offset + 4 <= view.byteLength) {
+        const marker = view.getUint16(offset);
+        if ((marker & 0xFF00) !== 0xFF00) return 1;  // マーカー列が壊れている
+        if (marker === 0xFFDA) return 1;             // SOS 以降に EXIF は無い
+        const size = view.getUint16(offset + 2);
+        if (size < 2) return 1;                      // 不正サイズ(無限ループ防止)
+        if (marker === 0xFFE1 && offset + 18 <= view.byteLength &&
+            view.getUint32(offset + 4) === 0x45786966) { // "Exif"
+          const tiff = offset + 10;
+          const endianMark = view.getUint16(tiff);
+          if (endianMark !== 0x4949 && endianMark !== 0x4D4D) return 1;
+          const little = endianMark === 0x4949;      // "II" = リトルエンディアン
+          const ifd = tiff + view.getUint32(tiff + 4, little);
+          if (ifd + 2 > view.byteLength) return 1;
+          const count = view.getUint16(ifd, little);
+          for (let i = 0; i < count; i++) {
+            const entry = ifd + 2 + i * 12;
+            if (entry + 12 > view.byteLength) return 1;
+            if (view.getUint16(entry, little) === 0x0112) { // 0x0112 = Orientation
+              const val = view.getUint16(entry + 8, little);
+              return (val >= 1 && val <= 8) ? val : 1;
+            }
+          }
+          return 1;                                  // Orientation タグ無し
+        }
+        offset += 2 + size;
+      }
+    } catch (e) {
+      // 解析失敗は「補正不要」扱い
+    }
+    return 1;
+  }
+
   clearBtn.addEventListener('click', () => {
     files = [];
     render();

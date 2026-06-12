@@ -93,8 +93,13 @@
 - 取説(guideSource, 3,377行)は `<script type="text/html">` の中身。**この中に絶対 `</script>` を書いてはいけない**(HTMLパーサが type 無視で早期終了する。過去 v3.3.5 で実際に取説全体を破壊した)。分割後のビルドで「連結後に `</script>` が紛れ込んでないか」を機械チェックする gate を build.js に入れる。
 - CSS/HTML/JS の連結順序が現行と1バイトでも変わると挙動が変わりうる(CSSカスケード、スクリプト実行順)。**現行bundleの並び順を正準とする**。
 
-### Phase 2 の罠 (一番慎重に)
-- 共通化は「1モード移行ごとにスモーク→リリース」。**6モード一気に共通化に乗せ替えるな**。1つずつ。
+### Phase 2 の進捗と実地で分かったこと (2026-06-12)
+- **完了した増分**(全てテスト green を維持): (1)triggerDownload統合 (2)escapeHtml統合 (3)**viewportToPage統合=最重要を完了**(tests/geometry.spec.js のゴールデン10ケースで固定) (4)formatSize→formatBytes統合。
+- **「script トップレベルの共有版に寄せて、モードの shadow を削除」パターンが Phase 2 の主力。これは全部やり切った**(triggerDownload/escapeHtml/formatSize)。`grep "function <名>"` でモード再定義ゼロを確認済み。次に同種を探すなら shadow スキャン(00-coreトップレベル関数 vs モード再定義)を回せばよいが、現状ゼロ。
+- **BusyLock は統合するな(精査結論)**: 実行中フラグ4つは2概念混在。isConverting/st.exporting=長処理ロック、st.rendering/isRendering=描画レース制御で相棒機構が別(redact=renderGen / imgPlace=renderPending)。無理に1つにすると壊す。残すのが正解。
+- **暗号化検出も統合するな**: モードごとに意図的に違う(サニタイズ=絶対平文化しない/pdfedit=getPermissions→PROTECTED_PDF/imgplace等=ignoreEncryption:true)。accidental dup でなく deliberate divergence。
+- **残りの Phase 2 は「軽い安全削除」では無くなる**。setStatus/failedNames はモード別DOMでパラメータ化が要る中規模リファクタ。EXIF統一は2実装(img2pdf=File→async / imgPlace=ArrayBuffer→sync+SOF寸法比較)でコア(IFDパース)は同アルゴだが周辺が別。**EXIFをやるなら先に imgPlace 側の orientation ゴールデンテスト(EXIF注入JPEGを配置→正立確認)を張ってから**。これは独立した集中タスク。
+- 共通化は「1モード移行ごとにスモーク」。**6モード一気に乗せ替えるな**。1つずつ。
 - `viewportToPage()` 統一は、imgPlace と黒塗りで**座標系の規約が微妙に違う可能性**がある(原点、Y軸、mm/pt、padYの有無)。安易に「同じやろ」で統合せず、両者の現行出力を固定(ゴールデン)して、統合後も**ピクセル一致**することを確認してから乗せ替える。ここが回帰の最大リスク。
 - `catch(_e){}` 35箇所の棚卸し: 全部が事故やない。「暗号化PDFは load で throw させて原本返す」のように**意図的な握り**もある(PdfSanitize がそれ)。3分類する: ①notifyWarnすべき(無言失敗)②failedNamesに積むべき③理由コメント付きで握ってOK。**一律で notifyWarn にすると五月蝿くて使い物にならん**。文脈を読め。
 

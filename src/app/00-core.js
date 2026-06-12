@@ -1059,7 +1059,7 @@ window.PdfSanitize = (function () {
     fileList.innerHTML = files.map(f => {
       const status = f.status;
       const rowClass = status === 'done' ? ' done' : status === 'error' ? ' error' : status === 'processing' ? ' processing' : '';
-      let metaHtml = `<span class="meta-tag">${formatSize(f.origSize)}</span>`;
+      let metaHtml = `<span class="meta-tag">${formatBytes(f.origSize)}</span>`;
       let statusHtml = '';
       let actionsHtml = '';
 
@@ -1076,7 +1076,7 @@ window.PdfSanitize = (function () {
         const reductionDisplay = reduction >= 0 ? `-${reduction}%` : `+${Math.abs(reduction)}%`;
         const reductionClass = reduction >= 0 ? 'reduction' : 'reduction-neg';
         metaHtml += `<span class="arrow">→</span>
-          <span class="meta-tag">${formatSize(f.newSize)}</span>
+          <span class="meta-tag">${formatBytes(f.newSize)}</span>
           <span class="${reductionClass}">${reductionDisplay}</span>`;
         if (modeLabel) {
           metaHtml += `<span class="meta-tag mode-tag">${modeLabel}モード</span>`;
@@ -1108,7 +1108,7 @@ window.PdfSanitize = (function () {
       const totalOrig = done.reduce((s, f) => s + f.origSize, 0);
       const totalNew = done.reduce((s, f) => s + f.newSize, 0);
       const totalRed = Math.round((1 - totalNew / totalOrig) * 100);
-      totalStats.innerHTML = `${files.length} ファイル ・ 完了 ${done.length} / 合計 <strong>${formatSize(totalOrig)} → ${formatSize(totalNew)}</strong> (-${totalRed}%)`;
+      totalStats.innerHTML = `${files.length} ファイル ・ 完了 ${done.length} / 合計 <strong>${formatBytes(totalOrig)} → ${formatBytes(totalNew)}</strong> (-${totalRed}%)`;
       downloadAllBtn.style.display = done.length > 1 ? '' : 'none';
     } else {
       totalStats.textContent = `${files.length} ファイル`;
@@ -1121,11 +1121,6 @@ window.PdfSanitize = (function () {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function formatSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
-  }
 
   window.removeFile = (id) => {
     files = files.filter(f => f.id != id);

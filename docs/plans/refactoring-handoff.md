@@ -93,8 +93,17 @@
 - 取説(guideSource, 3,377行)は `<script type="text/html">` の中身。**この中に絶対 `</script>` を書いてはいけない**(HTMLパーサが type 無視で早期終了する。過去 v3.3.5 で実際に取説全体を破壊した)。分割後のビルドで「連結後に `</script>` が紛れ込んでないか」を機械チェックする gate を build.js に入れる。
 - CSS/HTML/JS の連結順序が現行と1バイトでも変わると挙動が変わりうる(CSSカスケード、スクリプト実行順)。**現行bundleの並び順を正準とする**。
 
-### Phase 2 の進捗と実地で分かったこと (2026-06-12)
-- **完了した増分**(全てテスト green を維持): (1)triggerDownload統合 (2)escapeHtml統合 (3)**viewportToPage統合=最重要を完了**(tests/geometry.spec.js のゴールデン10ケースで固定) (4)formatSize→formatBytes統合。
+### Phase 2 完了 (2026-06-12) — 価値ある統合は全てやり切った
+- **完了した増分**(全てテスト green を維持、計6): (1)triggerDownload (2)escapeHtml (3)**viewportToPage=最重要**(tests/geometry.spec.js 10ケースで固定) (4)formatSize→formatBytes (5)**EXIFパーサ統合=要慎重項目**(tests/exif.spec.js 等価性で固定) (6)setStatus アクションバー・ミラー共有化。テストは 15→27本。
+- **「2実装で同バグ2回」(証拠A)は viewportToPage と EXIF の両方を解消済み**。純粋shadow(download/escapeHtml/formatSize)も完了。
+- **これ以上やらないと判断したもの(busywork/過剰設計のため)**:
+  - **failedNames 統合しない**: メッセージはモード別に意味ある差(「保護付き/破損の可能性」「このまま生成すると含まれません」)があり、コアの「配列に貯めて末尾表示」は既に正しく適用済み。一行三項演算子に helper を被せるのは過剰抽象。
+  - **catch(_e){} 棚卸しは不要**: 35箇所を triage した結果ほぼ全部が正当な防御的握り潰し(localStorage[プライベートモードで throw]/setPointerCapture[解放済みで throw]/revokeObjectURL/ocrWorker.terminate のクリーンアップ等)。隠れた無言失敗バグは無い。35個コメント足すのは低価値。
+  - **00-core の軽量化モード絡みほぐしは Phase 3 の仕事**(モード構造統一の一部)。
+- **次は Phase 3(モード統一構造)**: imgPlace(4,834行)の内部分割が本丸 / 全モードを同じライフサイクル形(init/onFiles/render/generate)に / デッドコード削除(承認制)。または Phase 4(取説・CSS整理)。どちらも独立した集中フェーズ。
+
+#### 旧メモ(Phase 2 着手前の予想。実地で上記に更新済み)
+- viewportToPage統一: imgPlace と黒塗りで座標系規約が違う可能性 → ゴールデンで固定してから、で実施済み(黒塗りは写像不要と判明)。
 - **「script トップレベルの共有版に寄せて、モードの shadow を削除」パターンが Phase 2 の主力。これは全部やり切った**(triggerDownload/escapeHtml/formatSize)。`grep "function <名>"` でモード再定義ゼロを確認済み。次に同種を探すなら shadow スキャン(00-coreトップレベル関数 vs モード再定義)を回せばよいが、現状ゼロ。
 - **BusyLock は統合するな(精査結論)**: 実行中フラグ4つは2概念混在。isConverting/st.exporting=長処理ロック、st.rendering/isRendering=描画レース制御で相棒機構が別(redact=renderGen / imgPlace=renderPending)。無理に1つにすると壊す。残すのが正解。
 - **暗号化検出も統合するな**: モードごとに意図的に違う(サニタイズ=絶対平文化しない/pdfedit=getPermissions→PROTECTED_PDF/imgplace等=ignoreEncryption:true)。accidental dup でなく deliberate divergence。

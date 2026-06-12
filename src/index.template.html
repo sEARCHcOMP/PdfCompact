@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PDF Compact — 軽量化 · OCR · 画像→PDF</title>
+<!-- iOS PWA: 「ホーム画面に追加」でアドレスバーなしのアプリ風表示 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PDF Compact">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0040ff">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'><stop offset='.45' stop-color='%230040ff' stop-opacity='0'/><stop offset='1' stop-color='%230040ff' stop-opacity='.75'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%230a0c12'/><rect width='32' height='32' rx='7' fill='url(%23s)'/><g stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 20 14 20 14 28'/><polyline points='26 12 18 12 18 4'/><line x1='18' y1='12' x2='28' y2='2'/><line x1='4' y1='30' x2='14' y2='20'/></g></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'><stop offset='.45' stop-color='%230040ff' stop-opacity='0'/><stop offset='1' stop-color='%230040ff' stop-opacity='.75'/></linearGradient></defs><rect width='32' height='32' rx='7' fill='%230a0c12'/><rect width='32' height='32' rx='7' fill='url(%23s)'/><g stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 20 14 20 14 28'/><polyline points='26 12 18 12 18 4'/><line x1='18' y1='12' x2='28' y2='2'/><line x1='4' y1='30' x2='14' y2='20'/></g></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<!-- fontkit (pdf-lib に日本語フォントを埋め込むのに必要、imgPlace タブの PDF 出力で使用) -->
+<script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/UTIF/3.1.0/UTIF.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/*@@INCLUDE:styles.css@@*/</style>
+</head>
+<body>
+<!-- 順次配置モード中、カーソル追従で「次に置かれる画像」プレビュー -->
+<div class="imgplace-queue-preview" id="imgPlaceQueuePreview" aria-hidden="true">
+  <img id="imgPlaceQueuePreviewImg" alt="">
+  <div class="qp-info">
+    <div class="qp-name" id="imgPlaceQueuePreviewName"></div>
+    <div class="qp-meta" id="imgPlaceQueuePreviewMeta"></div>
+  </div>
+</div>
+
+<!-- 新バージョン通知バナー (起動時チェック → 新版あれば右上に表示) -->
+<div id="updateBanner" class="update-banner" style="display:none;" role="alert">
+  <div class="update-banner-content">
+    <span class="update-banner-icon">🆙</span>
+    <span class="update-banner-text">
+      新バージョン <span class="update-banner-version" id="updateVersionLabel"></span> が公開されました
+      <span class="update-banner-notes" id="updateNotes"></span>
+    </span>
+    <button class="update-banner-dl-btn" id="updateDlBtn" type="button">DL</button>
+    <button class="update-banner-close" id="updateCloseBtn" type="button" title="このバージョンの通知を閉じる" aria-label="閉じる">×</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="shared-top">
+    <div class="brand">
+        <div class="brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 14 10 14 10 20"/>
+            <polyline points="20 10 14 10 14 4"/>
+            <line x1="14" y1="10" x2="21" y2="3"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">PDF<em>Compact</em><span class="brand-version" id="appVersionTopLabel"></span></div>
+          <div class="brand-tag">COMPRESS · OCR · BATCH</div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <button class="help-btn" onclick="openGuide()" aria-label="使い方ガイドを開く">
+          <span class="help-q">?</span>
+          <span>使い方</span>
+        </button>
+        <button class="help-btn settings-btn" id="settingsBtn" onclick="openSettings()" aria-label="設定を開く" title="設定">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>設定</span>
+          <span class="settings-new-dot" aria-hidden="true"></span>
+        </button>
+        <div class="settings-coachmark" id="settingsCoachmark" role="status">
+          <button class="cm-close" type="button" id="settingsCoachClose" aria-label="閉じる">×</button>
+          <div class="cm-title">⚙️ 設定が増えました</div>
+          <div class="cm-sub">出力するPDFの<b>メタデータ除去</b>や<b>透かし(社外秘など)</b>をここで設定できます。</div>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          LOCAL PROCESSING
+        </div>
+      </div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="compress">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 14 10 14 10 20"/>
+        <polyline points="20 10 14 10 14 4"/>
+        <line x1="14" y1="10" x2="21" y2="3"/>
+        <line x1="3" y1="21" x2="10" y2="14"/>
+      </svg>
+      <span>PDF軽量化</span>
+    </button>
+    <button class="mode-tab" data-mode="imgtopdf">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      <span>画像→PDF</span>
+    </button>
+    <button class="mode-tab" data-mode="convert">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="17 1 21 5 17 9"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+        <polyline points="7 23 3 19 7 15"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      </svg>
+      <span>変換</span>
+    </button>
+    <button class="mode-tab" data-mode="pdfedit">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <path d="M10.5 13.5l2 2 4-4"/>
+      </svg>
+      <span>PDF編集</span>
+    </button>
+    <button class="mode-tab" data-mode="imgplace">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="9" cy="9" r="2"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span>PDFに画像配置</span>
+    </button>
+    <button class="mode-tab" data-mode="redact">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <rect x="7" y="10" width="10" height="4" rx="0.5" fill="currentColor" stroke="none"/>
+      </svg>
+      <span>黒塗り</span>
+    </button>
+  </div>
+
+  <div class="mode-panel active" id="modeCompress">
+    <header class="hero">
+      <div class="hero-headline">
+      <h1>重いPDFを、<br><em>一瞬で軽く。</em></h1>
+      <p class="hero-sub">
+        書類はテキストを保持したまま、現場写真はOCRで検索可能に。<br>
+        すべてブラウザ内で完結するプロ向けPDF最適化ツール。<br>
+        <a href="javascript:void(0)" onclick="openGuide()" style="color:var(--accent); text-decoration:none; font-weight:600; white-space:nowrap; cursor:pointer;">使い方ガイド →</a>
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">100%</div>
+          <div class="hero-stat-label">LOCAL</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">∞</div>
+          <div class="hero-stat-label">BATCH</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">OCR</div>
+          <div class="hero-stat-label">JP + EN</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dropzone" id="dropzone">
+    <div class="dropzone-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="drop-text">PDFをドロップ、またはクリックして選択</div>
+    <div class="drop-hint">複数ファイルまとめてOK</div>
+    <input type="file" id="fileInput" accept="application/pdf" multiple>
+  </div>
+
+  <div class="panel">
+    <div class="step-head">
+      <span class="step-num">01</span>
+      <div>
+        <h2 class="step-title">処理モード</h2>
+        <p class="step-desc">ファイルの種類に応じて最適な処理方法を選択</p>
+      </div>
+    </div>
+    <div class="modes" id="modes">
+      <button class="mode-btn active" data-mode="auto">
+        <div class="mode-label">自動判定</div>
+        <div class="mode-desc">中身を見て最適なモードを選択</div>
+      </button>
+      <button class="mode-btn" data-mode="doc">
+        <div class="mode-label">書類モード</div>
+        <div class="mode-desc">テキスト・線画を保持 / 画像のみ再圧縮</div>
+      </button>
+      <button class="mode-btn" data-mode="photo">
+        <div class="mode-label">写真モード</div>
+        <div class="mode-desc">全ページ画像化 / 現場写真PDF向け</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="step-head">
+      <span class="step-num">02</span>
+      <div>
+        <h2 class="step-title">圧縮レベル</h2>
+        <p class="step-desc">解像度と画質のバランスを選択 (写真モード時に適用)</p>
+      </div>
+    </div>
+    <div class="presets" id="presets">
+      <button class="preset-btn" data-dpi="200" data-q="0.90">
+        <div class="preset-label">高画質</div>
+        <div class="preset-spec">200dpi / 90%</div>
+      </button>
+      <button class="preset-btn active" data-dpi="150" data-q="0.80">
+        <div class="preset-label">標準</div>
+        <div class="preset-spec">150dpi / 80%</div>
+      </button>
+      <button class="preset-btn" data-dpi="100" data-q="0.70">
+        <div class="preset-label">圧縮</div>
+        <div class="preset-spec">100dpi / 70%</div>
+      </button>
+      <button class="preset-btn" data-dpi="72" data-q="0.55">
+        <div class="preset-label">最大圧縮</div>
+        <div class="preset-spec">72dpi / 55%</div>
+      </button>
+    </div>
+    <div class="sliders">
+      <div class="slider-group">
+        <label>解像度 <span class="slider-val" id="dpiVal">150</span></label>
+        <input type="range" id="dpiSlider" min="50" max="300" step="10" value="150">
+      </div>
+      <div class="slider-group">
+        <label>JPEG画質 <span class="slider-val" id="qVal">80%</span></label>
+        <input type="range" id="qSlider" min="30" max="100" step="5" value="80">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="step-head">
+      <span class="step-num">03</span>
+      <div>
+        <h2 class="step-title">OCR (検索可能化)</h2>
+        <p class="step-desc">画像ベースのPDFにテキストレイヤーを追加し、文字検索を可能に</p>
+      </div>
+    </div>
+    <label class="toggle-row">
+      <input type="checkbox" id="ocrToggle">
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-text">OCRを有効にする</span>
+    </label>
+    <div class="ocr-body" id="ocrBody">
+      <div class="ocr-lang-row">
+        <label class="ocr-lang-label">認識言語</label>
+        <select id="ocrLang" class="select">
+          <option value="jpn+eng">日本語 + 英数字</option>
+          <option value="jpn">日本語のみ</option>
+          <option value="eng">英数字のみ</option>
+        </select>
+      </div>
+      <div class="ocr-note">
+        ・写真モード時のみ適用 (書類モードは元のテキストを保持)<br>
+        ・初回のみ辞書DL: 日本語 約10MB / 英語 約4MB<br>
+        ・処理時間: 1ページあたり数秒〜数十秒
+      </div>
+    </div>
+  </div>
+
+  <div class="filename-bar" id="compressFilenameBar" style="display:none;">
+    <span class="filename-bar-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      ファイル名
+    </span>
+    <div class="filename-bar-input-wrap">
+      <input type="text" class="filename-bar-input" id="compressFilenameInput" placeholder="未入力なら自動(1ファイル=指定名、複数=先頭に追加)" maxlength="80">
+    </div>
+    <button class="filename-bar-clear" id="compressFilenameClear" title="クリア" aria-label="クリア">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <button class="filename-bar-ts" id="compressFilenameTs" type="button" title="タイムスタンプを末尾に付ける">
+      <span class="filename-bar-ts-box"></span>
+      <span>日時</span>
+      <span class="filename-bar-ts-preview" id="compressFilenameTsPreview"></span>
+    </button>
+  </div>
+
+  <div id="actionBar" style="display:none;" class="action-bar">
+    <div class="total-stats" id="totalStats">0 ファイル</div>
+    <div class="action-bar-btns">
+      <button class="btn btn-ghost" id="clearBtn">クリア</button>
+      <button class="btn" id="downloadAllBtn" style="display:none;">全部DL</button>
+      <button class="btn btn-primary" id="compressBtn">
+        <span>軽量化スタート</span>
+        <span class="arrow-r">→</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="files" id="fileList"></div>
+  </div>
+
+  <div class="mode-panel" id="modeImgToPdf">
+    <header class="hero">
+      <div class="hero-headline">
+        <h1>画像を、<em>一冊のPDFに。</em></h1>
+        <p class="hero-sub">
+          現場写真・スクショ・HEICも、<strong style="color:var(--ink); font-weight:700;">既存のPDFも</strong>、まとめて放り込んで1つのPDFに結ぶ。
+          iPhoneのHEIC、仕様書PDF、何でも混ぜてOK。
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num">HEIC</div>
+            <div class="hero-stat-label">SUPPORTED</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">⇅</div>
+            <div class="hero-stat-label">SORTABLE</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">100%</div>
+            <div class="hero-stat-label">LOCAL</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="dropzone" id="imgDropzone">
+      <div class="dropzone-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <div class="drop-text">画像をドロップ、またはクリックして選択</div>
+      <div class="drop-hint">PNG · JPG · HEIC · BMP · TIFF · AVIF · PDF 対応 · 複数OK</div>
+      <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,image/avif,.avif,application/pdf,.pdf" multiple>
+    </div>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <div>
+          <h2 class="step-title">用紙サイズ</h2>
+          <p class="step-desc">出力するPDFの用紙サイズを選択</p>
+        </div>
+      </div>
+      <div class="presets page-5col" id="imgPageSizePresets">
+        <button class="preset-btn active" data-size="a4">
+          <div class="preset-label">A4</div>
+          <div class="preset-spec">210 · 297mm</div>
+        </button>
+        <button class="preset-btn" data-size="a3">
+          <div class="preset-label">A3</div>
+          <div class="preset-spec">297 · 420mm</div>
+        </button>
+        <button class="preset-btn" data-size="b4">
+          <div class="preset-label">B4</div>
+          <div class="preset-spec">257 · 364mm</div>
+        </button>
+        <button class="preset-btn" data-size="b5">
+          <div class="preset-label">B5</div>
+          <div class="preset-spec">182 · 257mm</div>
+        </button>
+        <button class="preset-btn" data-size="fit">
+          <div class="preset-label">画像合わせ</div>
+          <div class="preset-spec">96dpi</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <div>
+          <h2 class="step-title">配置方法</h2>
+          <p class="step-desc">画像を用紙にどう収めるか選択</p>
+        </div>
+      </div>
+      <div class="modes fit-2col" id="imgFitModes">
+        <button class="mode-btn active" data-fit="contain">
+          <div class="mode-label">全体</div>
+          <div class="mode-desc">比率そのまま、余白あり。書類・図面向け</div>
+        </button>
+        <button class="mode-btn" data-fit="cover">
+          <div class="mode-label">埋める</div>
+          <div class="mode-desc">用紙を埋める、はみ出しはトリミング。写真向け</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">03</span>
+        <div>
+          <h2 class="step-title">画質</h2>
+          <p class="step-desc">画質とファイルサイズのバランス</p>
+        </div>
+      </div>
+      <div class="presets" id="imgQualityPresets">
+        <button class="preset-btn" data-q="light">
+          <div class="preset-label">軽量</div>
+          <div class="preset-spec">1200px · q55</div>
+        </button>
+        <button class="preset-btn active" data-q="standard">
+          <div class="preset-label">標準</div>
+          <div class="preset-spec">2000px · q75</div>
+        </button>
+        <button class="preset-btn" data-q="high">
+          <div class="preset-label">高画質</div>
+          <div class="preset-spec">3200px · q90</div>
+        </button>
+        <button class="preset-btn" data-q="original">
+          <div class="preset-label">無圧縮</div>
+          <div class="preset-spec">original</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" id="imgListPanel" style="display: none;">
+      <div class="step-head">
+        <span class="step-num">04</span>
+        <div>
+          <h2 class="step-title">並び順</h2>
+          <p class="step-desc">ドラッグでページ順を調整 · 左上から番号順に並ぶ</p>
+        </div>
+      </div>
+      <div class="img-file-grid" id="imgFileGrid"></div>
+      <div class="img-progress-wrap" id="imgProgressWrap">
+        <div class="img-progress-bar" id="imgProgressBar"></div>
+      </div>
+      <div class="img-status-msg" id="imgStatusMsg"></div>
+    </div>
+
+    <div class="filename-bar" id="imgFilenameBar" style="display:none;">
+      <span class="filename-bar-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        ファイル名
+      </span>
+      <div class="filename-bar-input-wrap">
+        <input type="text" class="filename-bar-input" id="imgFilenameInput" placeholder="未入力なら自動でタイムスタンプ" maxlength="80">
+      </div>
+      <span class="filename-bar-suffix"><span class="ext">.pdf</span></span>
+      <button class="filename-bar-clear" id="imgFilenameClear" title="クリア" aria-label="クリア">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <button class="filename-bar-ts" id="imgFilenameTs" type="button" title="タイムスタンプを末尾に付ける">
+        <span class="filename-bar-ts-box"></span>
+        <span>日時</span>
+        <span class="filename-bar-ts-preview" id="imgFilenameTsPreview"></span>
+      </button>
+    </div>
+
+    <div id="imgActionBar" style="display:none;" class="action-bar">
+      <div class="total-stats" id="imgTotalStats">0 ファイル</div>
+      <div class="action-bar-status" id="imgActionBarStatus"></div>
+      <div class="action-bar-btns">
+        <button class="btn btn-ghost" id="imgClearBtn">クリア</button>
+        <button class="btn btn-primary" id="imgGenerateBtn">
+          <span>PDF作成</span>
+          <span class="arrow-r">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       MODE 3: FILE FORMAT CONVERTER
+       ========================================================== -->
+  <div class="mode-panel" id="modeConvert">
+    <header class="hero">
+      <div class="hero-headline">
+      <h1>フォーマット<br><em>変換ツール。</em></h1>
+      <p class="hero-sub">
+        JPG · PNG · HEIC · BMP · TIFF · AVIF · PDF を<br>
+        別のフォーマットに変換。1枚ずつ個別DL、またはZIPでまとめて。<br>
+        <a href="javascript:void(0)" onclick="openGuide()" style="color:var(--accent); text-decoration:none; font-weight:600; white-space:nowrap; cursor:pointer;">使い方ガイド →</a>
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">6</div>
+          <div class="hero-stat-label">INPUT FORMATS</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">5</div>
+          <div class="hero-stat-label">OUTPUT FORMATS</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">ZIP</div>
+          <div class="hero-stat-label">BATCH</div>
+        </div>
+      </div>
+      </div>
+    </header>
+
+    <div class="dropzone" id="convDropzone">
+      <div class="dropzone-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"/>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+          <polyline points="7 23 3 19 7 15"/>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+        </svg>
+      </div>
+      <div class="drop-text">変換するファイルをドロップ</div>
+      <div class="drop-hint">JPG · PNG · HEIC · BMP · TIFF · AVIF · PDF · 複数OK</div>
+      <input type="file" id="convFileInput" accept="image/png,image/jpeg,image/jpg,image/heic,image/heif,.heic,.heif,image/bmp,.bmp,image/tiff,.tif,.tiff,image/avif,.avif,application/pdf,.pdf" multiple>
+    </div>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <div>
+          <h2 class="step-title">出力フォーマット</h2>
+          <p class="step-desc">変換後のファイル形式を選択</p>
+        </div>
+      </div>
+      <div class="presets" id="convFormatPresets" style="grid-template-columns: repeat(5, 1fr);">
+        <button class="preset-btn active" data-format="jpg">
+          <div class="preset-label">JPG</div>
+          <div class="preset-spec">圧縮 · 写真</div>
+        </button>
+        <button class="preset-btn" data-format="png">
+          <div class="preset-label">PNG</div>
+          <div class="preset-spec">無劣化 · 透過</div>
+        </button>
+        <button class="preset-btn" data-format="pdf">
+          <div class="preset-label">PDF</div>
+          <div class="preset-spec">1枚=1PDF</div>
+        </button>
+        <button class="preset-btn" data-format="bmp">
+          <div class="preset-label">BMP</div>
+          <div class="preset-spec">無圧縮 · 大</div>
+        </button>
+        <button class="preset-btn" data-format="tiff">
+          <div class="preset-label">TIFF</div>
+          <div class="preset-spec">高品質</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" id="convQualityPanel">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <div>
+          <h2 class="step-title">画質</h2>
+          <p class="step-desc">JPG出力時のみ適用。他の形式では無視されます</p>
+        </div>
+      </div>
+      <div class="presets" id="convQualityPresets">
+        <button class="preset-btn" data-quality="light">
+          <div class="preset-label">軽量</div>
+          <div class="preset-spec">画質55%</div>
+        </button>
+        <button class="preset-btn active" data-quality="standard">
+          <div class="preset-label">標準</div>
+          <div class="preset-spec">画質80%</div>
+        </button>
+        <button class="preset-btn" data-quality="high">
+          <div class="preset-label">高画質</div>
+          <div class="preset-spec">画質95%</div>
+        </button>
+        <button class="preset-btn" data-quality="max">
+          <div class="preset-label">最高</div>
+          <div class="preset-spec">画質100%</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">03</span>
+        <div>
+          <h2 class="step-title">ダウンロード方法</h2>
+          <p class="step-desc">変換後のファイルの受け取り方を選択</p>
+        </div>
+      </div>
+      <div class="modes" id="convOutputModes" style="grid-template-columns: repeat(2, 1fr);">
+        <button class="mode-btn active" data-output="individual">
+          <div class="mode-label">1枚ずつ個別DL</div>
+          <div class="mode-desc">変換したファイルを個別にダウンロード</div>
+        </button>
+        <button class="mode-btn" data-output="zip">
+          <div class="mode-label">ZIPでまとめてDL</div>
+          <div class="mode-desc">すべて1つのZIPファイルにまとめて</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" id="convListPanel" style="display:none;">
+      <div class="step-head">
+        <span class="step-num">04</span>
+        <div>
+          <h2 class="step-title">ファイル一覧</h2>
+          <p class="step-desc">変換するファイル · 不要なものは✕で削除</p>
+        </div>
+      </div>
+      <div class="img-file-grid" id="convFileGrid"></div>
+      <div class="img-progress-wrap" id="convProgressWrap">
+        <div class="img-progress-bar" id="convProgressBar"></div>
+      </div>
+      <div class="img-status-msg" id="convStatusMsg"></div>
+    </div>
+
+    <div class="filename-bar" id="convFilenameBar" style="display:none;">
+      <span class="filename-bar-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        ファイル名
+      </span>
+      <div class="filename-bar-input-wrap">
+        <input type="text" class="filename-bar-input" id="convFilenameInput" placeholder="未入力なら自動。個別DLは連番、ZIPは指定名.zip" maxlength="80">
+      </div>
+      <span class="filename-bar-suffix"><span class="ext" id="convFilenameExt">.zip</span></span>
+      <button class="filename-bar-clear" id="convFilenameClear" title="クリア" aria-label="クリア">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <button class="filename-bar-ts" id="convFilenameTs" type="button" title="タイムスタンプを末尾に付ける">
+        <span class="filename-bar-ts-box"></span>
+        <span>日時</span>
+        <span class="filename-bar-ts-preview" id="convFilenameTsPreview"></span>
+      </button>
+    </div>
+
+    <div id="convActionBar" style="display:none;" class="action-bar">
+      <div class="total-stats" id="convTotalStats">0 ファイル</div>
+      <div class="action-bar-status" id="convActionBarStatus"></div>
+      <div class="action-bar-btns">
+        <button class="btn btn-ghost" id="convClearBtn">クリア</button>
+        <button class="btn btn-primary" id="convGenerateBtn">
+          <span>変換スタート</span>
+          <span class="arrow-r">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       MODE 4: PDF EDIT (pages: delete / reorder / rotate / split)
+       ========================================================== -->
+  <div class="mode-panel" id="modePdfEdit">
+    <header class="hero">
+      <div class="hero-headline">
+      <h1>PDFを、<br><em>自由に編集。</em></h1>
+      <p class="hero-sub">
+        複数PDFを投入して、ページを削除・並び替え・回転。<br>
+        分割ポイントを入れれば複数PDFに切り分けも。<br>
+        <strong style="color:var(--ink); font-weight:700;">テキスト・ベクター完全保持</strong>、検索性も維持されます。
+        <a href="javascript:void(0)" onclick="openGuide()" style="color:var(--accent); text-decoration:none; font-weight:600; white-space:nowrap; cursor:pointer; margin-left:4px;">使い方ガイド →</a>
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">✎</div>
+          <div class="hero-stat-label">EDIT PAGES</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">✂</div>
+          <div class="hero-stat-label">SPLIT</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">0%</div>
+          <div class="hero-stat-label">QUALITY LOSS</div>
+        </div>
+      </div>
+      </div>
+    </header>
+
+    <div class="dropzone" id="editDropzone">
+      <div class="dropzone-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <path d="M10.5 13.5l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="drop-text">PDFをドロップ、またはクリックして選択</div>
+      <div class="drop-hint">複数ファイルまとめてOK · 全ページを展開して編集</div>
+      <input type="file" id="editFileInput" accept="application/pdf,.pdf" multiple>
+    </div>
+
+    <div class="panel" id="editListPanel" style="display:none;">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <div>
+          <h2 class="step-title">ページ編集</h2>
+          <p class="step-desc">削除・ドラッグ並び替え・回転 · ページ間の<strong style="color:var(--accent);">✂ボタン</strong>で分割ポイント追加</p>
+        </div>
+      </div>
+      <div class="edit-toolbar">
+        <button class="edit-tool-btn" id="editSelectAll" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          全選択
+        </button>
+        <button class="edit-tool-btn" id="editExtractSelected" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          選択を取り出し
+        </button>
+        <button class="edit-tool-btn" id="editDeleteSelected" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+          選択を削除
+        </button>
+        <button class="edit-tool-btn" id="editRotateSelected" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          選択を右回転
+        </button>
+        <button class="edit-tool-btn" id="editClearSplits" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="6" r="3"/>
+            <circle cx="6" cy="18" r="3"/>
+            <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+            <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+          </svg>
+          分割を全解除
+        </button>
+      </div>
+      <div class="edit-page-grid" id="editPageGrid"></div>
+      <div class="img-progress-wrap" id="editProgressWrap">
+        <div class="img-progress-bar" id="editProgressBar"></div>
+      </div>
+      <div class="img-status-msg" id="editStatusMsg"></div>
+    </div>
+
+    <div class="filename-bar" id="editFilenameBar" style="display:none;">
+      <span class="filename-bar-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        ファイル名
+      </span>
+      <div class="filename-bar-input-wrap">
+        <input type="text" class="filename-bar-input" id="editFilenameInput" placeholder="未入力なら自動でタイムスタンプ" maxlength="80">
+      </div>
+      <span class="filename-bar-suffix"><span class="ext" id="editFilenameExt">.pdf</span></span>
+      <button class="filename-bar-clear" id="editFilenameClear" title="クリア" aria-label="クリア">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <button class="filename-bar-ts" id="editFilenameTs" type="button" title="タイムスタンプを末尾に付ける">
+        <span class="filename-bar-ts-box"></span>
+        <span>日時</span>
+        <span class="filename-bar-ts-preview" id="editFilenameTsPreview"></span>
+      </button>
+      <button class="filename-bar-ts" id="editAutoCompress" type="button" title="分割後の各PDFを自動で軽量化(画像化)して小さくします" style="display:none;">
+        <span class="filename-bar-ts-box"></span>
+        <span>分割時に軽量化</span>
+      </button>
+    </div>
+
+    <div id="editActionBar" style="display:none;" class="action-bar">
+      <div class="total-stats" id="editTotalStats">0 ページ</div>
+      <div class="action-bar-status" id="editActionBarStatus"></div>
+      <div class="action-bar-btns">
+        <button class="btn btn-ghost" id="editClearBtn">クリア</button>
+        <button class="btn btn-primary" id="editGenerateBtn">
+          <span>PDFを出力</span>
+          <span class="arrow-r">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mode-panel" id="modeImgPlace">
+    <header class="hero">
+      <div class="hero-headline">
+      <h1>PDFに画像を、<br><em>サクッと配置。</em></h1>
+      <p class="hero-sub">
+        JWWで作った枠だけのPDFに、写真や図を流し込み。<br>
+        ドラッグ・スナップ・整列・キャプションでサクッと仕上げて、<strong style="color:var(--ink); font-weight:700;">ベクター品質を保ったまま</strong>PDF出力。<br>
+        プロジェクトは <code>.lpw</code> で保存→続きから再開も可能。
+      </p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <h2 class="step-title">ベースPDFを読み込み</h2>
+      </div>
+      <div class="dropzone" id="imgPlacePdfDropzone">
+        <div class="dropzone-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="drop-text">ベースPDFをドロップ、またはクリックして選択</div>
+        <div class="drop-hint">50MBまで・JWWで作った枠だけのPDFでOK</div>
+        <input type="file" id="imgPlacePdfInput" accept="application/pdf">
+      </div>
+      <div id="imgPlacePdfStatus" class="imgplace-status" style="display:none;"></div>
+      <!-- プロジェクト読込（PDF未読込時でも使える） -->
+      <div class="imgplace-load-project-row">
+        <button type="button" class="btn btn-ghost" id="imgPlaceLoadProjectBtn">📂 プロジェクト読込 (.lpw)</button>
+        <input type="file" id="imgPlaceLoadProjectInput" accept=".lpw,.json,application/json,application/octet-stream" style="display:none;">
+      </div>
+    </div>
+
+    <div class="panel" id="imgPlaceEditorPanel" style="display:none;">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <h2 class="step-title">画像を配置</h2>
+      </div>
+      <div class="imgplace-editor">
+        <aside class="imgplace-pages" id="imgPlacePagesPanel" aria-label="ベースPDFページ一覧">
+          <div class="imgplace-pages-title">ベースPDF</div>
+          <div class="imgplace-pages-list" id="imgPlacePageList"></div>
+        </aside>
+        <div class="imgplace-splitter" id="imgPlaceSplitterLeft" data-side="left" title="ドラッグで左ペイン幅調整" role="separator" aria-orientation="vertical"></div>
+        <div class="imgplace-canvas-wrap" id="imgPlaceCanvasWrap">
+          <div class="imgplace-canvas-frame" id="imgPlaceCanvasFrame">
+            <canvas id="imgPlaceCanvas"></canvas>
+            <svg class="imgplace-lines-overlay" id="imgPlaceLinesOverlay" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="imgplace-overlay" id="imgPlaceOverlay"></div>
+            <!-- カスタムセル: 表示は常時、操作は customCellMode 中のみ -->
+            <div class="imgplace-custom-cell-layer" id="imgPlaceCustomCellLayer"></div>
+            <!-- スナップ中のセル外枠ハイライト（緑）-->
+            <div class="imgplace-active-snap-cell" id="imgPlaceActiveSnapCell" style="display:none;"></div>
+            <!-- カスタムセル編集中のアライメントガイド (橙線で平行アライメントを可視化) -->
+            <svg class="imgplace-align-guides" id="imgPlaceAlignGuides" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+        </div>
+        <div class="imgplace-splitter" id="imgPlaceSplitterRight" data-side="right" title="ドラッグで右ペイン幅調整" role="separator" aria-orientation="vertical"></div>
+        <aside class="imgplace-sidebar" aria-label="プロパティと画像ライブラリ">
+          <div class="imgplace-props" id="imgPlaceProps">
+            <div class="imgplace-props-title">プロパティ</div>
+            <div class="imgplace-props-empty" id="imgPlacePropsEmpty">画像を選択してください</div>
+            <!-- B-Gamma でX/Y/W/H + AR固定 + キャプションフィールドを実装 -->
+          </div>
+          <div class="imgplace-sidebar-splitter" id="imgPlaceSidebarSplitter" title="ドラッグで上下幅調整" role="separator" aria-orientation="horizontal"></div>
+          <div class="imgplace-library">
+            <div class="imgplace-library-title">画像ライブラリ</div>
+            <div class="dropzone imgplace-lib-dropzone" id="imgPlaceLibDropzone">
+              <div class="dropzone-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+              <div class="drop-text">画像ドロップ</div>
+              <div class="drop-hint">JPG / PNG・複数OK・1枚20MBまで</div>
+              <input type="file" id="imgPlaceLibInput" accept="image/jpeg,image/png" multiple>
+            </div>
+            <div class="imgplace-lib-list" id="imgPlaceLibList"></div>
+          </div>
+        </aside>
+      </div>
+      <div class="imgplace-meta" id="imgPlaceMeta"></div>
+    </div>
+
+    <div class="filename-bar" id="imgPlaceFilenameBar" style="display:none;">
+      <button class="btn btn-small" id="imgPlaceFilenameTs" type="button">📅 日付</button>
+      <input id="imgPlaceFilenameInput" placeholder="出力ファイル名（省略可）">
+      <span id="imgPlaceFilenameTsPreview" class="filename-ts-preview"></span>
+    </div>
+
+    <div id="imgPlaceActionBar" class="action-bar" style="display:none;">
+      <div class="total-stats" id="imgPlaceTotalStats">配置: 0 枚</div>
+      <div class="action-bar-status" id="imgPlaceActionBarStatus"></div>
+      <div class="action-bar-btns">
+        <select id="imgPlaceFontSelect" class="btn btn-ghost imgplace-font-select" title="全キャプションのフォントを一括変更">
+          <option value="'Noto Sans JP', sans-serif">Noto Sans JP</option>
+          <option value="'Yu Gothic', 'YuGothic', sans-serif">游ゴシック</option>
+          <option value="'Yu Mincho', 'YuMincho', serif">游明朝</option>
+          <option value="'Meiryo', sans-serif">メイリオ</option>
+          <option value="'BIZ UDGothic', sans-serif">BIZ UDゴシック</option>
+          <option value="'Hiragino Sans', sans-serif">ヒラギノ角ゴ</option>
+          <option value="'Hiragino Mincho ProN', serif">ヒラギノ明朝</option>
+          <option value="system-ui, sans-serif">システムデフォルト</option>
+          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+        </select>
+        <button class="btn btn-ghost" id="imgPlaceSnapBtn" type="button" title="他画像のエッジ・中心線・ページ中央にスナップ" data-snap="on">
+          <span id="imgPlaceSnapLabel">スナップ ON</span>
+        </button>
+        <button class="btn btn-ghost" id="imgPlaceLineDetectBtn" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off">📐 罫線スナップ OFF</button>
+        <button class="btn btn-ghost" id="imgPlaceCustomCellBtn" title="ON中はドラッグで自分用のセルを追加 / クリックで削除" data-active="off">✏️ カスタムセル OFF</button>
+        <button class="btn btn-ghost" id="imgPlaceSizeCapBtn" title="配置時に画像サイズをページの1/3まで自動圧縮（OFFで原寸換算）" data-active="on">📏 1/3制限 ON</button>
+        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">🎯 順次配置</button>
+        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">📄+ PDF追加</button>
+        <input type="file" id="imgPlaceAddPdfInput" accept="application/pdf" style="display:none;">
+        <button class="btn btn-ghost" id="imgPlaceClearBtn">クリア</button>
+        <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">💾 プロジェクト保存</button>
+        <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">📄 PDFとして出力</button>
+      </div>
+    </div>
+
+    <!-- ドラッグ中だけ画面下に出るゴミ箱: ここでpointerupすると配置を削除 -->
+    <div class="imgplace-trash" id="imgPlaceTrash" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6"/>
+        <path d="M14 11v6"/>
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      </svg>
+      <span>ここにドロップして削除</span>
+    </div>
+  </div>
+
+  <!-- ============ 黒塗り(墨消し)モード — v3.8.0 Phase1 ============ -->
+  <div class="mode-panel" id="modeRedact">
+    <header class="hero">
+      <div class="hero-headline">
+        <h1>見せたくない所を、<br><em>本当に消す。</em></h1>
+        <p class="hero-sub">
+          契約書・施主情報・図面の一部を黒く塗って隠します。<br>
+          塗ったページは画像化して、下の文字を物理的に消去(コピペで抜けません)。<br>
+          すべてブラウザ内で完結 ・ 通信ゼロ。
+        </p>
+      </div>
+    </header>
+
+    <div class="redact-uploadzone" id="redactUpload">
+      <div class="rz-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <rect x="7.5" y="12.5" width="9" height="4" rx="0.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
+      <div class="rz-sub">黒塗りしたいPDFを開きます ・ ファイルは外部送信されません</div>
+      <input type="file" id="redactFileInput" accept="application/pdf" hidden>
+    </div>
+
+    <div class="redact-editor" id="redactEditor">
+      <div class="redact-toolbar">
+        <div class="redact-pagenav">
+          <button class="redact-navbtn" id="redactPrev" title="前のページ" aria-label="前のページ">‹</button>
+          <span class="redact-pageinfo" id="redactPageInfo">1 / 1</span>
+          <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
+        </div>
+        <div class="redact-modetoggle" role="group" aria-label="黒塗りの方法">
+          <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
+          <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
+        </div>
+        <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
+      </div>
+      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
+      <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
+
+      <div class="redact-stage">
+        <div class="redact-canvas-wrap mode-text" id="redactCanvasWrap">
+          <canvas id="redactCanvas"></canvas>
+          <div class="redact-textlayer" id="redactTextLayer"></div>
+          <div class="redact-overlay" id="redactOverlay"></div>
+          <div class="redact-cells" id="redactCells"></div>
+        </div>
+      </div>
+
+      <div class="redact-warn">
+        <b>⚠ 仮表示です。</b> いまの黒い枠は半透明で、下の文字はまだ生きています。
+        <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。黒塗りの無いページは高画質のまま温存されます。
+      </div>
+
+      <div class="redact-actions">
+        <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
+        <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
+        <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">PDF<em>Compact</em> · 100% LOCAL · NO UPLOAD</div>
+    <div class="footer-note">
+      すべての処理はブラウザ内で完結 ・ ファイルは外部サーバーに送信されません<br>
+      書類モード: テキスト保持 / 写真モード: 全ページ画像化 / OCR: 画像→検索可能テキスト
+    </div>
+  </footer>
+
+</div>
+
+<div class="guide-modal" id="guideModal" role="dialog" aria-modal="true" aria-label="使い方ガイド">
+  <div class="guide-dock-splitter" id="guideDockSplitter" aria-label="取説パネル幅調整" role="separator"></div>
+  <!-- ドック⇔全画面切替ボタン (× の左、SVG は CSS で docked/全画面で出し分け) -->
+  <button class="guide-dock-btn" id="guideDockBtn" onclick="toggleGuideDock()" aria-label="表示切替">
+    <!-- ドック中表示: 拡大(全画面化) アイコン -->
+    <svg class="icon-expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"/>
+      <polyline points="9 21 3 21 3 15"/>
+      <line x1="21" y1="3" x2="14" y2="10"/>
+      <line x1="3" y1="21" x2="10" y2="14"/>
+    </svg>
+    <!-- 全画面中表示: 縮小(ドックに戻す) アイコン -->
+    <svg class="icon-collapse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 14 10 14 10 20"/>
+      <polyline points="20 10 14 10 14 4"/>
+      <line x1="14" y1="10" x2="21" y2="3"/>
+      <line x1="3" y1="21" x2="10" y2="14"/>
+    </svg>
+  </button>
+  <button class="guide-close-btn" onclick="closeGuide()" aria-label="閉じる">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <iframe class="guide-modal-frame" id="guideFrame" title="PDF Compact 使い方ガイド"></iframe>
+</div>
+
+<div class="success-modal" id="successModal" role="dialog" aria-modal="true" aria-label="完了">
+  <div class="success-card">
+    <div class="success-particles" id="successParticles"></div>
+    <div class="success-check">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle class="check-ring-glow" cx="32" cy="32" r="28"/>
+        <circle class="check-ring" cx="32" cy="32" r="28"/>
+        <path class="check-mark" d="M20 32 L28 40 L44 24"/>
+      </svg>
+    </div>
+    <h2 class="success-title" id="successTitle">完了しました</h2>
+    <p class="success-subtitle" id="successSubtitle">処理が終わりました</p>
+    <div class="success-stats" id="successStats"></div>
+    <button class="success-close" onclick="closeSuccess()">閉じる</button>
+  </div>
+</div>
+
+<!-- ===== 設定モーダル (success-modal パターン踏襲: 中央表示 / 背景クリック・ESC・×で閉じる) ===== -->
+<div class="settings-modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+  <div class="settings-card" role="document">
+    <button class="settings-close-x" onclick="closeSettings()" aria-label="閉じる" title="閉じる">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="settings-head">
+      <div class="settings-head-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+      <div class="settings-head-text">
+        <h2 class="settings-title" id="settingsModalTitle">設定</h2>
+        <p class="settings-subtitle">出力するPDFの扱いをここで決められます</p>
+      </div>
+    </div>
+    <!-- ===== セクション: 配布前サニタイズ ===== -->
+    <div class="settings-section">
+      <div class="settings-section-head">
+        <span class="settings-section-title">配布前サニタイズ</span>
+        <span class="settings-section-note">どのモードで作ったPDFにも自動でかかります</span>
+      </div>
+      <!-- メタデータ除去トグル (rank1) -->
+      <label class="settings-row" for="setMetaStrip">
+        <div class="settings-row-text">
+          <div class="settings-row-label">メタデータを消す</div>
+          <div class="settings-row-desc">作成者・タイトル・作成日などの隠れた情報を空にして、PDFから身元がバレるのを防ぎます。基本はオンのままで大丈夫です。</div>
+        </div>
+        <span class="settings-switch">
+          <input type="checkbox" id="setMetaStrip" class="settings-switch-input" role="switch" aria-label="メタデータを消す" checked>
+          <span class="settings-switch-track" aria-hidden="true"><span class="settings-switch-thumb"></span></span>
+        </span>
+      </label>
+      <!-- ============================================================ -->
+      <!-- 透かし (rank2) UI 一式 — v3.7.0 (preset版を採用)             -->
+      <!-- 状態の真実源は pdfcSettings.watermark(ON/OFF) と           -->
+      <!-- pdfcSettings.watermarkText(焼く文言) の2キーのみ。          -->
+      <!-- ------------------------------------------------------------ -->
+      <!-- (1) ON/OFF トグル: 既存 .settings-row を流用 -->
+      <label class="settings-row" for="setWatermark">
+        <div class="settings-row-text">
+          <div class="settings-row-label">透かしを入れる</div>
+          <div class="settings-row-desc">「社外秘」などの薄い文字を全ページに斜めに重ねて、もし流出してもどこ由来か分かるようにします。ふだんはオフでOK、外に出したくない資料のときだけオンに。</div>
+        </div>
+        <span class="settings-switch">
+          <input type="checkbox" id="setWatermark" class="settings-switch-input" role="switch" aria-label="透かしを入れる">
+          <span class="settings-switch-track" aria-hidden="true"><span class="settings-switch-thumb"></span></span>
+        </span>
+      </label>
+
+      <!-- (2) 透かしの中身: ON のときだけ JS が表示。既定 hidden -->
+      <div class="settings-subfield wm-detail" id="setWatermarkTextWrap" hidden>
+        <span class="settings-subfield-label" id="setWatermarkPresetLabel">入れる文字を選ぶ</span>
+
+        <div class="wm-chips" role="radiogroup" aria-labelledby="setWatermarkPresetLabel">
+          <label class="wm-chip">
+            <input type="radio" name="wmPreset" class="wm-chip-input" value="社外秘" data-preset="1">
+            <span class="wm-chip-face">社外秘</span>
+          </label>
+          <label class="wm-chip">
+            <input type="radio" name="wmPreset" class="wm-chip-input" value="複製禁止" data-preset="1">
+            <span class="wm-chip-face">複製禁止</span>
+          </label>
+          <label class="wm-chip">
+            <input type="radio" name="wmPreset" class="wm-chip-input" value="DRAFT" data-preset="1">
+            <span class="wm-chip-face">DRAFT</span>
+          </label>
+          <label class="wm-chip">
+            <input type="radio" name="wmPreset" class="wm-chip-input" value="__custom__" data-custom="1">
+            <span class="wm-chip-face">自分で入力</span>
+          </label>
+        </div>
+
+        <div class="wm-custom-wrap" id="setWatermarkCustomWrap" hidden>
+          <label class="settings-subfield-label" for="setWatermarkText" style="margin-top:10px;">入れたい文字 (全角10文字くらいまでが読みやすい)</label>
+          <input type="text" id="setWatermarkText" class="settings-text-input" placeholder="例: マル秘・部外秘・氏名 など" maxlength="20" autocomplete="off" inputmode="text">
+          <!-- 絵文字除去の注記 (M14): 除去が起きた時だけ JS が表示 -->
+          <span class="settings-subfield-label" id="setWatermarkEmojiNote" style="margin-top:6px; margin-bottom:0; color:var(--warn);" hidden>絵文字は透かしに使えないため除去しました</span>
+        </div>
+
+        <div class="wm-preview" id="setWatermarkPreview" aria-live="polite">
+          <span class="wm-preview-tag">仕上がり</span>
+          <span class="wm-preview-sample" id="setWatermarkPreviewSample">社外秘</span>
+        </div>
+      </div>
+      <!-- ============================================================ -->
+    </div>
+    <div class="settings-foot">
+      <span class="settings-foot-note">設定はこの端末に保存され、次に開いた時もそのままです</span>
+      <button class="settings-done-btn" onclick="closeSettings()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/html" id="guideSource">@@INCLUDE:guide.html@@
+</script>
+
+<script>
+/*@@INCLUDE:app.js@@*/
+</script>
+</body>
+</html>

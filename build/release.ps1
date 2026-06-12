@@ -22,24 +22,31 @@ $today = Get-Date -Format 'yyyy-MM-dd'
 function Fail($msg) { Write-Host "❌ $msg" -ForegroundColor Red; exit 1 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { Fail "バージョンは x.y.z 形式で: $Version" }
 
-# --- 1) テストゲート ---
+# --- 1) バージョン更新(src が真実の源 → ビルドで bundle 生成) ---
+# APP_VERSION は src/app.js にあり、bundle は build.js の生成物。
+$appjs = Join-Path $root 'src/app.js'
+$appSrc = [System.IO.File]::ReadAllText($appjs)
+$old = [regex]::Match($appSrc, "const APP_VERSION = '([^']+)';").Groups[1].Value
+if (-not $old) { Fail "src/app.js に APP_VERSION が見つからない" }
+$appSrc = $appSrc -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
+[System.IO.File]::WriteAllText($appjs, $appSrc)
+Write-Host "✓ src/app.js APP_VERSION $old → $Version"
+
+# bundle を src から再ビルド(これで bundle に新バージョンが入る)
+Write-Host "▶ ビルド中(src → bundle)..." -ForegroundColor Cyan
+node build.js
+if ($LASTEXITCODE -ne 0) { Fail "ビルド失敗" }
+$bundle = Join-Path $root 'pdf_compact_bundle.html'
+
+# --- 2) テストゲート(ビルド済み bundle に対して) ---
 if ($SkipTests) {
   Write-Host "⚠ テストをスキップしました(-SkipTests)。本番リリースでは非推奨" -ForegroundColor Yellow
 } else {
   Write-Host "▶ スモークテスト実行中..." -ForegroundColor Cyan
-  npm test
+  npx playwright test
   if ($LASTEXITCODE -ne 0) { Fail "テストが失敗。リリース中止(これは安全装置や)" }
   Write-Host "✓ テスト全通過" -ForegroundColor Green
 }
-
-# --- 2) バージョン更新 ---
-$bundle = Join-Path $root 'pdf_compact_bundle.html'
-$content = [System.IO.File]::ReadAllText($bundle)
-$old = [regex]::Match($content, "const APP_VERSION = '([^']+)';").Groups[1].Value
-if (-not $old) { Fail "APP_VERSION が見つからない" }
-$content = $content -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
-[System.IO.File]::WriteAllText($bundle, $content)
-Write-Host "✓ APP_VERSION $old → $Version"
 
 $vj = Join-Path $root 'version.json'
 $noteText = if ($Notes) { $Notes } else { (Get-Content $vj -Raw | ConvertFrom-Json).notes }

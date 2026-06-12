@@ -1,0 +1,3377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Compact — 使い方ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f9;
+    --surface: #ffffff;
+    --surface-2: #fafbfc;
+    --ink: #0a0c12;
+    --ink-2: #2a2d38;
+    --ink-muted: #5b6173;
+    --ink-faint: #8c92a3;
+    --line: #e3e6ec;
+    --line-soft: #eef0f5;
+    --accent: #0040ff;
+    --accent-deep: #002db3;
+    --accent-soft: #eaefff;
+    --accent-glow: rgba(0, 64, 255, 0.15);
+    --purple: #5b3fff;
+    --purple-soft: #eee9ff;
+    --success: #0a7d3e;
+    --success-soft: #e2f3e8;
+    --warn: #cc5520;
+    --warn-soft: #fde8dc;
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 20px;
+    --shadow-sm: 0 1px 2px rgba(10, 12, 18, 0.04);
+    --shadow-md: 0 4px 12px rgba(10, 12, 18, 0.06), 0 1px 2px rgba(10, 12, 18, 0.04);
+    --shadow-lg: 0 20px 48px rgba(10, 12, 18, 0.1), 0 4px 12px rgba(10, 12, 18, 0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    font-weight: 400;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--bg);
+    min-height: 100vh;
+    position: relative;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(10, 12, 18, 0.05) 1px, transparent 0);
+    background-size: 28px 28px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 500px;
+    background:
+      radial-gradient(ellipse 80% 60% at 30% 0%, rgba(0, 64, 255, 0.08), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 10%, rgba(91, 63, 255, 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============ TOP NAV ============ */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245, 246, 249, 0.85);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topnav-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: inherit;
+  }
+  .brand-mark {
+    width: 32px; height: 32px;
+    background: var(--ink);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: white; position: relative; overflow: hidden;
+    box-shadow: 0 3px 10px rgba(10, 12, 18, 0.15);
+  }
+  .brand-mark::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 45%, rgba(0, 64, 255, 0.55) 100%);
+  }
+  .brand-mark svg { position: relative; z-index: 1; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1; }
+  .brand-name {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800; font-size: 15px;
+    letter-spacing: -0.025em;
+  }
+  .brand-name em { font-style: normal; color: var(--accent); }
+  .brand-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; font-weight: 600;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em; margin-top: 3px;
+  }
+  .topnav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px;
+    background: var(--ink); color: white;
+    border-radius: var(--r-sm);
+    text-decoration: none;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: -0.005em;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(10, 12, 18, 0.15);
+  }
+  .topnav-cta:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--accent-glow);
+  }
+  .topnav-cta .arr { transition: transform 0.15s ease; }
+  .topnav-cta:hover .arr { transform: translateX(3px); }
+
+  /* ============ LAYOUT ============ */
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+  section { scroll-margin-top: 80px; }
+
+  /* ============ HERO ============ */
+  .hero {
+    padding: 72px 0 48px;
+    text-align: center;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 28px;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  h1.hero-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: clamp(34px, 5vw, 58px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    margin-bottom: 22px;
+  }
+  h1.hero-title em {
+    font-style: normal;
+    background: linear-gradient(110deg, var(--accent) 0%, var(--purple) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-lead {
+    font-size: 16px;
+    color: var(--ink-muted);
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.85;
+  }
+  .hero-lead strong {
+    color: var(--ink);
+    font-weight: 700;
+    background: linear-gradient(180deg, transparent 70%, var(--accent-soft) 70%);
+    padding: 0 3px;
+  }
+
+  /* ============ TOOL SELECTOR CARDS ============ */
+  .tool-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 44px auto 0;
+    max-width: 720px;
+  }
+  .tool-selector.three {
+    grid-template-columns: 1fr 1fr 1fr;
+    max-width: 960px;
+  }
+  .tool-selector.four {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1120px;
+  }
+  .tool-selector.five {
+    grid-template-columns: repeat(5, 1fr);
+    max-width: 1400px;
+  }
+  @media (max-width: 1280px) {
+    .tool-selector.five { grid-template-columns: repeat(3, 1fr); max-width: 1080px; }
+  }
+  @media (max-width: 1000px) {
+    .tool-selector.four { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+    .tool-selector.five { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+  }
+  @media (max-width: 820px) {
+    .tool-selector.three { grid-template-columns: 1fr; max-width: 480px; }
+  }
+  @media (max-width: 580px) {
+    .tool-selector.four { grid-template-columns: 1fr; max-width: 480px; }
+    .tool-selector.five { grid-template-columns: 1fr; max-width: 480px; }
+  }
+  .tool-card {
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 28px 24px;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .tool-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 32px var(--accent-glow);
+  }
+  .tool-card:hover::before { opacity: 1; }
+  .tool-card > * { position: relative; z-index: 1; }
+  .tool-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--ink);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: white;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(10, 12, 18, 0.18);
+  }
+  .tool-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 45%, rgba(0, 64, 255, 0.55) 100%);
+  }
+  .tool-icon svg { position: relative; z-index: 1; }
+  .tool-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .tool-name {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    line-height: 1.2;
+    /* 5列レイアウトで日本語名が見切れないよう、必要時は折返し許可 */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  /* 5列レイアウト時は font 少し下げて 8文字程度まで収まるように */
+  .tool-selector.five .tool-name { font-size: 17px; }
+  .tool-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+    /* 狭幅(ドック表示)時、JPG·PNG·PDF·BMP·TIFF みたいな中黒区切りでも改行できるように */
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+  .tool-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  .tool-link .arr {
+    transition: transform 0.2s ease;
+  }
+  .tool-card:hover .tool-link .arr { transform: translateX(3px); }
+
+  /* ============ JUMP NAV ============ */
+  .jumpnav {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 48px 0 0;
+    flex-wrap: wrap;
+  }
+  .jumpnav a {
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    text-decoration: none;
+    color: var(--ink-muted);
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .jumpnav a:hover {
+    color: var(--ink);
+    border-color: var(--ink-muted);
+    transform: translateY(-1px);
+  }
+
+  /* ============ PART DIVIDER ============ */
+  .part-divider {
+    padding: 64px 0 24px;
+    text-align: center;
+  }
+  .part-label-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--ink);
+    color: white;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(10, 12, 18, 0.2);
+  }
+  .part-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: clamp(32px, 4.5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 14px;
+  }
+  .part-title em {
+    font-style: normal;
+    background: linear-gradient(110deg, var(--accent) 0%, var(--purple) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .part-lead {
+    font-size: 15px;
+    color: var(--ink-muted);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  /* ============ SECTION HEADERS ============ */
+  .section-head {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    margin-bottom: 12px;
+  }
+  h2.section-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: clamp(26px, 3.4vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .section-lead {
+    font-size: 14.5px;
+    color: var(--ink-muted);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+  section {
+    padding: 56px 0;
+  }
+
+  /* ============ 3-STEP QUICKSTART ============ */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    position: relative;
+  }
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 28px 22px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .step-badge {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+  .step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+    margin-bottom: 18px;
+  }
+  .step-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--ink);
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    color: white;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(10, 12, 18, 0.15);
+  }
+  .step-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 45%, rgba(0, 64, 255, 0.5) 100%);
+  }
+  .step-icon svg { position: relative; z-index: 1; }
+  .step-title-h {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-bottom: 10px;
+  }
+  .step-text {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.75;
+  }
+
+  /* ============ MODE DECISION ============ */
+  .decision-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    padding: 36px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+  }
+  .decision-tip {
+    background: linear-gradient(135deg, var(--ink) 0%, #1a1f2e 100%);
+    color: white;
+    border-radius: var(--r-lg);
+    padding: 20px 22px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .decision-tip::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0, 64, 255, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .decision-tip-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    position: relative; z-index: 1;
+  }
+  .decision-tip-content { position: relative; z-index: 1; }
+  .decision-tip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 4px;
+  }
+  .decision-tip-text {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .mode-card {
+    background: var(--surface-2);
+    border: 1.5px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 22px;
+    position: relative;
+    transition: all 0.15s ease;
+  }
+  .mode-card:hover {
+    border-color: var(--ink-muted);
+    background: var(--surface);
+    transform: translateY(-1px);
+  }
+  .mode-card.recommended {
+    border-color: var(--accent);
+    background: linear-gradient(145deg, var(--accent-soft) 0%, var(--surface-2) 60%);
+  }
+  .mode-recommend-badge {
+    position: absolute;
+    top: -10px;
+    left: 18px;
+    background: var(--accent);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 5px 10px;
+    border-radius: 100px;
+    box-shadow: 0 3px 8px var(--accent-glow);
+  }
+  .mode-card-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 16px; font-weight: 700;
+    letter-spacing: -0.015em; margin-bottom: 3px;
+  }
+  .mode-card-sub {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+  .mode-card-desc {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .mode-examples {
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .mode-examples-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mode-examples ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mode-examples li {
+    font-size: 12px;
+    color: var(--ink-2);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .mode-examples li::before {
+    content: '';
+    width: 4px; height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+    transform: translateY(-2px);
+  }
+
+  /* ============ QUALITY LEVELS / PAGE SIZES ============ */
+  .quality-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .quality-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 22px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .quality-card:hover {
+    border-color: var(--ink-muted);
+    transform: translateY(-1px);
+  }
+  .quality-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 30px;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .quality-bars span {
+    height: 6px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+  .quality-bars span.on {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%);
+  }
+  .quality-name {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: -0.01em; margin-bottom: 2px;
+  }
+  .quality-spec {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+  .quality-use {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+
+  /* Page size grid (5 items) */
+  .page-size-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .page-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 20px 14px;
+    text-align: center;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .page-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .page-card-size {
+    font-family: 'Archivo', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .page-card-dim {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  .page-card-use {
+    font-size: 11px;
+    color: var(--ink-muted);
+    line-height: 1.55;
+  }
+
+  /* Fit mode comparison */
+  .fit-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .fit-card {
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+  }
+  .fit-card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+  .fit-card-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .fit-illustration {
+    width: 100%;
+    aspect-ratio: 3/2;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fit-illustration .page {
+    position: absolute;
+    inset: 8%;
+    background: white;
+    border: 1px dashed var(--ink-muted);
+    border-radius: 3px;
+  }
+  .fit-illustration .img-contain {
+    position: absolute;
+    top: 20%; left: 30%;
+    width: 40%; height: 60%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+    border-radius: 2px;
+  }
+  .fit-illustration .img-cover {
+    position: absolute;
+    inset: 8%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+    border-radius: 2px;
+  }
+  .fit-card-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.75;
+    margin-bottom: 8px;
+  }
+  .fit-card-use {
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 600;
+    padding: 8px 12px;
+    background: var(--accent-soft);
+    border-radius: var(--r-sm);
+  }
+
+  /* ============ HEIC EXPLAINER ============ */
+  .heic-hero {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    padding: 36px;
+    box-shadow: var(--shadow-md);
+  }
+  .heic-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-top: 28px;
+  }
+  .heic-step {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 20px;
+    text-align: center;
+  }
+  .heic-step-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--ink);
+    color: white;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .heic-step-icon.middle {
+    background: var(--accent);
+  }
+  .heic-step-icon::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.15) 100%);
+  }
+  .heic-step-icon svg { position: relative; z-index: 1; }
+  .heic-step-name {
+    font-family: 'Archivo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .heic-step-desc {
+    font-size: 11px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .heic-arrow {
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  .heic-note {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--accent-soft);
+    border-radius: var(--r-md);
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.75;
+  }
+  .heic-note strong { color: var(--accent); font-weight: 700; }
+
+  /* ============ OCR ============ */
+  .ocr-hero {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    padding: 36px;
+    box-shadow: var(--shadow-md);
+  }
+  .ocr-topline {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ocr-pill {
+    padding: 5px 11px;
+    background: var(--purple-soft);
+    color: var(--purple);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .ocr-compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 18px;
+    align-items: center;
+    margin-top: 28px;
+  }
+  .ocr-side {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 22px;
+    text-align: center;
+  }
+  .ocr-side.after {
+    background: linear-gradient(135deg, var(--purple-soft) 0%, var(--accent-soft) 100%);
+    border-color: var(--purple);
+  }
+  .ocr-side-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+  }
+  .ocr-side.after .ocr-side-label { color: var(--purple); }
+  .ocr-visual {
+    height: 60px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+    color: var(--ink-muted);
+  }
+  .ocr-side.after .ocr-visual { color: var(--purple); }
+  .ocr-side-text {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+  .ocr-arrow {
+    width: 36px; height: 36px;
+    background: var(--ink);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: white; flex-shrink: 0;
+  }
+  .ocr-note {
+    margin-top: 24px;
+    padding: 14px 18px;
+    background: var(--accent-soft);
+    border-radius: var(--r-md);
+    border-left: 3px solid var(--accent);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.75;
+  }
+  .ocr-note strong { color: var(--accent); font-weight: 700; }
+
+  /* ============ SCENARIOS ============ */
+  .scenarios {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .scenario {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 22px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+  }
+  .scenario:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .scenario-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .scenario-icon.blue {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .scenario-icon.purple {
+    background: var(--purple-soft);
+    color: var(--purple);
+  }
+  .scenario-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
+  }
+  .scenario-text {
+    font-size: 12.5px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+  }
+  .scenario-tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    background: var(--line-soft);
+    color: var(--ink-muted);
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+  .scenario-tag.blue {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .scenario-tag.purple {
+    background: var(--purple-soft);
+    color: var(--purple);
+  }
+
+  /* ============ FAQ ============ */
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .faq-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
+  }
+  .faq-item:hover { box-shadow: var(--shadow-sm); }
+  .faq-item[open] {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .faq-summary {
+    cursor: pointer;
+    padding: 18px 22px;
+    font-size: 14.5px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    letter-spacing: -0.005em;
+    list-style: none;
+  }
+  .faq-summary::-webkit-details-marker { display: none; }
+  .faq-summary::after {
+    content: '+';
+    font-family: 'Archivo', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink-muted);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .faq-item[open] .faq-summary::after {
+    transform: rotate(45deg);
+    color: var(--accent);
+  }
+  .faq-body {
+    padding: 0 22px 20px;
+    color: var(--ink-muted);
+    line-height: 1.8;
+    font-size: 13.5px;
+  }
+  .faq-body p + p { margin-top: 10px; }
+  .faq-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: var(--line-soft);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  .faq-category-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    margin: 24px 0 10px;
+  }
+  .faq-category-label:first-child { margin-top: 0; }
+
+  /* ============ PRIVACY ============ */
+  .privacy-card {
+    background: linear-gradient(135deg, var(--ink) 0%, #151925 100%);
+    color: white;
+    border-radius: var(--r-xl);
+    padding: 52px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .privacy-card::before {
+    content: '';
+    position: absolute;
+    top: -20%; right: -10%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0, 64, 255, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .privacy-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(91, 63, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .privacy-inner { position: relative; z-index: 1; }
+  .privacy-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 22px;
+  }
+  .privacy-title {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: clamp(26px, 3.8vw, 38px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .privacy-title em {
+    font-style: normal;
+    background: linear-gradient(110deg, #6b8eff 0%, #a591ff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .privacy-lead {
+    font-size: 14.5px;
+    color: rgba(255,255,255,0.75);
+    max-width: 580px;
+    line-height: 1.8;
+    margin-bottom: 32px;
+  }
+  .privacy-points {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .privacy-point {
+    padding: 18px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--r-md);
+    backdrop-filter: blur(8px);
+  }
+  .privacy-point-icon {
+    width: 30px; height: 30px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 64, 255, 0.4);
+  }
+  .privacy-point h4 {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
+  }
+  .privacy-point p {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.7;
+  }
+
+  /* ============ FINAL CTA ============ */
+  .final-cta {
+    text-align: center;
+    padding: 64px 24px;
+  }
+  .final-cta h2 {
+    font-family: 'Archivo', 'Noto Sans JP', sans-serif;
+    font-size: clamp(28px, 4.2vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 14px;
+    line-height: 1.15;
+  }
+  .final-cta p {
+    font-size: 15px;
+    color: var(--ink-muted);
+    margin-bottom: 28px;
+  }
+  .btn-xl {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 26px;
+    background: var(--accent);
+    color: white;
+    border-radius: var(--r-md);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 24px var(--accent-glow);
+  }
+  .btn-xl:hover {
+    background: var(--accent-deep);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px var(--accent-glow);
+  }
+  .btn-xl .arr {
+    transition: transform 0.15s ease;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 400;
+  }
+  .btn-xl:hover .arr { transform: translateX(4px); }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 36px 24px 44px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  .footer-brand {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.22em;
+    margin-bottom: 10px;
+  }
+  .footer-brand em { font-style: normal; color: var(--accent); }
+  .footer-note {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+    line-height: 1.9;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 760px) {
+    .topnav-inner { padding: 12px 16px; }
+    .container { padding: 0 16px; }
+    .hero { padding: 44px 0 32px; }
+    section { padding: 44px 0; }
+    .part-divider { padding: 48px 0 16px; }
+    .tool-selector { grid-template-columns: 1fr; max-width: 100%; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .mode-grid { grid-template-columns: 1fr; }
+    .quality-grid { grid-template-columns: 1fr; }
+    .page-size-grid { grid-template-columns: repeat(2, 1fr); }
+    .fit-compare { grid-template-columns: 1fr; }
+    .scenarios { grid-template-columns: 1fr; }
+    .privacy-points { grid-template-columns: 1fr; }
+    .privacy-card { padding: 36px 24px; }
+    .decision-box { padding: 22px; }
+    .heic-hero { padding: 24px 20px; }
+    .heic-flow {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .heic-arrow { transform: rotate(90deg); justify-self: center; }
+    .ocr-hero { padding: 24px 20px; }
+    .ocr-compare {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .ocr-arrow { justify-self: center; transform: rotate(90deg); }
+    .jumpnav { margin-top: 28px; }
+    .jumpnav a { font-size: 11px; padding: 7px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="#top" class="brand">
+      <div class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 14 10 14 10 20"/>
+          <polyline points="20 10 14 10 14 4"/>
+          <line x1="14" y1="10" x2="21" y2="3"/>
+          <line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">PDF<em>Compact</em></div>
+        <div class="brand-tag">USER GUIDE</div>
+      </div>
+    </a>
+    <a href="javascript:void(0)" onclick="window.parent.postMessage('closeGuide','*')" class="topnav-cta">
+      <span>ツールを開く</span>
+      <span class="arr">→</span>
+    </a>
+  </div>
+</nav>
+
+<div id="top"></div>
+
+<div class="container">
+
+  <!-- ========== HERO ========== -->
+  <section class="hero">
+    <div class="eyebrow">
+      <span class="eyebrow-dot"></span>
+      HOW TO USE · 使い方ガイド
+    </div>
+    <h1 class="hero-title">
+      重いPDFも、バラバラ画像も、<br><em>一気にまとめる。</em>
+    </h1>
+    <p class="hero-lead">
+      PDF Compactは<strong>5つのツールが1つに</strong>。<strong>軽量化</strong>、<strong>画像→PDF</strong>、<strong>変換</strong>、ページ編集・分割・抽出ができる<strong>PDF編集</strong>、そしてJWWの枠PDFに写真を流し込む<strong>PDFに画像配置</strong>モード。
+      このガイドでは順を追ってわかりやすく説明します。
+    </p>
+
+    <div class="tool-selector five">
+      <a href="#part-compress" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 14 10 14 10 20"/>
+            <polyline points="20 10 14 10 14 4"/>
+            <line x1="14" y1="10" x2="21" y2="3"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 01</div>
+        <div class="tool-name">PDF軽量化</div>
+        <div class="tool-desc">重いPDFを軽く。OCRで検索可能にも。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
+      <a href="#part-imgtopdf" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 02</div>
+        <div class="tool-name">画像→PDF</div>
+        <div class="tool-desc">画像もPDFもまとめて1冊に結合。HEIC対応。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
+      <a href="#part-convert" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 03</div>
+        <div class="tool-name">変換</div>
+        <div class="tool-desc">JPG·PNG·PDF·BMP·TIFFを相互変換。ZIP一括DL対応。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
+      <a href="#part-edit" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <path d="M10.5 13.5l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 04</div>
+        <div class="tool-name">PDF編集</div>
+        <div class="tool-desc">ページ削除・並び替え・回転・分割・抽出。品質劣化ゼロ。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
+      <a href="#part-imgplace" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 3v18"/>
+            <circle cx="6" cy="6" r="0.5" fill="currentColor"/>
+            <path d="M13 13l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 05</div>
+        <div class="tool-name">PDFに画像配置</div>
+        <div class="tool-desc">JWWの枠PDFに写真をドラッグ流し込み。罫線スナップ・複数選択・カスタムセル対応。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
+    </div>
+
+    <nav class="jumpnav">
+      <a href="#part-compress">PDF軽量化</a>
+      <a href="#part-imgtopdf">画像→PDF</a>
+      <a href="#part-convert">変換</a>
+      <a href="#part-edit">PDF編集</a>
+      <a href="#part-imgplace">画像配置</a>
+      <a href="#filename">ファイル名</a>
+      <a href="#scenarios">活用シーン</a>
+      <a href="#faq">よくある質問</a>
+      <a href="#privacy">安全性</a>
+      <a href="#changelog">更新履歴</a>
+    </nav>
+  </section>
+
+  <!-- ==========================================================
+       PART 1: PDF COMPRESSION
+       ========================================================== -->
+  <section id="part-compress" class="part-divider">
+    <div class="part-label-pill">PART 01 / COMPRESSION</div>
+    <h1 class="part-title">PDF<em>軽量化</em>の使い方</h1>
+    <p class="part-lead">
+      重いPDFをメールで送る・アプリにアップする時のためのモード。
+    </p>
+  </section>
+
+  <section id="quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで完了します</h2>
+      <p class="section-lead">面倒な設定は不要。入れて、選んで、ダウンロード。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">UPLOAD</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFを入れる</h3>
+        <p class="step-text">点線の枠にPDFをドラッグ&ドロップ。複数ファイルまとめて入れられます。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">CONFIGURE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 10v6m6.36-17.36l-4.24 4.24m-4.24 4.24l-4.24 4.24M23 12h-6m-10 0H1m17.36 6.36l-4.24-4.24m-4.24-4.24L5.64 5.64"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">設定を選ぶ</h3>
+        <p class="step-text">処理モード・圧縮レベル・OCRを選択。<strong>迷ったら全部そのまま</strong>でOK。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">DOWNLOAD</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ダウンロード</h3>
+        <p class="step-text"><strong>軽量化スタート</strong>を押して待つだけ。完了したらDLボタンで受け取り。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="modes">
+    <div class="section-head">
+      <div class="section-num">PROCESSING MODE</div>
+      <h2 class="section-title">どのモードを選べばいい?</h2>
+      <p class="section-lead">PDFの中身によって、ベストな処理方法が変わります。</p>
+    </div>
+    <div class="decision-box">
+      <div class="decision-tip">
+        <div class="decision-tip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3 8-8"/>
+            <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+          </svg>
+        </div>
+        <div class="decision-tip-content">
+          <div class="decision-tip-label">EASY MODE</div>
+          <div class="decision-tip-text">
+            迷ったら<strong>「自動判定」</strong>でOK。ツールが中身を見てベストな方法を選びます。
+          </div>
+        </div>
+      </div>
+      <div class="mode-grid">
+        <div class="mode-card recommended">
+          <div class="mode-recommend-badge">RECOMMENDED</div>
+          <div class="mode-card-title">自動判定</div>
+          <div class="mode-card-sub">AUTO</div>
+          <div class="mode-card-desc">
+            PDFの中身を自動でチェックして、書類モードと写真モードを使い分けます。
+          </div>
+          <div class="mode-examples">
+            <div class="mode-examples-label">こんな人向け</div>
+            <ul>
+              <li>どれを選べばいいかわからない</li>
+              <li>とりあえず軽くしたい</li>
+              <li>ファイルの種類がバラバラ</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mode-card">
+          <div class="mode-card-title">書類モード</div>
+          <div class="mode-card-sub">DOCUMENT</div>
+          <div class="mode-card-desc">
+            文字や線画はそのまま綺麗に残して、写真や画像だけを軽くします。<strong>文字検索も使えます。</strong>
+          </div>
+          <div class="mode-examples">
+            <div class="mode-examples-label">こんなPDFに</div>
+            <ul>
+              <li>契約書・見積書</li>
+              <li>申請書・仕様書</li>
+              <li>マニュアル・説明書</li>
+            </ul>
+          </div>
+        </div>
+        <div class="mode-card">
+          <div class="mode-card-title">写真モード</div>
+          <div class="mode-card-sub">PHOTO</div>
+          <div class="mode-card-desc">
+            全ページを画像として扱い、最も軽くします。<strong>最大限に小さくしたい時</strong>におすすめ。
+          </div>
+          <div class="mode-examples">
+            <div class="mode-examples-label">こんなPDFに</div>
+            <ul>
+              <li>現場写真のまとめ</li>
+              <li>スキャンしたアルバム</li>
+              <li>スマホで撮った書類</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quality">
+    <div class="section-head">
+      <div class="section-num">COMPRESSION LEVEL</div>
+      <h2 class="section-title">圧縮レベルの選び方</h2>
+      <p class="section-lead">軽くするほど画質は少し下がります。用途に応じて選択。</p>
+    </div>
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">高画質</div>
+          <div class="quality-spec">200dpi · 画質90%</div>
+          <p class="quality-use">印刷予定、細かい文字を残したい時。サイズは控えめにしか減りません。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">標準 <span style="font-size:10px; font-family:'JetBrains Mono',monospace; background:var(--accent); color:white; padding:2px 7px; border-radius:100px; letter-spacing:0.05em; margin-left:6px; vertical-align:2px;">DEFAULT</span></div>
+          <div class="quality-spec">150dpi · 画質80%</div>
+          <p class="quality-use">画面で見る・メールで送るのに最適。バランスが一番いい、ほとんどの場合これでOK。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">圧縮</div>
+          <div class="quality-spec">100dpi · 画質70%</div>
+          <p class="quality-use">メール上限に引っかかる時、LINEで送りたい時。画面で見る分には十分。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">最大圧縮</div>
+          <div class="quality-spec">72dpi · 画質55%</div>
+          <p class="quality-use">とにかく小さくしたい時。スマホで内容確認する程度なら問題なし。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ocr">
+    <div class="section-head">
+      <div class="section-num">OCR</div>
+      <h2 class="section-title">OCRって何?</h2>
+      <p class="section-lead">写真の中の文字を、検索できるテキストに変換する機能です。</p>
+    </div>
+    <div class="ocr-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">日本語対応</span>
+        <span class="ocr-pill">英数字対応</span>
+        <span class="ocr-pill">ブラウザ内で完結</span>
+      </div>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        現場写真がズラっと並んだPDFは、普通は<strong>文字検索(Ctrl+F)ができません</strong>。
+        OCRを有効にすると、写真に写り込んでいる文字(看板・図面の文字・掲示物など)を自動で読み取り、
+        あとから検索できるようにします。
+      </p>
+      <div class="ocr-compare">
+        <div class="ocr-side">
+          <div class="ocr-side-label">BEFORE</div>
+          <div class="ocr-visual">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div class="ocr-side-text">画像として保存<br>検索できない</div>
+        </div>
+        <div class="ocr-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+        <div class="ocr-side after">
+          <div class="ocr-side-label">AFTER · OCR ON</div>
+          <div class="ocr-visual">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </div>
+          <div class="ocr-side-text">文字として認識<br>検索できる</div>
+        </div>
+      </div>
+      <div class="ocr-note">
+        <strong>初回だけ辞書のダウンロードあり</strong>(日本語 約10MB、英語 約4MB)。一度DLすればブラウザに保存されるので2回目以降は早くなります。処理時間は1ページあたり数秒〜数十秒。
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       PART 2: IMAGE TO PDF
+       ========================================================== -->
+  <section id="part-imgtopdf" class="part-divider">
+    <div class="part-label-pill">PART 02 / IMAGE TO PDF</div>
+    <h1 class="part-title">画像<em>→PDF</em>の使い方</h1>
+    <p class="part-lead">
+      現場写真・スクショ・<strong>既存のPDFまで</strong>、まとめて1つのPDFに結合。工事写真台帳・引継書類づくりに。
+    </p>
+  </section>
+
+  <section id="img-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで完了します</h2>
+      <p class="section-lead">画像を入れて、並べて、PDF化。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">IMPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">画像を入れる</h3>
+        <p class="step-text">
+          写真を<strong>ドラッグ&ドロップ</strong>。PNG、JPG、そしてiPhoneの<strong>HEIC</strong>もそのままOK。まとめて何枚でも。
+        </p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">REORDER</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 11 21 7 17 3"/>
+            <line x1="21" y1="7" x2="9" y2="7"/>
+            <polyline points="7 21 3 17 7 13"/>
+            <line x1="15" y1="17" x2="3" y2="17"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">並び替える</h3>
+        <p class="step-text">
+          サムネイルを<strong>ドラッグで並び替え</strong>。番号がそのままPDFのページ順に。不要なものは✕で削除。
+        </p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">GENERATE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDF生成</h3>
+        <p class="step-text">
+          用紙サイズと画質を選んで<strong>PDF生成</strong>。タイムスタンプ付きの名前で自動ダウンロード。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="img-pagesize">
+    <div class="section-head">
+      <div class="section-num">PAGE SIZE</div>
+      <h2 class="section-title">用紙サイズの選び方</h2>
+      <p class="section-lead">出力PDFの用紙サイズを選択。画像の向きは自動で判定されます。</p>
+    </div>
+    <div class="page-size-grid">
+      <div class="page-card">
+        <div class="page-card-size">A4</div>
+        <div class="page-card-dim">210 · 297mm</div>
+        <div class="page-card-use">一般的な書類サイズ。迷ったらコレ</div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-size">A3</div>
+        <div class="page-card-dim">297 · 420mm</div>
+        <div class="page-card-use">図面・大きく見せたい時</div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-size">B4</div>
+        <div class="page-card-dim">257 · 364mm</div>
+        <div class="page-card-use">日本の公的書類に多い</div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-size">B5</div>
+        <div class="page-card-dim">182 · 257mm</div>
+        <div class="page-card-use">ノート・手帳サイズ</div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-size" style="font-size:17px;">原寸</div>
+        <div class="page-card-dim">画像サイズ</div>
+        <div class="page-card-use">画像の縦横そのままPDF化</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="img-fit">
+    <div class="section-head">
+      <div class="section-num">FIT MODE</div>
+      <h2 class="section-title">配置方法</h2>
+      <p class="section-lead">画像を用紙にどう収めるか。用途に応じて選択。</p>
+    </div>
+    <div class="fit-compare">
+      <div class="fit-card">
+        <div class="fit-card-label">OPTION A</div>
+        <div class="fit-card-title">全体表示</div>
+        <div class="fit-illustration">
+          <div class="page"></div>
+          <div class="img-contain"></div>
+        </div>
+        <p class="fit-card-desc">
+          画像の比率を保ったまま用紙内に収めます。余白はできますが、<strong style="color:var(--ink);">画像は一切切れません</strong>。
+        </p>
+        <div class="fit-card-use">📋 書類・図面・スクショ向け</div>
+      </div>
+      <div class="fit-card">
+        <div class="fit-card-label">OPTION B</div>
+        <div class="fit-card-title">用紙を埋める</div>
+        <div class="fit-illustration">
+          <div class="img-cover"></div>
+        </div>
+        <p class="fit-card-desc">
+          用紙を画像で埋め尽くします。<strong style="color:var(--ink);">画像の端はトリミング</strong>されますが、余白がなく見栄えが良い。
+        </p>
+        <div class="fit-card-use">📷 写真アルバム・記念PDF向け</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="img-quality">
+    <div class="section-head">
+      <div class="section-num">QUALITY PRESET</div>
+      <h2 class="section-title">画質プリセット</h2>
+      <p class="section-lead">画質とファイルサイズのバランス。用途で選び分けましょう。</p>
+    </div>
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">軽量</div>
+          <div class="quality-spec">~1200px · q55</div>
+          <p class="quality-use">LINEやメールで送る用。iPhone写真10枚でも3〜5MBに収まります。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">標準 <span style="font-size:10px; font-family:'JetBrains Mono',monospace; background:var(--accent); color:white; padding:2px 7px; border-radius:100px; letter-spacing:0.05em; margin-left:6px; vertical-align:2px;">DEFAULT</span></div>
+          <div class="quality-spec">~2000px · q75</div>
+          <p class="quality-use">見た目とサイズのバランス型。迷ったらこれ。ほとんどの用途でOK。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">高画質</div>
+          <div class="quality-spec">~3200px · q90</div>
+          <p class="quality-use">客先提出・印刷用。細部まで綺麗に残したい時に。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">無圧縮</div>
+          <div class="quality-spec">original</div>
+          <p class="quality-use">元画像そのままPDF化。劣化なし。ファイルは重くなります。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="img-heic">
+    <div class="section-head">
+      <div class="section-num">HEIC SUPPORT</div>
+      <h2 class="section-title">iPhoneのHEICもOK</h2>
+      <p class="section-lead">iPhoneで撮った写真(HEIC形式)もそのままドロップできます。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        iPhoneの標準写真形式 <strong>HEIC(High Efficiency Image Container)</strong>は、
+        PCや一部アプリで開けないことがあります。このツールなら、<strong>自動でJPEGに変換</strong>してからPDFに入れるので、変換アプリは不要です。
+      </p>
+
+      <div class="heic-flow">
+        <div class="heic-step">
+          <div class="heic-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2"/>
+              <text x="12" y="16" text-anchor="middle" font-size="8" fill="white" stroke="none" font-family="monospace" font-weight="700">HEIC</text>
+            </svg>
+          </div>
+          <div class="heic-step-name">iPhone写真</div>
+          <div class="heic-step-desc">HEIC形式のまま</div>
+        </div>
+        <div class="heic-arrow">→</div>
+        <div class="heic-step">
+          <div class="heic-step-icon middle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M8 12l3 3 5-6"/>
+            </svg>
+          </div>
+          <div class="heic-step-name">自動変換</div>
+          <div class="heic-step-desc">ブラウザ内でJPEGに</div>
+        </div>
+        <div class="heic-arrow">→</div>
+        <div class="heic-step">
+          <div class="heic-step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="heic-step-name">PDFに結合</div>
+          <div class="heic-step-desc">1冊にまとまる</div>
+        </div>
+      </div>
+
+      <div class="heic-note">
+        <strong>変換時間の目安</strong>:1枚あたり数秒かかります。10枚なら30秒〜1分ほど。枚数が多い場合は少し待ってください。ネットへの送信は一切ありません。
+      </div>
+    </div>
+  </section>
+
+  
+  <!-- ==========================================================
+       PART 3: FORMAT CONVERTER
+       ========================================================== -->
+  <section id="part-convert" class="part-divider">
+    <div class="part-label-pill">PART 03 / CONVERT</div>
+    <h1 class="part-title">フォーマット<em>変換</em>の使い方</h1>
+    <p class="part-lead">
+      JPG・PNG・HEIC・BMP・TIFF・PDFを相互変換。混ぜて投げてもOK、出力はZIPでまとめられます。
+    </p>
+  </section>
+
+  <section id="conv-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで変換完了</h2>
+      <p class="section-lead">投入→形式を選ぶ→DL、これだけです。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">IMPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ファイル投入</h3>
+        <p class="step-text">変換したいファイルをドロップ。<strong>形式ごちゃまぜでOK</strong>、何個でもまとめて入れられます。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">SELECT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">出力形式を選ぶ</h3>
+        <p class="step-text">JPG / PNG / PDF / BMP / TIFF から選択。画質とDL方法(個別 or ZIP)も設定。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">CONVERT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">変換スタート</h3>
+        <p class="step-text"><strong>変換スタート</strong>を押して待つだけ。個別DLなら順次、ZIPなら1つにまとめて自動DL。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="conv-formats">
+    <div class="section-head">
+      <div class="section-num">FORMATS</div>
+      <h2 class="section-title">出力形式の選び方</h2>
+      <p class="section-lead">どの形式が何に向いてるか、ざっくり覚えておくと便利です。</p>
+    </div>
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">JPG</div>
+          <div class="quality-spec">圧縮・写真向け</div>
+          <p class="quality-use">写真に最適。ファイルサイズが小さく、メール・LINE・Web共有の定番形式。透過は保持できません。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">PNG</div>
+          <div class="quality-spec">無劣化・透過対応</div>
+          <p class="quality-use">ロゴ・イラスト・スクショ向け。劣化なし、背景透明も保持。ファイルはJPGより大きめ。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">PDF</div>
+          <div class="quality-spec">1ファイル1PDF</div>
+          <p class="quality-use">1枚ずつ個別にPDF化。複数画像を1冊にまとめたい時は<strong>画像→PDFモード</strong>を使ってください。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">BMP</div>
+          <div class="quality-spec">無圧縮・大サイズ</div>
+          <p class="quality-use">Windows標準の無圧縮形式。劣化ゼロだがファイルは非常に大きくなります。古い業務システム向け。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">TIFF</div>
+          <div class="quality-spec">高品質・印刷向け</div>
+          <p class="quality-use">印刷・スキャン・業務用途で使われる高品質形式。官公庁の書類やFAX系システムで求められることも。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="conv-mixed">
+    <div class="section-head">
+      <div class="section-num">MIXED INPUT</div>
+      <h2 class="section-title">形式ごちゃまぜ投入OK</h2>
+      <p class="section-lead">
+        JPG・PNG・HEIC・BMP・TIFF・PDFを同時に放り込んでも、全部まとめて処理されます。
+      </p>
+    </div>
+    <div class="heic-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">6形式対応</span>
+        <span class="ocr-pill">複数ページTIFF/PDFも展開</span>
+        <span class="ocr-pill">全自動変換</span>
+      </div>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        たとえばこんな混在でも大丈夫:
+      </p>
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">入力</strong>: 現場写真 JPG × 5 + スクショ PNG × 3 + HEIC × 2 + 仕様書 PDF(10ページ)<br>
+        <span style="color:var(--accent); font-weight:700;">出力形式 JPG + ZIP選択</span> →<br>
+        <strong style="color:var(--success);">出力</strong>: 全部JPGに統一された 20枚 を 1つのZIPにまとめてDL
+      </div>
+      <div class="heic-note" style="margin-top:20px;">
+        <strong>ポイント</strong>:複数ページのPDFやTIFFは<strong>1ページ=1ファイル</strong>として展開されます。ファイル名は「元の名前_page1」「元の名前_page2」という形式で自動付与。
+      </div>
+    </div>
+  </section>
+
+  <section id="conv-output">
+    <div class="section-head">
+      <div class="section-num">DOWNLOAD MODE</div>
+      <h2 class="section-title">個別DL vs ZIPまとめ</h2>
+      <p class="section-lead">ファイル数が少ない時は個別、多い時はZIPがラク。</p>
+    </div>
+    <div class="fit-compare">
+      <div class="fit-card">
+        <div class="fit-card-label">OPTION A</div>
+        <div class="fit-card-title">1枚ずつ個別DL</div>
+        <div class="fit-illustration" style="display:grid; place-items:center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <p class="fit-card-desc">
+          ファイルが<strong style="color:var(--ink);">1つずつ順番にDL</strong>されます。ブラウザによっては複数DLの許可を求めるダイアログが出ることも。
+        </p>
+        <div class="fit-card-use">📄 少数(5枚以下)の変換向け</div>
+      </div>
+      <div class="fit-card">
+        <div class="fit-card-label">OPTION B</div>
+        <div class="fit-card-title">ZIPでまとめて</div>
+        <div class="fit-illustration" style="display:grid; place-items:center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <p class="fit-card-desc">
+          変換結果を<strong style="color:var(--ink);">1つのZIPファイル</strong>にまとめてDL。フォルダに展開すれば全ファイルが整理された状態で取り出せます。
+        </p>
+        <div class="fit-card-use">📦 大量(10枚以上)の変換に最適</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="conv-quality">
+    <div class="section-head">
+      <div class="section-num">QUALITY</div>
+      <h2 class="section-title">画質設定について</h2>
+      <p class="section-lead">画質は <strong>JPGとPDF出力時のみ</strong> 効果があります。PNG/BMP/TIFFは元々無劣化なので設定不要。</p>
+    </div>
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">軽量</div>
+          <div class="quality-spec">画質55%</div>
+          <p class="quality-use">ファイルサイズ最小。メール・LINEで送るのに向いてます。画質はやや落ちます。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">標準 <span style="font-size:10px; font-family:'JetBrains Mono',monospace; background:var(--accent); color:white; padding:2px 7px; border-radius:100px; letter-spacing:0.05em; margin-left:6px; vertical-align:2px;">DEFAULT</span></div>
+          <div class="quality-spec">画質80%</div>
+          <p class="quality-use">バランス型。画面で見るにもメール添付にも適した設定。迷ったらこれ。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">高画質</div>
+          <div class="quality-spec">画質95%</div>
+          <p class="quality-use">印刷・客先提出用。ほぼ劣化なしですが、ファイルサイズは大きめに。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">最高</div>
+          <div class="quality-spec">画質100%</div>
+          <p class="quality-use">劣化なしの最高画質。ファイルサイズは最大、アーカイブ用・印刷入稿用向け。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <!-- ==========================================================
+       PART 4: PDF EDIT
+       ========================================================== -->
+  <section id="part-edit" class="part-divider">
+    <div class="part-label-pill">PART 04 / PDF EDIT</div>
+    <h1 class="part-title">PDF<em>編集</em>の使い方</h1>
+    <p class="part-lead">
+      複数PDFのページを自由に編集。削除・並び替え・回転・分割・抽出が1画面で完結。テキスト・ベクターは完全保持、検索性もそのまま。
+    </p>
+  </section>
+
+  <section id="edit-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで編集完了</h2>
+      <p class="section-lead">投入→編集→出力、これだけ。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">IMPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFを投入</h3>
+        <p class="step-text">1つでも複数でもOK。全ページがサムネイルで展開されて、編集可能な状態になります。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">EDIT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ページを編集</h3>
+        <p class="step-text">ドラッグで並び替え、✕で削除、↻で回転、✂で分割ポイント追加。番号をタップで複数選択も可能。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">EXPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">出力</h3>
+        <p class="step-text">PDFを出力 or 選択を取り出し。分割ポイントがあれば自動でZIPにまとめて複数PDFで出力されます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="edit-ops">
+    <div class="section-head">
+      <div class="section-num">OPERATIONS</div>
+      <h2 class="section-title">5つの編集操作</h2>
+      <p class="section-lead">すべて品質劣化ゼロ。元のテキスト・ベクターがそのまま保持されます。</p>
+    </div>
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">☑ 選択</div>
+          <div class="quality-spec">ページ右上のチェックボックス</div>
+          <p class="quality-use">各ページの右上にチェックボックスがあります。タップで選択 → ツールバーの「選択を〇〇」ボタンで一括操作できます。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">🗑️ 削除</div>
+          <div class="quality-spec">ページカードの✕ボタン</div>
+          <p class="quality-use">個別削除は✕ボタン。複数選択した後「選択を削除」でまとめて削除も可能。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">🔀 並び替え</div>
+          <div class="quality-spec">ドラッグ&ドロップ</div>
+          <p class="quality-use">ページカードをドラッグして順序を入れ替え。複数PDFをまたいでの並び替えもOK。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">🔄 回転</div>
+          <div class="quality-spec">90°ずつ右回転</div>
+          <p class="quality-use">スキャナで傾いて取り込まれたページや、横向きスキャンを補正。選択して一括回転も可能。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">✂ 分割</div>
+          <div class="quality-spec">ページ間の分割ボタン</div>
+          <p class="quality-use">ページとページの間にある<strong>✂チップ</strong>をクリックで分割ポイント追加。複数PDFに切り分けて出力されます。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">📤 抽出</div>
+          <div class="quality-spec">選択を取り出し</div>
+          <p class="quality-use">必要なページだけチェックして「選択を取り出し」。分割や削除せず、元を保ったまま必要分だけ切り出せます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="edit-split">
+    <div class="section-head">
+      <div class="section-num">SPLIT</div>
+      <h2 class="section-title">分割出力の使い方</h2>
+      <p class="section-lead">1つのPDFを複数のPDFに切り分けたい時。分割ポイントを置くだけ。</p>
+    </div>
+    <div class="heic-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">ページ間の✂チップをクリック</span>
+        <span class="ocr-pill">ZIPで自動出力</span>
+        <span class="ocr-pill">品質劣化ゼロ</span>
+      </div>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:8px;">
+        例えば20ページの資料を3セクションに分けたい時:
+      </p>
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">入力</strong>: 20ページのPDF<br>
+        <span style="color:var(--accent); font-weight:700;">ページ5と12の後ろに✂分割ポイント追加</span> →<br>
+        <strong style="color:var(--success);">出力</strong>: <br>
+        &nbsp;&nbsp;part1.pdf (1〜5ページ)<br>
+        &nbsp;&nbsp;part2.pdf (6〜12ページ)<br>
+        &nbsp;&nbsp;part3.pdf (13〜20ページ)<br>
+        &nbsp;&nbsp;→ 1つのZIPにまとめてダウンロード
+      </div>
+      <div class="heic-note" style="margin-top:20px;">
+        <strong>ポイント</strong>: 分割ポイントを追加すると、ページの間に青い点線バーと「<strong>PART 2 START</strong>」タグが表示されて、どこで切れるかが視覚的にハッキリ分かります。
+      </div>
+
+      <div style="margin-top:32px; padding:20px; background:var(--surface-2); border:1.5px dashed var(--accent); border-radius:var(--r-md);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+          <div style="width:32px; height:32px; border-radius:8px; background:var(--accent); color:white; display:grid; place-items:center; flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 14 10 14 10 20"/>
+              <polyline points="20 10 14 10 14 4"/>
+              <line x1="14" y1="10" x2="21" y2="3"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </div>
+          <strong style="color:var(--ink); font-size:14.5px;">分割時に軽量化トグル</strong>
+        </div>
+        <p style="font-size:13.5px; color:var(--ink-muted); line-height:1.85;">
+          分割ポイントを追加するとファイル名バーに「<strong>分割時に軽量化</strong>」トグルが出現します。ONにすると分割後の各PDFが自動で軽量化(画像化)されて、ファイルサイズが<strong style="color:var(--accent);">70〜85%削減</strong>されます。
+        </p>
+        <p style="font-size:13px; color:var(--ink-muted); line-height:1.85; margin-top:10px;">
+          ⚠ 軽量化するとテキスト検索ができなくなります。検索性を保ちたい時はOFFのままで。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="edit-extract">
+    <div class="section-head">
+      <div class="section-num">EXTRACT</div>
+      <h2 class="section-title">選択ページだけ取り出し</h2>
+      <p class="section-lead">必要なページだけ抜き出したい時。ページ右上のチェックボックスで選択→「選択を取り出し」。</p>
+    </div>
+    <div class="fit-compare">
+      <div class="fit-card">
+        <div class="fit-card-label">USE CASE A</div>
+        <div class="fit-card-title">書類の必要部分だけ抜粋</div>
+        <div class="fit-illustration" style="display:grid; place-items:center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <p class="fit-card-desc">
+          50ページの報告書から<strong style="color:var(--ink);">必要な3ページだけ</strong>抜き出して、元請けに送る。元のPDFには手を加えず、抽出したPDFだけダウンロード。
+        </p>
+        <div class="fit-card-use">📄 元データはそのまま · 必要な分だけ切り出し</div>
+      </div>
+      <div class="fit-card">
+        <div class="fit-card-label">USE CASE B</div>
+        <div class="fit-card-title">複数PDFから選り抜き</div>
+        <div class="fit-illustration" style="display:grid; place-items:center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="8" height="18" rx="1"/>
+            <rect x="14" y="3" width="8" height="18" rx="1"/>
+            <path d="M10 12l4 0"/>
+          </svg>
+        </div>
+        <p class="fit-card-desc">
+          複数のPDFを投入して、<strong style="color:var(--ink);">各PDFから必要なページだけ</strong>選んで1冊にまとめる。施主提出用の抜粋資料づくりに最適。
+        </p>
+        <div class="fit-card-use">📦 複数ソース横断抽出</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="edit-quality">
+    <div class="section-head">
+      <div class="section-num">QUALITY</div>
+      <h2 class="section-title">なぜ劣化ゼロなのか</h2>
+      <p class="section-lead">PDF編集は他モードと違い、<strong>ページを画像化しません</strong>。</p>
+    </div>
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        多くのPDF編集ツールは、内部でページを画像に変換してから再構築するため、<strong style="color:var(--warn);">テキストが画像になってしまう</strong>・<strong style="color:var(--warn);">ファイルサイズが膨らむ</strong>・<strong style="color:var(--warn);">検索性が失われる</strong>といった問題が起きます。
+      </p>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:12px;">
+        PDF Compactの編集モードは、pdf-libの<code>copyPages()</code>技術を使って<strong style="color:var(--accent);">ページをオブジェクトとしてそのままコピー</strong>しています。元のテキスト、フォント、ベクター線、画像、注釈がオリジナルのまま保持されます。<br>
+        ※<strong style="color:var(--warn);">しおり(目次)と入力フォームは、複数PDFの結合では引き継がれません</strong>。
+      </p>
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:20px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">保持されるもの</strong><br>
+        &nbsp;&nbsp;✓ テキスト(検索・コピー可能)<br>
+        &nbsp;&nbsp;✓ フォント<br>
+        &nbsp;&nbsp;✓ 図面のベクター線(CAD図面もくっきり)<br>
+        &nbsp;&nbsp;✓ 画像の解像度<br>
+        &nbsp;&nbsp;✓ 注釈<br>
+        &nbsp;&nbsp;✓ 回転情報<br>
+        <span style="color:var(--warn);">△ しおり(目次)・入力フォームは、複数PDFの結合では引き継がれません</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       PART 5: PDF IMAGE PLACE (PDFに画像配置)
+       ========================================================== -->
+  <section id="part-imgplace" class="part-divider">
+    <div class="part-label-pill">PART 05 / IMAGE PLACE</div>
+    <h1 class="part-title">PDFに<em>画像配置</em>の使い方</h1>
+    <p class="part-lead">
+      JWWで作った枠だけのPDFに、写真や図をドラッグで流し込んでサクッと仕上げる。罫線スナップ・カスタムセル・複数選択でも作業を高速化。ベクター品質を保ったままPDF出力。
+    </p>
+  </section>
+
+  <section id="imgplace-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">4ステップで配置完了</h2>
+      <p class="section-lead">枠PDF読込 → 画像追加 → ドラッグ配置 → PDF出力。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">BASE PDF</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ベースPDFをドロップ</h3>
+        <p class="step-text">JWWで作った枠だけのPDF (照明器具表・施工写真台帳など) を投入。あとから追加でPDFを末尾ドロップしてページ連結もOK。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">IMAGES</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">画像をライブラリに追加</h3>
+        <p class="step-text">右の画像ライブラリにJPG/PNGをまとめてドロップ。複数選択(Ctrl+クリックやドラッグ範囲)もOK。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">PLACE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">ドラッグで配置</h3>
+        <p class="step-text">画像を中央のPDFにドラッグして好きな位置に。罫線スナップONなら枠の中心に自動吸い付き。8隅でリサイズ。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">04</div>
+        <div class="step-label">EXPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFとして出力</h3>
+        <p class="step-text">アクションバーの「PDFとして出力」で完成PDFをDL。元のベクター品質はそのまま保持、画像はベクター枠と完全合成。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="imgplace-snap">
+    <div class="section-head">
+      <div class="section-num">RULER SNAP</div>
+      <h2 class="section-title">罫線スナップ + カスタムセル</h2>
+      <p class="section-lead">JWWの枠線を自動検出して、画像中心をピタッと枠の真ん中に。</p>
+    </div>
+
+    <div class="heic-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">📐 罫線スナップ</span>
+        <span class="ocr-pill">セル中心XY同時吸付</span>
+        <span class="ocr-pill">緑外枠ハイライト</span>
+        <span class="ocr-pill">扁平率フィルタ</span>
+      </div>
+
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:8px;">
+        アクションバーの <strong>📐 罫線スナップ</strong> ボタンを押すと、ベースPDFの罫線(直線・矩形)を自動検出して、枠で囲まれたセル中心が <span style="color:#00cc44; font-weight:700;">緑の +</span> マーカーで可視化されます。画像をドラッグするとそのセル中心にXY同時にピタッと吸い付き、対象セルが <span style="color:#00cc44; font-weight:700;">緑の外枠ハイライト</span> で確認できます。
+      </p>
+
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">検出されるセル条件</strong><br>
+        &nbsp;&nbsp;✓ 4辺がすべて実線で囲まれている (罫線の隙間 1.5mm まで許容)<br>
+        &nbsp;&nbsp;✓ 各辺 15mm 以上 + 面積 500mm² 以上<br>
+        &nbsp;&nbsp;✓ 長辺/短辺 が 4倍以下 (細長い帯は除外)<br>
+        &nbsp;&nbsp;✓ 罫線として認識される線は 10mm 以上 (ロゴ装飾は除外)
+      </div>
+
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:16px;">
+        自動検出されない枠があったり、独自に範囲を決めたい場合は <strong>✏️ カスタムセル</strong> ボタン。ONにして枠内をドラッグすれば自分用の矩形を追加できます。4隅ハンドルでリサイズ、本体ドラッグで移動、× で削除、+ で複製。罫線スナップONなら既存罫線にも吸い付きながら描画できます。
+      </p>
+    </div>
+  </section>
+
+  <section id="imgplace-multi">
+    <div class="section-head">
+      <div class="section-num">MULTI-SELECT</div>
+      <h2 class="section-title">複数選択 + 一括/順次配置</h2>
+      <p class="section-lead">大量の画像を効率よく配置する2つの方法。</p>
+    </div>
+
+    <div class="quality-grid">
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        </div>
+        <div>
+          <div class="quality-name">一括ドラッグ</div>
+          <div class="quality-spec">複数選択 → ドラッグ → オフセット並べ</div>
+          <p class="quality-use">画像ライブラリで Ctrl+クリック or ラバーバンドで複数選択 → どれか1つを canvas にドラッグすると、選択した全画像が右下方向に少しずつオフセットされて並んで配置。後で手で整列。</p>
+        </div>
+      </div>
+      <div class="quality-card">
+        <div class="quality-bars">
+          <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
+        </div>
+        <div>
+          <div class="quality-name">🎯 順次配置</div>
+          <div class="quality-spec">クリックで1枚ずつ順番配置</div>
+          <p class="quality-use">複数選択した状態でアクションバーの <strong>🎯 順次配置</strong> ボタン → canvas が照準モード → クリックで Queue 先頭から順番に配置。カーソル追従で次に置く画像のサムネ+ファイル名が表示。罫線スナップと組合せると セル芯に1枚ずつ ピタッと配置できる。</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:13.5px; color:var(--ink-muted); line-height:1.85; margin-top:16px;">
+      ⌨ <strong>Esc</strong> で順次配置キャンセル / 複数選択解除。ページ切替しても順次配置モードは継続。
+    </p>
+  </section>
+
+  <section id="imgplace-page">
+    <div class="section-head">
+      <div class="section-num">PAGE OPS</div>
+      <h2 class="section-title">ページ追加・削除・複数選択</h2>
+      <p class="section-lead">ベースPDFのページ管理もこの画面で完結。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>追加PDF</strong>: アクションバーの「📄+ PDF追加」ボタン、または canvas 領域にPDFをドラッグ&ドロップ。末尾にページが連結。</li>
+        <li><strong>ページ削除</strong>: 左サムネにマウスホバー → 右上の赤い × ボタン。配置済画像/カスタムセルも自動で一緒に削除。</li>
+        <li><strong>ページ複数選択</strong>: Ctrl+クリック / Shift+クリック / 空きエリアからドラッグでラバーバンド選択。橙枠でハイライト。</li>
+        <li><strong>一括削除</strong>: 複数ページ選択中に × ボタンで選択中の全ページを一括削除。</li>
+        <li><strong>サムネに配置画像反映</strong>: 配置・移動・リサイズすると数百ms後に左サムネにも反映、全ページ俯瞰しやすい。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="imgplace-layout">
+    <div class="section-head">
+      <div class="section-num">LAYOUT</div>
+      <h2 class="section-title">レイアウトのカスタマイズ</h2>
+      <p class="section-lead">画面解像度や作業スタイルに合わせて自由に調整。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>左右ペイン固定</strong>: ページ全体をスクロールしても左右の操作パネルは常に viewport 上部に固定。中央 canvas だけがスクロール。</li>
+        <li><strong>列幅ドラッグ</strong>: 左ペインと中央、中央と右ペインの間の縦バーをドラッグで列幅変更。設定は localStorage に保存。</li>
+        <li><strong>右ペイン内 上下スプリッター</strong>: プロパティ枠と画像ライブラリの境界もドラッグで上下調整。</li>
+        <li><strong>列数自動増減</strong>: 右画像ライブラリは幅に応じて 2→3→4列に自動増減 (auto-fill)。</li>
+        <li><strong>1/3 サイズ制限 📏</strong>: 画像配置時の初期サイズをページの1/3 までに自動圧縮 (ON/OFF切替)。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="imgplace-project">
+    <div class="section-head">
+      <div class="section-num">PROJECT FILE</div>
+      <h2 class="section-title">.lpw プロジェクト保存・autosave</h2>
+      <p class="section-lead">作業を中断しても完全復元。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        アクションバーの <strong>💾 プロジェクト保存</strong> でベースPDF + 配置画像 + カスタムセル + キャプション すべて含む <code>.lpw</code> ファイル(JSON形式)を出力。「名前を付けて保存」ダイアログで保存先を選べる(Chrome/Edge)。
+      </p>
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:12px;">
+        ベースPDF読込前の画面にある <strong>📂 プロジェクト読込</strong> から復元。さらに <strong>autosave</strong> 機能でブラウザの IndexedDB に5秒debounceで自動保存、同じPDFを開き直すと「前回の状態を復元しますか?」とダイアログ提案。
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       SHARED: FILENAME & TIMESTAMP
+       ========================================================== -->
+  <section id="filename">
+    <div class="section-head">
+      <div class="section-num">FILENAME</div>
+      <h2 class="section-title">ファイル名 & タイムスタンプ</h2>
+      <p class="section-lead">4モードすべて共通 · 出力時のファイル名を自由に指定。タイムスタンプも任意で追加できます。</p>
+    </div>
+
+    <div class="heic-hero">
+      <div class="ocr-topline">
+        <span class="ocr-pill">全モード対応</span>
+        <span class="ocr-pill">日本語OK</span>
+        <span class="ocr-pill">日時は任意</span>
+        <span class="ocr-pill">自動サニタイズ</span>
+      </div>
+
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:8px;">
+        アクションバーの上にファイル名入力欄があります。入力しなくてもOK、自動で名前が付きます。
+      </p>
+
+      <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
+        <strong style="color:var(--ink);">入力例</strong>: 「見積書」と入力<br>
+        <span style="color:var(--ink-muted);">日時OFF</span> → <code>見積書.pdf</code><br>
+        <span style="color:var(--accent); font-weight:700;">日時ON</span>  → <code>見積書_20260424.pdf</code><br>
+        <br>
+        <strong style="color:var(--ink);">未入力時</strong>: 自動でモード別の名前が付く<br>
+        例: <code>images_20260424.pdf</code>、<code>edited_20260424.pdf</code> など
+      </div>
+
+      <div class="heic-note" style="margin-top:20px;">
+        <strong>使えない文字は自動削除</strong>: <code>\ / : * ? " &lt; &gt; |</code> はWindowsで禁止されてるので、入力と同時に消えます。日本語・スペース・記号は自由に使えます。
+      </div>
+    </div>
+
+    <div class="steps-grid" style="margin-top:40px;">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">INPUT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">名前を入力</h3>
+        <p class="step-text">空欄でもOK。入力すると✕ボタンでクリアできます。拡張子は自動付加されるので書かなくて良い。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">TIMESTAMP</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">日時をつけるか選ぶ</h3>
+        <p class="step-text">「日時」トグルをONにすると末尾に <code>_20260424</code> が付きます。同名ファイル上書き防止に便利。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">OUTPUT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">出力</h3>
+        <p class="step-text">指定した名前(+日時)でダウンロード。ZIPの時はZIP名に、個別DLの時は各ファイル名に反映されます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SHARED: SCENARIOS / FAQ / PRIVACY / CTA
+       ========================================================== -->
+  <section id="scenarios">
+    <div class="section-head">
+      <div class="section-num">USE CASES</div>
+      <h2 class="section-title">こんな時に便利</h2>
+      <p class="section-lead">実際にはこんなシーンで活躍します。</p>
+    </div>
+
+    <div class="scenarios">
+      <div class="scenario">
+        <div class="scenario-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">PDFがメールで送れない</div>
+          <p class="scenario-text">「添付ファイルが大きすぎます」エラー。多くのメールは20〜25MBが上限なので、軽量化で下げれば送れます。</p>
+          <span class="scenario-tag blue">軽量化 · 標準</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+            <line x1="9" y1="17" x2="15" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">工事写真台帳を作る</div>
+          <p class="scenario-text">現場写真を日付順に並べて1つのPDFに。用紙はA4、配置は「全体表示」、画質は「標準」が定番の設定です。</p>
+          <span class="scenario-tag purple">画像→PDF · A4 標準</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">現場写真のPDFが重い</div>
+          <p class="scenario-text">写真何十枚のPDFを施主や元請けに共有したい時。画質は保ったまま大幅に軽くできます。</p>
+          <span class="scenario-tag blue">軽量化 · 写真 + OCR</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">スクショをまとめる</div>
+          <p class="scenario-text">スマホのスクショを議事録的にPDF化。「用紙を埋める」モードで余白なしの綺麗な仕上がりに。</p>
+          <span class="scenario-tag purple">画像→PDF · 埋める</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">申請書類が重い</div>
+          <p class="scenario-text">役所への提出書類が容量オーバー。書類モードなら文字が綺麗なまま、中の画像だけ軽くするので安心。</p>
+          <span class="scenario-tag blue">軽量化 · 書類</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 18h.01"/>
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">iPhoneのHEIC写真</div>
+          <p class="scenario-text">AirDropやメールで送られてきたHEIC画像を、そのままドロップするだけでPDF化。変換アプリ不要。</p>
+          <span class="scenario-tag purple">画像→PDF · HEIC対応</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">後で検索したい</div>
+          <p class="scenario-text">「あの配管の写真どこやっけ」とあとで探したくなる現場写真PDF。OCRを有効にしておけば写真の中の文字も検索OK。</p>
+          <span class="scenario-tag blue">軽量化 · OCR</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">書類を写真でスキャン</div>
+          <p class="scenario-text">紙の書類を複数ページ、スマホで撮ってまとめたい時。ドラッグで並び替えてPDF化できます。</p>
+          <span class="scenario-tag purple">画像→PDF</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#eee9ff; color:var(--purple);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">HEIC → JPG一括変換</div>
+          <p class="scenario-text">iPhoneの写真をPCや業務システムで使えるJPGに変換したい時。まとめて投げてZIPで受け取れます。</p>
+          <span class="scenario-tag" style="background:#eee9ff; color:var(--purple);">変換 · HEIC→JPG</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#eee9ff; color:var(--purple);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">PDFから画像を抜き出す</div>
+          <p class="scenario-text">複数ページPDFを1ページずつJPGやPNGに。各ページが自動で「元名_page1」「_page2」と命名されます。</p>
+          <span class="scenario-tag" style="background:#eee9ff; color:var(--purple);">変換 · PDF→JPG</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#eee9ff; color:var(--purple);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">業務システムのTIFF対応</div>
+          <p class="scenario-text">官公庁やFAX系システムで求められるTIFFへの変換。スマホで撮った写真もTIFFに統一できます。</p>
+          <span class="scenario-tag" style="background:#eee9ff; color:var(--purple);">変換 · TIFF出力</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#fef3c7; color:#92400e;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">必要ページだけ元請けに</div>
+          <p class="scenario-text">50ページの仕様書から関連する3ページだけ抜き出して送付。元データは触らず必要分だけ切り出せます。</p>
+          <span class="scenario-tag" style="background:#fef3c7; color:#92400e;">PDF編集 · 抽出</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#fef3c7; color:#92400e;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="6" r="3"/>
+            <circle cx="6" cy="18" r="3"/>
+            <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+            <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">冊子を章ごとに分割</div>
+          <p class="scenario-text">20ページの資料を3セクションに分けて各担当者に配布。分割ポイントを置くだけでZIPで出力。</p>
+          <span class="scenario-tag" style="background:#fef3c7; color:#92400e;">PDF編集 · 分割</span>
+        </div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon" style="background:#fef3c7; color:#92400e;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </div>
+        <div>
+          <div class="scenario-title">スキャンの向き補正</div>
+          <p class="scenario-text">スキャナーで傾いて取り込まれたページだけ一括回転。検索性を保ったまま綺麗に補正。</p>
+          <span class="scenario-tag" style="background:#fef3c7; color:#92400e;">PDF編集 · 回転</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="section-head">
+      <div class="section-num">FAQ</div>
+      <h2 class="section-title">よくある質問</h2>
+      <p class="section-lead">気になるポイントにお答えします。</p>
+    </div>
+
+    <div class="faq-category-label">— 共通 —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">ファイルは誰かに送信されますか?</summary>
+        <div class="faq-body">
+          <p>いいえ。<strong>すべての処理はあなたのブラウザの中で完結します。</strong>ファイルが外部のサーバーに送られることは一切ありません。</p>
+          <p>そのため、契約書・施主情報・現場写真など、機密性の高い書類でも安心してお使いいただけます。インターネットを切った状態でも(初回のOCR辞書DL後であれば)動作します。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">スマホでも使えますか?</summary>
+        <div class="faq-body">
+          <p>はい、スマホのブラウザでも動作します。ただし、パソコンに比べるとメモリが少ないため、<strong>小さめのファイル(10MB以下目安)</strong>から試してみることをおすすめします。</p>
+          <p>iPhoneの場合はSafari、Androidの場合はChromeでの動作確認を推奨します。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">処理が途中で止まってしまいます</summary>
+        <div class="faq-body">
+          <p>メモリ不足の可能性があります。以下をお試しください:</p>
+          <p>・他のアプリ・タブを閉じる<br>
+             ・ファイルを1つずつ処理する<br>
+             ・大きなPDFは先に分割、画像は枚数を減らす<br>
+             ・OCRをオフにする(OCRは特にメモリを使います)</p>
+          <p>それでも改善しない場合は、ブラウザ(Chrome・Edge・Safariなど)を最新版にアップデートしてみてください。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-category-label">— PDF軽量化について —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">どのくらい軽くなりますか?</summary>
+        <div class="faq-body">
+          <p>ファイルの中身によって大きく変わりますが、目安として:</p>
+          <p>・<strong>現場写真のまとめ:</strong> 元の1/5〜1/10くらい(例: 50MB → 5〜10MB)<br>
+             ・<strong>申請書や契約書:</strong> 元の1/2〜1/3くらい<br>
+             ・<strong>すでに軽いPDF:</strong> ほとんど変わらない場合もあります</p>
+          <p>変化量は処理後に画面上で確認できます(例: <code>50.2 MB → 4.8 MB (-90%)</code>)。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">パスワード付きPDFは処理できますか?</summary>
+        <div class="faq-body">
+          <p>申し訳ありません、パスワード付きPDFは処理できません。先にパスワードを解除してからお使いください(Adobe Acrobatやプレビューアプリなどで解除できます)。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">OCRの精度が低いです</summary>
+        <div class="faq-body">
+          <p>OCRは画像の文字を読み取る仕組みなので、<strong>写真が鮮明でない・文字が小さすぎる・手書き</strong>の場合は精度が落ちます。改善策:</p>
+          <p>・圧縮レベルを<strong>「高画質」</strong>に上げる<br>
+             ・認識言語を適切に選ぶ(日本語メインなら「日本語のみ」の方が精度が上がる場合も)<br>
+             ・元のPDFをより鮮明なものに差し替える</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-category-label">— 画像→PDFについて —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">対応している形式は?</summary>
+        <div class="faq-body">
+          <p><strong>画像</strong>: PNG、JPG、HEIC/HEIF<br>
+             <strong>PDF</strong>: 通常のPDF(パスワードなし)</p>
+          <p>画像とPDFを<strong>混ぜて投入OK</strong>。たとえば「現場写真10枚+仕様書PDF3ページ」をまとめて1冊のPDFに結合できます。他の画像形式(BMP、TIFF、GIFなど)は現在非対応です。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">PDFも入力できるって本当?</summary>
+        <div class="faq-body">
+          <p>はい、PDFも画像と一緒にまとめて投入できます。たとえば:</p>
+          <p>・現場写真(JPG) + 仕様書(PDF) → 引継書類1冊に<br>
+             ・スクショ(PNG) + 契約書(PDF) → 社内回覧用1冊に<br>
+             ・複数のPDFを結合するだけの使い方もOK</p>
+          <p>PDFは各ページが画像として取り込まれ、設定した用紙サイズ・画質で出力PDFに結合されます。<strong>PDFは1つのブロック</strong>として扱われるので、並び替え時は全ページが一緒に移動します。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">HEIC変換が遅い</summary>
+        <div class="faq-body">
+          <p>HEICは一度JPEGに変換してからPDFに入れるため、通常の画像より時間がかかります。<strong>1枚あたり数秒</strong>が目安で、枚数が多いと数十秒〜数分かかることも。</p>
+          <p>急ぎの場合は、事前にiPhone側で「写真」→共有→JPEGに変換しておく方法もあります(設定→カメラ→フォーマット→「互換性優先」でJPEGに保存することも可能)。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">画像の順番を変えたい</summary>
+        <div class="faq-body">
+          <p>サムネイルを<strong>マウスでドラッグ</strong>(スマホの場合はタップ長押しでドラッグ)して、好きな位置に移動できます。番号がそのままPDFのページ順になります。</p>
+          <p>不要な画像は、サムネイル右上の<strong>✕ボタン</strong>で削除できます(マウスを重ねると表示されます)。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">ページの向きがおかしい</summary>
+        <div class="faq-body">
+          <p>画像の縦横比で自動判定しているため、判定が意図と違うことがあります。その場合は:</p>
+          <p>・画像側を先に回転させてから投入する<br>
+             ・用紙サイズを「原寸(画像サイズ)」にする(比率そのまま)</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">余白が気になる</summary>
+        <div class="faq-body">
+          <p>配置方法を<strong>「用紙を埋める」</strong>に変更してください。余白なしで用紙いっぱいに画像が配置されます。ただし画像の端は少しトリミングされます。</p>
+          <p>書類などトリミングされると困る場合は「全体表示」のまま、用紙サイズを画像の比率に近いもの(例: A4ではなくA3など)に変えるのも手です。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">何枚まで入れられますか?</summary>
+        <div class="faq-body">
+          <p>上限はありませんが、<strong>50枚を超えると処理が重くなります</strong>。スマホでは20〜30枚程度が目安。</p>
+          <p>大量に処理する場合は、画質を「軽量」にする、もしくは数回に分けて生成してから、別途PDFを結合するのをおすすめします。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">ファイル名はどうなりますか?</summary>
+        <div class="faq-body">
+          <p>自動で<strong>タイムスタンプ付き</strong>の名前が付きます(例: <code>images_20260421_1430.pdf</code>)。年月日と時刻(時分)が入るので、複数作っても上書きされません。</p>
+          <p>ダウンロード後に好きな名前にリネームして保存してください。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-category-label">— フォーマット変換について —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">形式をごちゃまぜで投げても大丈夫?</summary>
+        <div class="faq-body">
+          <p><strong>はい、全く問題ありません。</strong>JPG・PNG・HEIC・BMP・TIFF・PDFを同時に放り込めます。</p>
+          <p>ただし<strong>出力形式は1種類のみ</strong>です。たとえば「半分はJPG、半分はPDF」のような出力はできません。その場合は2回に分けて実行してください。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">複数ページのPDF/TIFFはどうなる?</summary>
+        <div class="faq-body">
+          <p>各ページが<strong>別々のファイル</strong>として出力されます。たとえば10ページPDFをJPGに変換すると、<code>元名_page1.jpg</code>〜<code>元名_page10.jpg</code>の10ファイルが生成されます。</p>
+          <p>逆に<strong>1つにまとめたい</strong>場合は「画像→PDFモード」を使って結合してください。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">ZIPと個別DL、どっちがいい?</summary>
+        <div class="faq-body">
+          <p>ファイル数で使い分けるのがおすすめ:</p>
+          <p>・<strong>3〜5枚以下</strong>:個別DLで十分<br>
+             ・<strong>それ以上</strong>:ZIPの方が速くて整理しやすい</p>
+          <p>個別DLだとブラウザによっては「複数のファイルDLを許可しますか?」という確認が出ることがあります。ZIPならそれが起きません。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">画質設定はいつ効く?</summary>
+        <div class="faq-body">
+          <p>画質設定は<strong>JPGとPDF出力時のみ</strong>効果があります。</p>
+          <p>PNG・BMP・TIFFは元から「無劣化」の形式なので、画質を下げてもサイズは変わらず、画質設定は無視されます(UIでも半透明になって無効化が表示されます)。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">HEIC→JPG一括変換はできる?</summary>
+        <div class="faq-body">
+          <p>得意分野です!iPhoneの写真(HEIC)を複数ドロップして出力形式「JPG」+「ZIP」にすれば、一気に変換できます。</p>
+          <p>変換時間は<strong>1枚あたり数秒</strong>が目安。20枚で1〜2分程度です。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">透過(透明背景)は残る?</summary>
+        <div class="faq-body">
+          <p>出力形式によります:</p>
+          <p>・<strong>PNG / TIFF / BMP(32bit)</strong>:透過を保持<br>
+             ・<strong>JPG / PDF</strong>:透過は白背景に変換されます</p>
+          <p>PNGのロゴなどをJPGにすると背景が白くなるので、透過を残したい場合はPNGかTIFF出力を選んでください。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-category-label">— PDF編集について —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">編集すると画質は落ちますか?</summary>
+        <div class="faq-body">
+          <p><strong>劣化ゼロです。</strong>PDF編集モードはページを画像化せず、元のPDFオブジェクトをそのままコピーする方式を使っています。</p>
+          <p>テキスト・フォント・図面のベクター線・埋め込み画像・注釈はオリジナルのまま保持されます。編集後もCtrl+Fで文字検索も可能です。</p>
+          <p>※しおり(目次)と入力フォームは、複数PDFの結合では引き継がれません。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">複数PDFを1つにまとめられる?</summary>
+        <div class="faq-body">
+          <p>はい、簡単にできます。複数のPDFを一度にドロップすると、全ページが並びます。</p>
+          <p>ドラッグで並び順を整えて「PDFを出力」すれば、1つのPDFとして結合されます。複数PDFを投入した時は自動的に「結合モード」になります。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">分割ポイントはどう追加する?</summary>
+        <div class="faq-body">
+          <p>ページとページの間、ページカードの<strong>右端</strong>に小さな「✂チップ」ボタンがあります。クリックすると青く点灯し、そのページの後ろで分割されます。</p>
+          <p>分割ポイントが追加されると、ページ間に<strong>青い点線バー</strong>と「<strong>PART 2 START</strong>」などのタグが表示され、どこで分割されるかが一目で分かります。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">分割と抽出の違いは?</summary>
+        <div class="faq-body">
+          <p>似てますが用途が違います:</p>
+          <p><strong>分割(✂)</strong>: すべてのページを使って、境界で区切って複数PDFに。20ページを5,5,10で3分割 → 合計20ページ全部が3つのPDFに入る<br>
+          <strong>抽出(選択を取り出し)</strong>: 選んだページ<strong>だけ</strong>を1つのPDFに。20ページから3ページ選択 → 3ページだけのPDFが出る(残り17ページは使われない)</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">「選択を右回転」ボタンがグレーアウトしてる</summary>
+        <div class="faq-body">
+          <p>ページが1つも選択されていないためです。ページカードの<strong>番号をタップ</strong>すると選択され、ボタンが有効になります。</p>
+          <p>複数ページを選んで一括回転もできます。選択中のページは青い枠で表示されます。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">パスワード付きPDFも編集できる?</summary>
+        <div class="faq-body">
+          <p>パスワードで保護されたPDFは基本的に編集不可です。先にパスワードを解除してから投入してください。</p>
+          <p>内部的にはパスワード解除を試みる設定ですが、強い暗号化(AES-256など)が掛かっていると読み込めないことがあります。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">「分割時に軽量化」トグルって何?</summary>
+        <div class="faq-body">
+          <p>分割ポイントを置いた時にだけ出現する特別なトグルです。ONにすると、分割後の各PDFが<strong>自動で軽量化</strong>(画像化)されます。</p>
+          <p>なぜ必要か: PDFを分割すると、ブラウザ環境の技術的制約で<strong>各分割PDFが元のフォント・画像を全部含んでしまう</strong>ため、解凍すると<strong>元サイズ×分割数</strong>に膨らむことがあります(例: 5MB→15MB)。</p>
+          <p>軽量化トグルONで、各PDFが150DPIで画像化されてサイズが<strong>70〜85%削減</strong>されます。ただしテキスト検索はできなくなる点に注意。</p>
+          <p><strong>使い分け</strong>:<br>
+          ・テキスト検索性を保ちたい → OFFのまま<br>
+          ・ファイルサイズを重視 → ON</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">ページをチェックボックスで選べる?</summary>
+        <div class="faq-body">
+          <p>はい、各ページの<strong>右上にチェックボックス</strong>があります。タップすると青く点灯して選択中になります。</p>
+          <p>チェックボックスは小さく見えますが、<strong>実際のタップ反応範囲は見た目の約4倍</strong>に広げてあるので、指でも余裕でタップできます。</p>
+          <p>選択したページに対して、ツールバーの<strong>「選択を取り出し」「選択を削除」「選択を右回転」</strong>が有効になります。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-category-label">— ファイル名について —</div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary class="faq-summary">ファイル名は指定できる?</summary>
+        <div class="faq-body">
+          <p>はい、全モードで<strong>出力ファイル名を自由に指定</strong>できます。アクションバーの上にある入力欄に名前を入力するだけ。</p>
+          <p>空欄のままでもOK。その場合は自動で<code>images_20260424.pdf</code>のようにタイムスタンプ付きの名前が付きます。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">「日時」トグルって何?</summary>
+        <div class="faq-body">
+          <p>ファイル名の末尾に<strong>日付(YYYYMMDD)</strong>を付けるかどうかのトグルです。デフォルトOFF、押すとON。</p>
+          <p>例: 入力「見積書」+ トグルON → <code>見積書_20260424.pdf</code></p>
+          <p>同じ名前のファイルを日ごとに作る時に便利。トグルの右には<strong>現在の日付プレビュー</strong>が表示されるので、何が付くかすぐ分かります。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">ファイル名に使えない文字は?</summary>
+        <div class="faq-body">
+          <p>Windowsで禁止されている次の文字は自動的に削除されます:</p>
+          <p><code>\ / : * ? " &lt; &gt; |</code></p>
+          <p>それ以外の文字(日本語、スペース、記号など)は自由に使えます。</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">変換モードの個別DL時、ファイル名は?</summary>
+        <div class="faq-body">
+          <p>個別DL時は<strong>元のファイル名</strong>が使われます(拡張子のみ変更)。例えば<code>photo.heic</code>をJPGに変換すると<code>photo.jpg</code>で保存されます。</p>
+          <p>ZIPでまとめる時だけファイル名指定が有効になります。ZIPなら中のファイル名は元のまま保持されつつ、ZIP自体に指定した名前が付きます。</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="section-head">
+      <div class="section-num">PRIVACY & SECURITY</div>
+      <h2 class="section-title">安心してお使いください</h2>
+      <p class="section-lead">大切な書類を扱うからこそ、セキュリティは譲れません。</p>
+    </div>
+    <div class="privacy-card">
+      <div class="privacy-inner">
+        <div class="privacy-eyebrow">100% LOCAL · NO UPLOAD · PRIVATE</div>
+        <h3 class="privacy-title">
+          ファイルは<em>あなたの手元から</em><br>一歩も出ません。
+        </h3>
+        <p class="privacy-lead">
+          このツールは、ファイルの処理をすべて<strong>あなたのブラウザの中</strong>で行います。
+          クラウドにアップロードしたり、外部のサーバーで変換したりすることは一切ありません。
+        </p>
+        <div class="privacy-points">
+          <div class="privacy-point">
+            <div class="privacy-point-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h4>外部送信なし</h4>
+            <p>ファイルは一切ネットに送信されません。オフラインでも動作します。</p>
+          </div>
+          <div class="privacy-point">
+            <div class="privacy-point-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h4>機密情報OK</h4>
+            <p>施主情報・契約書・現場写真など、機密性の高い書類でも安心。</p>
+          </div>
+          <div class="privacy-point">
+            <div class="privacy-point-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <h4>保存期間ゼロ</h4>
+            <p>処理が終わったらブラウザからも消えます。履歴も残りません。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="changelog">
+    <div class="section-head">
+      <div class="section-num">CHANGELOG</div>
+      <h2 class="section-title">更新履歴</h2>
+      <p class="section-lead">主な機能追加・改善の記録。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary class="faq-summary">v3.7.0 (2026-06-02) — 🔏 透かし (ウォーターマーク)</summary>
+        <div class="faq-body">
+          <p><strong>「社外秘」などの薄い文字を全ページに斜めに重ねる機能。</strong>右上の⚙️設定で ON/OFF(既定オフ)。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>「社外秘 / 複製禁止 / DRAFT」をワンタップで選択。自由入力もOK</li>
+            <li>全ページ中央に45度・薄いグレーで1個。もし流出してもどこ由来か分かるように</li>
+            <li>全モード(軽量化 / 画像→PDF / 変換 / PDF編集 / 画像配置)のPDF出力に適用</li>
+            <li>画像出力には影響なし。暗号化PDFは安全のため素通し。日本語フォントは出力時に必要分だけ埋込(サイズ肥大なし)</li>
+            <li>設定はこの端末に保存。配布前の事故防止に「どこ由来か分かる」が加わりました</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.6.0 (2026-06-02) — 🛡 配布前サニタイズ (メタデータ除去)</summary>
+        <div class="faq-body">
+          <p><strong>出力するPDFから「隠れた個人情報」を自動で消す機能。</strong>右上の⚙️設定で ON/OFF。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>作成者・タイトル・作成日・使用ソフト名などのメタデータを、PDF出力時に自動でクリア(デフォルトON)</li>
+            <li>「前の客先名が作成者欄に残ってた」「社内テンプレ流用がバレる」といった<strong>うっかり情報漏洩を防止</strong></li>
+            <li>全モード(軽量化 / 画像→PDF / 変換 / PDF編集 / 画像配置)の出力すべてに適用</li>
+            <li>画像出力(PNG/JPG等)には影響なし。暗号化PDFは安全のため素通し(平文化しない)</li>
+            <li>設定はこの端末に保存され次回も有効。「社外送信ゼロ」に「配布前の事故防止」が加わりました</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.5.x シリーズ (2026-06-02) — iPad 対応</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.5.0</strong> — iPad で PC と同じドック表示が使えるように:
+              <ul style="margin-left:1.5em;">
+                <li>ドック許可閾値を 720→700px に下げて iPad portrait (768px) を許可</li>
+                <li>ドック幅を viewport 適応 (iPad portrait 345px / landscape 460px / PC 480px)</li>
+                <li>iOS PWA 対応: 共有 → 「ホーム画面に追加」でアドレスバーなしのアプリ風表示</li>
+                <li>README.txt に iPad 利用手順を追記</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.4.x シリーズ (2026-05-28〜06-02) — バグハント + モバイル致命修正</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.4.2</strong> — スマホで取説ドック幅がツールを隠していた致命バグ修正(モバイル<700pxは強制全画面モーダル化、自動表示も無効)</li>
+            <li><strong>v3.4.1</strong> — 軽量化/変換の全失敗時UX改善、AVIF onerrorに通知追加、ピンチ3本目ガード、取説 closure 修正、定数とリテラル統一、ページ複数選択削除の早期returnクリア</li>
+            <li><strong>v3.4.0</strong> — 並列エージェント(3名)バグハント結果:imgPlace タブ切替後のフローティングゴミ箱残留 / 取説ドックスプリッターpointerupリーク / ドック幅 restore のclamp漏れ / scrollGuideToSection早期return / PDF Rotation TODO追加</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.3.x シリーズ (2026-05-28) — 取説ドック表示の進化</summary>
+        <div class="faq-body">
+          <p><strong>取説を「ツールと並べて見れる」体験に全面刷新。</strong></p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.3.9</strong> — ドック狭幅でツールカード説明文が中黒区切りで見切れる問題修正、再表示時に現在のタブのセクションへ自動スクロール</li>
+            <li><strong>v3.3.8</strong> — 拡大⇔ドックトグルボタン(× の左)復活、× で閉じた後の再オープンは必ずドック表示から</li>
+            <li><strong>v3.3.7</strong> — モードタブ切替で取説も該当 PART セクションへ smooth スクロール連動</li>
+            <li><strong>v3.3.6</strong> — v3.3.5 で取説表示が崩壊するバグを即修正(ガイドソース内に script タグ入れて外側 script type=text/html が早期終了していた)</li>
+            <li><strong>v3.3.5</strong> — 取説モーダル右上のボタン3連被り(ドックトグル/×/ツールを開く)を解消</li>
+            <li><strong>v3.3.4</strong> — PDF Compact 起動時に取説を自動でドック表示するように(× で閉じればそのセッション中は再表示しない)</li>
+            <li><strong>v3.3.3</strong> — 取説を必ずドック表示で開くように(localStorage 状態判定を廃止、過去にトグルしてても毎回ドック)</li>
+            <li><strong>v3.3.2</strong> — localStorage マイグレーション + body の padding-right が CSS で効かない Chrome の挙動を html 要素 inline で回避</li>
+            <li><strong>v3.3.1</strong> — デフォルトドック表示 + 被り要素の位置補正(imgPlace 右ペイン・編集 editor の 100vw breakout 補正)</li>
+            <li><strong>v3.3.0</strong> — 取説モーダルを右側ドックパネルに切替可能化、境界スプリッターでドック幅可変、設定は localStorage 永続化</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.2.x シリーズ (2026-05-28) — 取説強化</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.2.2</strong> — 取説のツールカード「フォーマット変換」を「変換」にリネーム(文字見切れ解消)+ word-break ガード追加</li>
+            <li><strong>v3.2.1</strong> — 取説トップの tool-card + jumpnav にも「PDFに画像配置」リンクを追加</li>
+            <li><strong>v3.2.0</strong> — 取説に <strong>「PDFに画像配置」モード章 (PART 05)</strong> を新規追加(クイックスタート / 罫線スナップ + カスタムセル / 複数選択 + 順次配置 / ページ管理 / レイアウト / .lpw プロジェクト保存)</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.1.x シリーズ (2026-05-27〜28) — 改善 + バグ修正</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.1.6</strong> — 取説の更新履歴に v3.0.1〜v3.1.5 を追記(反映漏れ対応)</li>
+            <li><strong>v3.1.5</strong> — 罫線スナップ: 扁平率4倍超のセル(細長い帯状)を矩形として認識しないように</li>
+            <li><strong>v3.1.4</strong> — 軽量化(全部DL後)/画像→PDF/PDF編集 でも出力後に保持ファイル自動クリア(全モード統一)</li>
+            <li><strong>v3.1.3</strong> — 変換モード: 個別DLでも2枚以上は自動でZIPにまとめる(ブラウザの「複数ファイルDL許可」プロンプト回避)</li>
+            <li><strong>v3.1.2</strong> — 変換モード: 変換完了後に元ファイルを自動クリア(次の作業がそのまま始められる)</li>
+            <li><strong>v3.1.1</strong> — 罫線スナップ: 線長フィルタを 0.7mm → 10mm に強化(ロゴ等の短い装飾線をセル境界として誤検出しないように)</li>
+            <li><strong>v3.1.0</strong> — 画像→PDF / 変換 モードで <strong>AVIF</strong> 画像の入力に対応</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.0.x シリーズ (2026-05-23) — UI改善</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>v3.0.2</strong> — アプリ上部(ブランド名の隣)にバージョンバッジを表示</li>
+            <li><strong>v3.0.1</strong> — プロパティ枠のスクロールバーを常時表示(キャプション追加時に内容が見えない問題を修正)</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.0.0 (2026-05-23) — メジャーアップデート: UI再設計</summary>
+        <div class="faq-body">
+          <p><strong>「PDFに画像配置」モードのレイアウト全面刷新。</strong>大量画像・複数ページの編集が劇的に快適に。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>左右ペイン固定 + 中央canvas通常スクロール</strong> — どこをスクロールしても操作パネルは見えたまま</li>
+            <li><strong>左右の列幅をドラッグで可変</strong> — スプリッターで自由幅、設定は記憶</li>
+            <li><strong>右ライブラリは画面幅に応じて列数自動増減</strong> — 広げれば 2→3→4列に</li>
+            <li><strong>右ペイン内も上下スプリッター</strong> — プロパティ/ライブラリの比率調整可</li>
+            <li><strong>左サムネに配置画像をプレビュー反映</strong> — 全ページ俯瞰しやすく</li>
+            <li><strong>左ペイン「ベースPDF」タイトル</strong> + ベースPDFページの複数選択 (Ctrl/Shift/ラバーバンド) + 一括削除</li>
+            <li><strong>PDFを追加でドロップ可能</strong> — 末尾ページとして連結マージ</li>
+            <li><strong>ページ削除 × ボタン</strong> — サムネホバーで出現、配置画像も同時に整理</li>
+            <li><strong>画像ライブラリも複数選択</strong> (Ctrl/Shift/ラバーバンド)</li>
+            <li><strong>選択した複数画像を一括ドラッグ配置</strong> — オフセット並べ</li>
+            <li><strong>順次配置モード(🎯)</strong> — クリックで1枚ずつ順番配置 + 次に置く画像のサムネ+ファイル名がカーソル追従</li>
+            <li><strong>配置画像も複数選択 → 画面下ゴミ箱で一括削除</strong></li>
+            <li><strong>画像ドロップゾーン上でホイール</strong>でライブラリ内スクロール</li>
+            <li><strong>PDFドロップ時に枠外オレンジ表示</strong></li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v2.x シリーズ — 罫線スナップ &amp; カスタムセル</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li><strong>罫線スナップ</strong> — JWWで作った枠線(直線/矩形)を自動検出してスナップ対象に</li>
+            <li><strong>矩形セル中心スナップ</strong> — 4辺で囲まれた領域を検出、中心に XY 同時吸い付き</li>
+            <li><strong>セル外枠ハイライト</strong> — スナップ中はそのセルが緑枠で光る</li>
+            <li><strong>カスタムセル機能</strong> — 自分で矩形をドラッグ描画 → スナップ対象に追加</li>
+            <li><strong>カスタムセル編集</strong> — 4隅ハンドルでリサイズ / 本体ドラッグで移動 / × で削除 / + で複製</li>
+            <li><strong>平行アライメントガイド</strong> — 他セルと整列時に橙色ガイド線</li>
+            <li><strong>Shift+ドラッグで水平/垂直拘束</strong></li>
+            <li><strong>画像配置サイズ 1/3 制限トグル</strong> — 配置時にページ1/3まで自動圧縮 (📏)</li>
+            <li><strong>起動時自動アップデートチェック</strong> + .exe / .vbs ランチャー(ZIP配布)</li>
+            <li><strong>プロジェクト保存に「名前を付けて保存」ダイアログ</strong></li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v1.x シリーズ — 基本機能 (Phase 1)</summary>
+        <div class="faq-body">
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>PDFに画像を配置する基本機能</li>
+            <li>ドラッグ&ドロップ配置 / ダブルクリックで中央配置</li>
+            <li>8ハンドルリサイズ / アスペクト比固定 / Shift で一時解除</li>
+            <li>移動 / マルチ選択(Ctrl+クリック / ラバーバンド) / マルチドラッグ</li>
+            <li>整列4種(横並び等間隔 / 上端 / 下端 / 縦中央)+ サイズ統一</li>
+            <li>他画像エッジ・中心線・ページ中央へのスナップ + ガイド線表示</li>
+            <li>複数キャプション(上下位置 / 揃え / サイズ / 太字 / フォント切替)</li>
+            <li><code>.lpw</code> プロジェクト保存/読込 + IndexedDB autosave + SHA256 ベース復元</li>
+            <li>PDF出力(pdf-lib焼き込み、ベクター品質保持)</li>
+            <li>HEIC / TIFF 含む 画像読込対応(EXIF orientation 自動補正)</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <h2>さあ、使ってみよう</h2>
+    <p>準備ができたら、ツールを開いてファイルを入れてみてください。</p>
+    <a href="javascript:void(0)" onclick="window.parent.postMessage('closeGuide','*')" class="btn-xl">
+      <span>ツールを開く</span>
+      <span class="arr">→</span>
+    </a>
+  </section>
+
+</div>
+
+<footer>
+  <div class="footer-brand">PDF<em>Compact</em> · 100% LOCAL · NO UPLOAD</div>
+  <div class="footer-note">
+    すべての処理はブラウザ内で完結 ・ ファイルは外部サーバーに送信されません
+    <span class="app-version-label" id="appVersionLabel"></span>
+  </div>
+</footer>
+
+</body>
+</html>

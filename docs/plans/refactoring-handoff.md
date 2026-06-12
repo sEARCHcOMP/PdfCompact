@@ -161,3 +161,27 @@
 ---
 
 *このノートは生きとる文書や。Phase が進んだら docs/plans/refactoring-progress.md に進捗を、新しい暗黙知は tasks/lessons.md に追記してくれ。*
+
+---
+
+## Phase 1 着手後の運用ルール (2026-06-12 追記)
+
+**ビルド工程が入った。今後コードを触るのは `src/` で、bundle は生成物。**
+
+- 編集対象:
+  - `src/styles.css` — CSS(3,906行)
+  - `src/guide.html` — 取説(text/html 埋め込み、3,377行)
+  - `src/app.js` — アプリJS(9,550行。まだ1ファイル。次の増分で mode-*.js に分割予定)
+  - `src/index.template.html` — 骨格(DOCTYPE/CDN/タブ/パネルHTML/閉じタグ。sentinel 3つを持つ)
+- ビルド: `node build.js`(src → bundle 生成、**連結のみ・CRLF維持・minifyしない**)
+- 検証: `node build.js --check`(bundle と src が byte一致か。書き換えない)
+- `npm test` は **pretest で `build.js --check` が走る** → src と bundle が乖離してたらテスト前に落ちる(ビルド忘れ検出)。乖離したら `node build.js` してから再テスト
+- bundle は依然 git 追跡(配布物 = auto-update が取得する生成済みファイル)。**src 編集 → build → bundle も一緒に commit**
+- リリース: `pwsh build/release.ps1 -Version x.y.z -Notes "..."` が
+  src/app.js の APP_VERSION 書換 → build → test → version.json/README → ZIP → SHA整合 を一気通貫
+- **byte一致が絶対基準**: build.js は現行 bundle を1バイトも違わず再現する(SHA検証済み)。
+  app.js を後でモジュール分割する時も、分割のたびに `build.js --check` が通る(= bundle 不変)ことを必ず確認してから次へ
+- 注意: `src/guide.html` 内に `</script>` を書くと外側が早期終了する(過去 v3.3.5 の事故)。
+  build.js は app.js の `</script>` 混入はチェックするが、guide は text/html なので別途注意。
+- **次の増分**: src/app.js(9,550行)を 6モード + 基盤に分割。分割後も build 出力が byte 不変であること。
+  分割は「app.js 内のモジュール境界(IIFE/コメント区切り)を実測 → ファイルに切り出し → build.js の INCLUDES に追加 → --check 通過」を1モジュールずつ。

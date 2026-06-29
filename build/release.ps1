@@ -23,14 +23,17 @@ function Fail($msg) { Write-Host "❌ $msg" -ForegroundColor Red; exit 1 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { Fail "バージョンは x.y.z 形式で: $Version" }
 
 # --- 1) バージョン更新(src が真実の源 → ビルドで bundle 生成) ---
-# APP_VERSION は src/app.js にあり、bundle は build.js の生成物。
-$appjs = Join-Path $root 'src/app.js'
+# APP_VERSION は src/app/ のどこか(現状 00-core-00-sanitize.js)にある。bundle は build.js の生成物。
+# 分割の都度パスが動くため、固定パスでなく src/app/ から自動探索する。
+$appjs = Get-ChildItem (Join-Path $root 'src/app') -Filter *.js -Recurse |
+  Where-Object { (Get-Content $_.FullName -Raw) -match "const APP_VERSION = '[^']+';" } |
+  Select-Object -First 1 -ExpandProperty FullName
+if (-not $appjs) { Fail "src/app/ に APP_VERSION が見つからない" }
 $appSrc = [System.IO.File]::ReadAllText($appjs)
 $old = [regex]::Match($appSrc, "const APP_VERSION = '([^']+)';").Groups[1].Value
-if (-not $old) { Fail "src/app.js に APP_VERSION が見つからない" }
 $appSrc = $appSrc -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
 [System.IO.File]::WriteAllText($appjs, $appSrc)
-Write-Host "✓ src/app.js APP_VERSION $old → $Version"
+Write-Host "✓ $(Split-Path $appjs -Leaf) APP_VERSION $old → $Version"
 
 # bundle を src から再ビルド(これで bundle に新バージョンが入る)
 Write-Host "▶ ビルド中(src → bundle)..." -ForegroundColor Cyan

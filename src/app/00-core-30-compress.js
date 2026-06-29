@@ -1,3 +1,17 @@
+  // 書類モードの削減率がこの値未満なら写真モードへのフォールバックを検討する
+  const FALLBACK_REDUCTION_THRESHOLD = 0.05; // = 5%
+
+  // 軽量化結果の表示文言(noteの一元管理。最終ガードでの上書き判定を文字列マッチに頼らないため)
+  const COMPRESS_NOTE = {
+    DOC_OK:                  '書類モード(テキスト検索を維持)',
+    DOC_NO_IMAGE:            'ベクタ/テキストPDF(圧縮対象の画像なし)',
+    DOC_INEFFECTIVE_MANUAL:  '書類モードでは効果が薄いPDFです(写真モードで再圧縮できます)',
+    PHOTO_FALLBACK:          '書類モードで効果が薄いため画像化で圧縮(テキスト検索不可)',
+    PHOTO_FALLBACK_OCR:      '画像化＋OCRで圧縮(検索性を維持)',
+    PHOTO_FALLBACK_FAILED:   '書類モード(画像化しても縮まず)',
+    ALREADY_OPTIMIZED:       '既に最適化済み(圧縮効果なし)',
+  };
+
   async function detectBestMode(file) {
     try {
       const buf = await file.arrayBuffer();
@@ -133,7 +147,89 @@
       useObjectStreams: true,
       addDefaultPage: false
     });
-    return { blob: new Blob([outBytes], { type: 'application/pdf' }) };
+    return {
+      blob: new Blob([outBytes], { type: 'application/pdf' }),
+      imageCount: imageEntries.length, // 検出した画像XObject総数
+      replacedCount: replaced,         // 実際に再圧縮した枚数(0 かつ imageCount>0 = 非JPEG画像のみ)
+    };
+  }
+
+  /**
+   * 書類モードの結果を評価し、必要なら写真モードへフォールバックして「より小さい方」を返す。
+   * f.note / f.ocrApplied を副作用でセットする。
+   * @returns {{ blob: Blob }}
+   */
+  async function maybeFallbackToPhoto(f, docResult, dpi, quality, opts) {
+    const { isAuto, ocrEnabled, ocrLangValue } = opts;
+    const origSize = f.origSize;
+    const docSize  = docResult.blob.size;
+    const reduction = origSize > 0 ? (1 - docSize / origSize) : 0;
+
+    // (a) 画像が無い → ベクタ/テキスト主体。フォールバック不可(D-2)
+    if (docResult.imageCount === 0) {
+      f.note = COMPRESS_NOTE.DOC_NO_IMAGE;
+      return { blob: docResult.blob };
+    }
+
+    // (b) 手動docモードはフォールバックしない(D-1)。効果が薄ければ理由のみ表示
+    if (!isAuto) {
+      f.note = (reduction < FALLBACK_REDUCTION_THRESHOLD)
+        ? COMPRESS_NOTE.DOC_INEFFECTIVE_MANUAL
+        : COMPRESS_NOTE.DOC_OK;
+      return { blob: docResult.blob };
+    }
+
+    // (c) autoモード: 効果が薄い or 非JPEG画像のみ(再圧縮ゼロ)→ 写真モードへ
+    const ineffective =
+      (reduction < FALLBACK_REDUCTION_THRESHOLD) || (docResult.replacedCount === 0);
+    if (!ineffective) {
+      f.note = COMPRESS_NOTE.DOC_OK; // 書類モードで十分縮み、検索性も維持できた
+      return { blob: docResult.blob };
+    }
+
+    // --- フォールバック実行 ---
+    f.currentStep = '画像化で再圧縮中...';
+    render();
+
+    let photoResult;
+    if (ocrEnabled) {
+      photoResult = await compressPdfPhotoModeOCR(f, dpi, quality, ocrLangValue);
+      f.ocrApplied = true;
+    } else {
+      photoResult = await compressPdfPhotoMode(f, dpi, quality);
+    }
+
+    // 小さい方を採用(D-3)
+    if (photoResult.blob.size < docResult.blob.size) {
+      f.mode = 'photo';   // 実体は画像化された → UIの「書類モード」タグと note の矛盾を防ぐ
+      f.note = ocrEnabled ? COMPRESS_NOTE.PHOTO_FALLBACK_OCR : COMPRESS_NOTE.PHOTO_FALLBACK;
+      return { blob: photoResult.blob };
+    } else {
+      // 写真化しても書類モード以下にならなかった → 書類モード結果を採用、OCRは不採用
+      f.ocrApplied = false;
+      f.note = COMPRESS_NOTE.PHOTO_FALLBACK_FAILED;
+      return { blob: docResult.blob };
+    }
+  }
+
+  /**
+   * 圧縮結果を fileObj に採用する最終ガード(4.5)。出力が元サイズ以上 かつ 非OCR なら元ファイルへ戻す。
+   * 通常経路と暗号化フォールバック経路の両方から呼ぶ(重複排除)。
+   */
+  async function applyResultWithGuard(f, result) {
+    if (result.blob.size >= f.origSize && !f.ocrApplied) {
+      f.status = 'done';
+      f.result = new Blob([await f.file.arrayBuffer()], { type: 'application/pdf' });
+      f.newSize = f.origSize;
+      // 「画像なし(ベクタ)」の説明は情報量が多いので残し、それ以外は最適化済みに統一
+      if (f.note !== COMPRESS_NOTE.DOC_NO_IMAGE) {
+        f.note = COMPRESS_NOTE.ALREADY_OPTIMIZED;
+      }
+    } else {
+      f.result = result.blob;
+      f.newSize = result.blob.size;
+      f.status = 'done';
+    }
   }
 
   // PHOTO MODE: rasterize everything (old behavior, good for photo-heavy PDFs)

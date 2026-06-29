@@ -501,8 +501,13 @@
 
         let result;
         if (mode === 'doc') {
-          result = await compressPdfDocMode(f, dpi, quality);
-          if (ocrEnabled) f.note = 'OCR不要(元々テキスト検索可)';
+          const docResult = await compressPdfDocMode(f, dpi, quality);
+          // 書類モードで効果が薄ければ auto時のみ写真モードへ自動フォールバック(note は内部で確定)
+          result = await maybeFallbackToPhoto(f, docResult, dpi, quality, {
+            isAuto: (currentMode === 'auto'),
+            ocrEnabled,
+            ocrLangValue,
+          });
         } else if (ocrEnabled) {
           result = await compressPdfPhotoModeOCR(f, dpi, quality, ocrLangValue);
           f.ocrApplied = true;
@@ -510,28 +515,46 @@
           result = await compressPdfPhotoMode(f, dpi, quality);
         }
 
-        // If output ended up larger than original, keep original (rare but possible)
-        if (result.blob.size >= f.origSize && !f.ocrApplied) {
-          f.status = 'done';
-          f.result = new Blob([await f.file.arrayBuffer()], { type: 'application/pdf' });
-          f.newSize = f.origSize;
-          f.note = '元のまま(圧縮効果なし)';
-        } else {
-          f.result = result.blob;
-          f.newSize = result.blob.size;
-          f.status = 'done';
-        }
+        // 最終ガード(出力が元以上なら元へ戻す)は共有ヘルパで実行
+        await applyResultWithGuard(f, result);
         render();
       } catch (err) {
         console.error(err);
-        f.status = 'error';
-        let errMsg = err.message || '不明';
-        // 保護付き(編集制限)PDFは書類モードの load (ignoreEncryption:false) で
-        // 英語の生エラーになるため、日本語の説明と回避策に差し替える
-        if (/encrypt/i.test(errMsg)) {
-          errMsg = '保護付き(編集制限)のPDFのため書類モードで処理できません。圧縮モードを「写真」にすると処理できます';
+        let handled = false;
+        // auto時の暗号化(編集制限)エラーは写真モードへ自動フォールバック。
+        // pdf.js はパスワード無しの編集制限PDFを描画できることが多いため、写真モードなら処理可能。
+        // doc経路(ignoreEncryption:false の load)で落ちた時だけ救済する(f.mode==='doc')。
+        // 手動docのときは従来どおりエラー表示(下の通常処理)を維持する。
+        if (/encrypt/i.test(err.message || '') && currentMode === 'auto' && f.mode === 'doc') {
+          try {
+            f.currentStep = '画像化で再圧縮中...';
+            render();
+            const photo = ocrEnabled
+              ? await compressPdfPhotoModeOCR(f, dpi, quality, ocrLangValue)
+              : await compressPdfPhotoMode(f, dpi, quality);
+            if (ocrEnabled) f.ocrApplied = true;
+            // 写真化で実際に縮んだ(または検索性付与=OCR)ときだけ採用。
+            // 縮まなければ「開けすらしなかった暗号化原本」を完了扱いにせず、正直にエラーへ落とす。
+            if (photo.blob.size < f.origSize || f.ocrApplied) {
+              f.mode = 'photo';   // 実体は画像化された
+              f.note = ocrEnabled ? COMPRESS_NOTE.PHOTO_FALLBACK_OCR : COMPRESS_NOTE.PHOTO_FALLBACK;
+              f.result = photo.blob;
+              f.newSize = photo.blob.size;
+              f.status = 'done';
+              handled = true;
+            }
+          } catch (e2) { /* 写真モードでも失敗 → 下の通常エラー処理へ */ }
         }
-        f.error = errMsg;
+        if (!handled) {
+          f.status = 'error';
+          let errMsg = err.message || '不明';
+          // 保護付き(編集制限)PDFは書類モードの load (ignoreEncryption:false) で
+          // 英語の生エラーになるため、日本語の説明と回避策に差し替える
+          if (/encrypt/i.test(errMsg)) {
+            errMsg = '保護付き(編集制限)のPDFのため書類モードで処理できません。圧縮モードを「写真」にすると処理できます';
+          }
+          f.error = errMsg;
+        }
         render();
       }
     }

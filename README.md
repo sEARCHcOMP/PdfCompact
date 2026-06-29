@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.8.0** · 2026-06-11
+> **Version 3.9.0** · 2026-06-29
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.8.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.9.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
 
 ---
 
@@ -44,6 +44,14 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.9.0 (2026-06-29) — Minor (🔄 軽量化の自動フォールバック)
+- **書類モードで縮まないPDFを自動で画像化圧縮**: スクショ入りWord(PNG/FlateDecode画像)・白黒スキャン(CCITT/JBIG2)・透過マスク付き等、従来「元のまま(圧縮効果なし)」だったPDFを、おまかせ(自動)モード時に写真モードへ自動フォールバックして確実に縮める
+- ベクタ/テキストのみのPDF(図面など画像0枚)は画質を守るため画像化しない(理由を表示)
+- 手動「書類モード」選択時は従来どおりテキスト検索を維持(自動画像化しない)
+- OCR ON 時のフォールバックは透明テキスト層を付与して検索性を維持
+- 保護付き(編集制限)PDFも自動モードなら画像化で処理を試みる。縮まない場合は理由を明示
+- 結果は必ず「書類/写真の小さい方」を採用、最終ガードで膨張を防止(既存の写真モード単体・PDF編集の分割時軽量化には影響なし)
 
 ### v3.8.0 (2026-06-11) — Minor (🖤 黒塗り/墨消し)
 - **新モード「黒塗り」を追加**: 契約書・施主情報・図面の機密箇所を本物の不可逆消去で隠す

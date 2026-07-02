@@ -1403,6 +1403,18 @@
         <div class="tool-desc">JWWの枠PDFに写真をドラッグ流し込み。罫線スナップ・複数選択・カスタムセル対応。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
+      <a href="#part-redact" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <rect x="7" y="10" width="10" height="4" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 06</div>
+        <div class="tool-name">黒塗り(墨消し)</div>
+        <div class="tool-desc">見せたくない所を本当に消す。文字クリックで黒塗り、出力前に消去を自動チェック。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
     </div>
 
     <nav class="jumpnav">
@@ -1411,6 +1423,7 @@
       <a href="#part-convert">変換</a>
       <a href="#part-edit">PDF編集</a>
       <a href="#part-imgplace">画像配置</a>
+      <a href="#part-redact">黒塗り</a>
       <a href="#filename">ファイル名</a>
       <a href="#scenarios">活用シーン</a>
       <a href="#faq">よくある質問</a>
@@ -1649,6 +1662,9 @@
       </div>
       <div class="ocr-note">
         <strong>初回だけ辞書のダウンロードあり</strong>(日本語 約10MB、英語 約4MB)。一度DLすればブラウザに保存されるので2回目以降は早くなります。処理時間は1ページあたり数秒〜数十秒。
+      </div>
+      <div class="heic-note">
+        <strong>縮まないPDFは自動で画像化(v3.9.0〜)</strong>:スクリーンショット入りWordや白黒スキャンなど、書類モードでは縮まないPDFを「おまかせ(自動)」モードのとき自動で画像化して確実に縮めます。手動で「書類」を選んだ場合はテキスト検索を守るため画像化しません。図面などのベクタPDFも画質を守るため対象外(縮まない理由を画面に表示します)。
       </div>
     </div>
   </section>
@@ -2568,6 +2584,71 @@
 
 
   <!-- ==========================================================
+       PART 6: REDACTION (黒塗り / 墨消し)
+       ========================================================== -->
+  <section id="part-redact" class="part-divider">
+    <div class="part-label-pill">PART 06 / REDACTION</div>
+    <h1 class="part-title">黒塗り<em>(墨消し)</em>の使い方</h1>
+    <p class="part-lead">
+      契約書・施主情報・図面の見せたくない箇所を「本当に」消します。黒い四角を上に重ねるだけの見せかけではなく、下の文字データごと物理的に消去。コピー&amp;ペーストや検索でも取り出せません。
+    </p>
+  </section>
+
+  <section id="redact-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで完了します</h2>
+      <p class="section-lead">PDFを入れる → 隠す場所を選ぶ → 黒塗りして出力。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">UPLOAD</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFを入れる</h3>
+        <p class="step-text">隠したい情報が入ったPDFをドラッグ&amp;ドロップ。処理はすべてこのパソコンの中だけで完結し、外部への送信は一切ありません。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">SELECT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">隠す場所を選ぶ</h3>
+        <p class="step-text">文字をクリック(またはなぞって選択)すると黒塗りが付きます。マウスを乗せて青く光る文字が対象の合図。重なった黒塗りは自動でひとつにまとまります。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">EXPORT</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">黒塗りして出力</h3>
+        <p class="step-text">「黒塗りして出力」を押すと、本当に消えたかを自動チェックしてからダウンロード。1文字でも残っていれば出力を中止する安全設計です。</p>
+      </div>
+    </div>
+
+    <div class="heic-note">
+      <strong>3つの塗り方</strong>:①文字をクリック(1か所ずつ確実に) ②文字をなぞって選択(まとめて) ③「自由に四角」で囲む(スキャンPDF・図面の一部など文字データが無い場所はこちら。案内が自動で表示されます)。タブレットはタップか長押しでOK。間違えたら黒塗り右上の×で削除できます(確認つき)。
+    </div>
+    <div class="heic-note">
+      <strong>大事な仕様</strong>:黒塗りしたページは画像に変換され、そのページは文字の検索・コピーができなくなります(情報を物理的に消すための仕様です)。黒塗りの無いページは高画質のまま保持されます。<strong>配布前に必ず出力PDFの中身をご確認ください。</strong>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
        SHARED: FILENAME & TIMESTAMP
        ========================================================== -->
   <section id="filename">
@@ -3194,6 +3275,29 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v3.9.0 (2026-06-29) — 🔄 軽量化の自動フォールバック</summary>
+        <div class="faq-body">
+          <p><strong>「圧縮しても元のまま」だったPDFを、自動で画像化して確実に縮めます。</strong></p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>スクリーンショット入りWord・白黒スキャンなど、書類モードで縮まないPDFが対象</li>
+            <li>おまかせ(自動)モードのときだけ作動。手動「書類」選択時はテキスト検索を守るため画像化しません</li>
+            <li>図面などのベクタPDF(画像なし)は画質を守るため対象外。縮まない理由も画面に表示</li>
+            <li>OCRをONにしておけば、画像化後も文字検索できる透明テキストを付与</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.8.0 (2026-06-11) — 🖤 黒塗り(墨消し)</summary>
+        <div class="faq-body">
+          <p><strong>新モード「黒塗り」を追加。</strong>見せたくない情報を、本当に消します(PART 06 参照)。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>文字をクリック/なぞるだけで黒塗り。スキャンPDFは「自由に四角」で囲むだけ</li>
+            <li>黒塗りページは画像化して文字データを物理消去。コピペ・検索で取り出せません</li>
+            <li>出力前に「本当に消えたか」を自動チェック。残っていれば出力を中止する安全設計</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.7.0 (2026-06-02) — 🔏 透かし (ウォーターマーク)</summary>
         <div class="faq-body">
           <p><strong>「社外秘」などの薄い文字を全ページに斜めに重ねる機能。</strong>右上の⚙️設定で ON/OFF(既定オフ)。</p>

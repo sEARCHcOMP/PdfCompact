@@ -66,7 +66,8 @@
     imgtopdf: 'part-imgtopdf',
     convert: 'part-convert',
     pdfedit: 'part-edit',
-    imgplace: 'part-imgplace'
+    imgplace: 'part-imgplace',
+    redact: 'part-redact'      // v3.9.x: 取説 PART 06(黒塗り)追加に伴い連動対象へ
   };
   // 取説 iframe を該当セクションまでスクロール (ドック表示中の時のみ意味あり)
   // behavior: 'smooth' (タブ切替時のアニメ) or 'auto' (再表示時の瞬間移動)

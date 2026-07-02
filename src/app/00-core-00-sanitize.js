@@ -15,7 +15,7 @@
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
   const APP_VERSION = '3.9.0';
-  // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
+  // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
     try { return atob(_BASE_B64); } catch (_e) { return ''; }

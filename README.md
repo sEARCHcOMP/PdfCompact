@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.12.0** · 2026-07-02
+> **Version 4.0.0** · 2026-07-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.12.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.0.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -46,6 +46,13 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.0.0 (2026-07-02) — Major (🎉 スマホ転送 2GB 対応 + マイルストーン)
+- **スマホ転送の1ファイル上限を 100MB → 2GB に引き上げ**: 現場動画も送れる。バックエンドは署名付きURL(R2 presigned PUT)方式(pc-toolkit 側で実装・Worker 配備済み)
+- PC→スマホ送信はハイブリッド経路: ≤100MB は従来の Worker 経由(file:// 起動でも確実)、>100MB は署名URLで R2 直PUT
+- R2 バケット CORS は PUT を全オリジン許可に変更済み(2026-07-02。アップロードの認可は署名付きURL側が担うため安全。ダッシュボードが `null` オリジンを受け付けないための措置で、これによりランチャーの file:// 起動でも大容量送信可)
+- R2 ライフサイクルルール設定済み(中継サーバの消し忘れファイルは1日で自動削除)
+- 7モード完成の節目としてメジャーバージョンへ
 
 ### v3.12.0 (2026-07-02) — Minor (📲 スマホ転送が双方向に)
 - **PC→スマホ送信を追加**: 「スマートフォンへ送る」からファイル選択(またはドラッグ&ドロップ)で、スマートフォン側に「保存」ボタン付きで届く。スマホ側UI(phone.js)は従来から `from:'pc'` の受信に対応済みのため、スマホ側の変更なし

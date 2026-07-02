@@ -253,7 +253,12 @@
     // パソコン → スマートフォン 送信 (スマホ側 phone.js の uploadOne と対称)
     // ============================================================
     var phoneConnected = false;
-    var MAX_SEND_SIZE = 100 * 1024 * 1024;   // Worker 側の上限(100MB)と一致させる
+    // 送信経路は2段構え(スマホ側 phone.js は常時署名URL方式だが、PC側は file:// 起動
+    // (ランチャー)があり R2 直PUTの CORS が通らない環境が残るため、小さい方は Worker 経由を維持):
+    //   ≤100MB: PUT {worker}/upload (Worker 経由。ACAO:* なのでどの起動形態でも通る)
+    //   >100MB: POST {worker}/sign-upload → R2 へ直PUT (R2 バケットの CORS 許可が必要)
+    var LEGACY_LIMIT = 100 * 1024 * 1024;            // Worker 無料枠のボディ上限
+    var MAX_SEND_SIZE = 2 * 1024 * 1024 * 1024;      // 署名URL方式の上限(Worker 側と一致)
 
     function updateSendUI(connected){
       phoneConnected = connected;
@@ -331,21 +336,44 @@
 
     function sendOne(file){
       if (file.size > MAX_SEND_SIZE){
-        addSendError('「' + file.name + '」は送信できません。1ファイルあたり 100MB までです。');
+        addSendError('「' + file.name + '」は送信できません。1ファイルあたり 2GB までです。');
         return Promise.resolve();
       }
       var fileId = randomHex(16);
       var safeName = sanitizeFileName(file.name);
       var key = 'transfers/' + roomId + '/' + fileId + '/' + encodeURIComponent(safeName);
+      var ct = file.type || 'application/octet-stream';
       var row = addSendRow(file.name);
+      var onProgress = function(loaded, total){
+        var pct = total ? Math.round(loaded / total * 100) : 0;
+        row.bar.style.width = pct + '%';
+        row.state.textContent = pct + '%';
+      };
       return makeThumb(file).then(function(thumb){
-        var url = HIKARI_WORKER_URL + '/upload?key=' + encodeURIComponent(key) +
-                  '&ct=' + encodeURIComponent(file.type || 'application/octet-stream');
-        return xhrPut(url, file, function(loaded, total){
-          var pct = total ? Math.round(loaded / total * 100) : 0;
-          row.bar.style.width = pct + '%';
-          row.state.textContent = pct + '%';
-        }).then(function(){
+        var uploading;
+        if (file.size <= LEGACY_LIMIT){
+          // 小ファイル: Worker 経由(従来どおり)
+          uploading = xhrPut(
+            HIKARI_WORKER_URL + '/upload?key=' + encodeURIComponent(key) + '&ct=' + encodeURIComponent(ct),
+            file, onProgress
+          );
+        } else {
+          // 大ファイル: 署名付きURLを発行して R2 へ直PUT。
+          // 署名に content-type が含まれるため、xhrPut の Content-Type は
+          // sign-upload に渡した ct と完全一致していること(両方 file.type 由来で一致)
+          uploading = fetch(HIKARI_WORKER_URL + '/sign-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, ct: ct, size: file.size })
+          }).then(function(res){
+            if (!res.ok) throw new Error('sign-upload HTTP ' + res.status);
+            return res.json();
+          }).then(function(d){
+            if (!d || !d.url) throw new Error('no presigned url');
+            return xhrPut(d.url, file, onProgress);
+          });
+        }
+        return uploading.then(function(){
           var payload = {
             name: file.name,
             safeName: safeName,

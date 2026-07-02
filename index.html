@@ -5222,7 +5222,7 @@
         <div class="hikari-send-drop" id="hikariSendDrop">
           <input type="file" id="hikariSendInput" multiple hidden>
           <button class="hikari-send-btn" id="hikariSendBtn" type="button" disabled>ファイルを選んで送る</button>
-          <div class="hikari-send-note">ここにドラッグ&amp;ドロップでも送れます(1ファイル 100MB まで)</div>
+          <div class="hikari-send-note">ここにドラッグ&amp;ドロップでも送れます(1ファイル 2GB まで)</div>
         </div>
         <div class="hikari-list" id="hikariSendList"></div>
       </div>
@@ -8756,6 +8756,17 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.0.0 (2026-07-02) — 🎉 メジャーアップデート(2GB対応)</summary>
+        <div class="faq-body">
+          <p><strong>スマホ転送で 1ファイル 2GB まで送れるようになりました。</strong>現場の動画もそのまま送れます。あわせて、7つの道具(軽量化・画像→PDF・変換・PDF編集・画像配置・黒塗り・スマホ転送)が揃った節目として v4.0 になりました。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>大きいファイルは新しい転送経路(署名付きURL)で安定して届きます</li>
+            <li>中継サーバに残ったファイルは1日で自動削除される保険を追加(通常は受け渡し直後に削除)</li>
+            <li>使い方・画面の操作は今までと変わりません</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.12.0 (2026-07-02) — 📲 スマホ転送がパソコン→スマホにも対応</summary>
         <div class="faq-body">
           <p><strong>スマホ転送が双方向になりました。</strong>「スマートフォンへ送る」からファイルを選ぶ(またはドラッグ&amp;ドロップ)と、スマートフォン側に「保存」ボタン付きで届きます。</p>
@@ -9008,7 +9019,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.12.0';
+  const APP_VERSION = '4.0.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -18598,7 +18609,12 @@ window.PdfSanitize = (function () {
     // パソコン → スマートフォン 送信 (スマホ側 phone.js の uploadOne と対称)
     // ============================================================
     var phoneConnected = false;
-    var MAX_SEND_SIZE = 100 * 1024 * 1024;   // Worker 側の上限(100MB)と一致させる
+    // 送信経路は2段構え(スマホ側 phone.js は常時署名URL方式だが、PC側は file:// 起動
+    // (ランチャー)があり R2 直PUTの CORS が通らない環境が残るため、小さい方は Worker 経由を維持):
+    //   ≤100MB: PUT {worker}/upload (Worker 経由。ACAO:* なのでどの起動形態でも通る)
+    //   >100MB: POST {worker}/sign-upload → R2 へ直PUT (R2 バケットの CORS 許可が必要)
+    var LEGACY_LIMIT = 100 * 1024 * 1024;            // Worker 無料枠のボディ上限
+    var MAX_SEND_SIZE = 2 * 1024 * 1024 * 1024;      // 署名URL方式の上限(Worker 側と一致)
 
     function updateSendUI(connected){
       phoneConnected = connected;
@@ -18676,21 +18692,44 @@ window.PdfSanitize = (function () {
 
     function sendOne(file){
       if (file.size > MAX_SEND_SIZE){
-        addSendError('「' + file.name + '」は送信できません。1ファイルあたり 100MB までです。');
+        addSendError('「' + file.name + '」は送信できません。1ファイルあたり 2GB までです。');
         return Promise.resolve();
       }
       var fileId = randomHex(16);
       var safeName = sanitizeFileName(file.name);
       var key = 'transfers/' + roomId + '/' + fileId + '/' + encodeURIComponent(safeName);
+      var ct = file.type || 'application/octet-stream';
       var row = addSendRow(file.name);
+      var onProgress = function(loaded, total){
+        var pct = total ? Math.round(loaded / total * 100) : 0;
+        row.bar.style.width = pct + '%';
+        row.state.textContent = pct + '%';
+      };
       return makeThumb(file).then(function(thumb){
-        var url = HIKARI_WORKER_URL + '/upload?key=' + encodeURIComponent(key) +
-                  '&ct=' + encodeURIComponent(file.type || 'application/octet-stream');
-        return xhrPut(url, file, function(loaded, total){
-          var pct = total ? Math.round(loaded / total * 100) : 0;
-          row.bar.style.width = pct + '%';
-          row.state.textContent = pct + '%';
-        }).then(function(){
+        var uploading;
+        if (file.size <= LEGACY_LIMIT){
+          // 小ファイル: Worker 経由(従来どおり)
+          uploading = xhrPut(
+            HIKARI_WORKER_URL + '/upload?key=' + encodeURIComponent(key) + '&ct=' + encodeURIComponent(ct),
+            file, onProgress
+          );
+        } else {
+          // 大ファイル: 署名付きURLを発行して R2 へ直PUT。
+          // 署名に content-type が含まれるため、xhrPut の Content-Type は
+          // sign-upload に渡した ct と完全一致していること(両方 file.type 由来で一致)
+          uploading = fetch(HIKARI_WORKER_URL + '/sign-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, ct: ct, size: file.size })
+          }).then(function(res){
+            if (!res.ok) throw new Error('sign-upload HTTP ' + res.status);
+            return res.json();
+          }).then(function(d){
+            if (!d || !d.url) throw new Error('no presigned url');
+            return xhrPut(d.url, file, onProgress);
+          });
+        }
+        return uploading.then(function(){
           var payload = {
             name: file.name,
             safeName: safeName,

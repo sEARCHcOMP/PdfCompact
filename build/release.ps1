@@ -39,7 +39,7 @@ Write-Host "✓ $(Split-Path $appjs -Leaf) APP_VERSION $old → $Version"
 Write-Host "▶ ビルド中(src → bundle)..." -ForegroundColor Cyan
 node build.js
 if ($LASTEXITCODE -ne 0) { Fail "ビルド失敗" }
-$bundle = Join-Path $root 'pdf_compact_bundle.html'
+$bundle = Join-Path $root 'index.html'
 
 # --- 2) テストゲート(ビルド済み bundle に対して) ---
 if ($SkipTests) {
@@ -53,7 +53,7 @@ if ($SkipTests) {
 
 $vj = Join-Path $root 'version.json'
 $noteText = if ($Notes) { $Notes } else { (Get-Content $vj -Raw | ConvertFrom-Json).notes }
-$verObj = [ordered]@{ version = $Version; notes = $noteText; download_path = 'pdf_compact_bundle.html' }
+$verObj = [ordered]@{ version = $Version; notes = $noteText; download_path = 'index.html' }
 ($verObj | ConvertTo-Json -Depth 5) + "`n" | Set-Content -Path $vj -Encoding utf8 -NoNewline
 Write-Host "✓ version.json 更新"
 
@@ -70,10 +70,13 @@ if (Test-Path $readme) {
 $dest = Join-Path $root 'PDF_Compact.zip'
 $stage = Join-Path $env:TEMP "pdfc_zip_stage_$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Force $stage | Out-Null
-foreach ($f in @('PDF Compact.bat', 'PDF Compact.exe', 'pdf_compact_bundle.html', 'README.txt', 'version.json')) {
+foreach ($f in @('PDF Compact.bat', 'PDF Compact.exe', 'README.txt', 'version.json')) {
   $src = Join-Path $root $f
   if (Test-Path $src) { Copy-Item $src $stage } else { Write-Host "  (省略: $f が無い)" -ForegroundColor DarkGray }
 }
+# 本体はリポ上では index.html だが、ランチャー(.bat/.exe)はローカル名 pdf_compact_bundle.html を
+# 開く/更新するため、ZIP内では旧名で格納する(配布済みランチャーとの互換維持)
+Copy-Item $bundle (Join-Path $stage 'pdf_compact_bundle.html')
 if (Test-Path (Join-Path $root 'samples')) {
   New-Item -ItemType Directory -Force (Join-Path $stage 'samples') | Out-Null
   Get-ChildItem (Join-Path $root 'samples') -File | Where-Object { $_.Name -ne '_gen_dummies.js' } |

@@ -7,7 +7,7 @@
   //      で base64 化した文字列に差替える (username 隠蔽のため)
   //   3. リポジトリに次の2ファイルを置く:
   //        - version.json:  { "version": "2.2.0", "notes": "..." [, "download_path": "..." ] }
-  //        - pdf_compact_bundle.html (新版本体)
+  //        - index.html (新版本体。旧名 pdf_compact_bundle.html から改名済)
   //   4. CORS 全開で安定する GitHub raw を使用 (Google Drive は CORS で大半失敗)
   // 隠蔽方式 (casual viewer 向け):
   //   - URL は base64 にして source 直読みでは username 見えない
@@ -30,7 +30,7 @@
     if (manifest && manifest.download_path) return b + manifest.download_path;
     // 互換: 絶対 URL の download_url が指定されてればそれ (但し username 漏洩注意)
     if (manifest && manifest.download_url) return manifest.download_url;
-    return b + 'pdf_compact_bundle.html';
+    return b + 'index.html';
   }
 
 /* ===================================================================

@@ -1,5 +1,5 @@
 // PDF Compact ビルドスクリプト(連結のみ)
-// src/ の分割ファイルを骨格テンプレートに差し込んで、単一HTML pdf_compact_bundle.html を生成する。
+// src/ の分割ファイルを骨格テンプレートに差し込んで、単一HTML index.html を生成する。
 // 方針(docs/plans/refactoring-handoff.md 法則2): bundler/transpile/minify は一切しない。
 //   - ランタイム依存ゼロ(node標準APIのみ)
 //   - 出力は人間が読める形のまま(デバッグ性を維持)
@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 const ROOT = __dirname;
 const TEMPLATE = path.join(ROOT, 'src', 'index.template.html');
-const OUT = path.join(ROOT, 'pdf_compact_bundle.html');
+const OUT = path.join(ROOT, 'index.html');
 
 // アプリJS は src/app/*.js をファイル名のソート順に連結して1つの payload にする。
 //   00-core / 10-img2pdf / 20-convert / 30-pdfedit / 40-imgplace / 50-redact / 90-settings

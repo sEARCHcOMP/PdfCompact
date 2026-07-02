@@ -111,7 +111,7 @@ const BUILD_BUFFER = `function(orientation, little){
 
 test.describe('EXIF orientation パーサ等価性', () => {
   test('orientation 1-8 × 両エンディアンで 旧img2pdf=旧imgplace=新共有=期待値', async ({ page }) => {
-    await page.goto('/pdf_compact_bundle.html');  // ページコンテキストが要るだけ(ライブラリ不要)
+    await page.goto('/index.html');  // ページコンテキストが要るだけ(ライブラリ不要)
     const result = await page.evaluate(({ oldA, oldB, neu, build }) => {
       const pOldA = eval('(' + oldA + ')');
       const pOldB = eval('(' + oldB + ')');
@@ -136,7 +136,7 @@ test.describe('EXIF orientation パーサ等価性', () => {
   });
 
   test('異常系(非JPEG/EXIFなし/壊れ)は全実装が 1 を返す', async ({ page }) => {
-    await page.goto('/pdf_compact_bundle.html');
+    await page.goto('/index.html');
     const result = await page.evaluate(({ oldA, oldB, neu }) => {
       const pOldA = eval('(' + oldA + ')'), pOldB = eval('(' + oldB + ')'), pNew = eval('(' + neu + ')');
       const cases = {

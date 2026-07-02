@@ -4,7 +4,7 @@ const { expect } = require('@playwright/test');
 
 /** アプリを開いて CDN ライブラリの読込完了まで待ち、ダイアログを潰す */
 async function openApp(page) {
-  await page.goto('/pdf_compact_bundle.html');
+  await page.goto('/index.html');
   await page.waitForFunction(
     () => window.PDFLib && window.pdfjsLib && window.JSZip,
     null, { timeout: 60_000 }

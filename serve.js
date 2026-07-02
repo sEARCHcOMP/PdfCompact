@@ -21,7 +21,7 @@ const MIME = {
 
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
-  if (urlPath === '/' || urlPath === '') urlPath = '/pdf_compact_bundle.html';
+  if (urlPath === '/' || urlPath === '') urlPath = '/index.html';
   const filePath = path.join(ROOT, urlPath);
   // ディレクトリトラバーサル防止
   if (!filePath.startsWith(ROOT)) {

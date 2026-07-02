@@ -37,7 +37,7 @@
 
 | ファイル | リンク |
 |---|---|
-| 本体 (HTML) | [pdf_compact_bundle.html](pdf_compact_bundle.html) |
+| 本体 (HTML) | [index.html](index.html) |
 | バージョン情報 | [version.json](version.json) |
 | Windows ランチャー | [PDF Compact.exe](PDF%20Compact.exe) / [.vbs](PDF%20Compact.vbs) / [.bat](PDF%20Compact.bat) |
 

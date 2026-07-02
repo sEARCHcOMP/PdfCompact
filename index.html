@@ -8557,7 +8557,7 @@
   //      で base64 化した文字列に差替える (username 隠蔽のため)
   //   3. リポジトリに次の2ファイルを置く:
   //        - version.json:  { "version": "2.2.0", "notes": "..." [, "download_path": "..." ] }
-  //        - pdf_compact_bundle.html (新版本体)
+  //        - index.html (新版本体。旧名 pdf_compact_bundle.html から改名済)
   //   4. CORS 全開で安定する GitHub raw を使用 (Google Drive は CORS で大半失敗)
   // 隠蔽方式 (casual viewer 向け):
   //   - URL は base64 にして source 直読みでは username 見えない
@@ -8565,7 +8565,7 @@
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
   const APP_VERSION = '3.9.0';
-  // base64('https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/')
+  // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
   function _decodeBase() {
     try { return atob(_BASE_B64); } catch (_e) { return ''; }
@@ -8580,7 +8580,7 @@
     if (manifest && manifest.download_path) return b + manifest.download_path;
     // 互換: 絶対 URL の download_url が指定されてればそれ (但し username 漏洩注意)
     if (manifest && manifest.download_url) return manifest.download_url;
-    return b + 'pdf_compact_bundle.html';
+    return b + 'index.html';
   }
 
 /* ===================================================================

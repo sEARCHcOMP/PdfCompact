@@ -3903,3 +3903,209 @@
     }
   }
 
+
+  /* ============================================================ */
+  /* Hikari(スマホ転送)モード — .hikari-* 接頭辞で隔離             */
+  /* ============================================================ */
+  .hikari-loading {
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 13px;
+    padding: 48px 0;
+  }
+
+  .hikari-offline {
+    text-align: center;
+    padding: 44px 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .hikari-offline-icon { font-size: 34px; margin-bottom: 10px; }
+  .hikari-offline-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .hikari-offline-sub { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; }
+
+  .hikari-main { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---- 接続カード(QR + 波紋) ---- */
+  .hikari-connect {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 28px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 26px 30px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .hikari-qr-stage {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hikari-ripple {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 28px;
+    border: 1.5px solid var(--accent-glow);
+    opacity: 0;
+    animation: hikariRipple 3.6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+    pointer-events: none;
+  }
+  .hikari-ripple.hr2 { animation-delay: 1.2s; }
+  .hikari-ripple.hr3 { animation-delay: 2.4s; }
+  @keyframes hikariRipple {
+    0%   { transform: scale(0.92); opacity: 0; }
+    18%  { opacity: 1; }
+    100% { transform: scale(1.42); opacity: 0; }
+  }
+  .hikari-qr-stage.connected .hikari-ripple { animation: none; opacity: 0; }
+
+  .hikari-qr {
+    position: relative;
+    z-index: 1;
+    width: 180px;
+    height: 180px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hikari-qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .hikari-qr-skeleton {
+    color: var(--ink-faint);
+    font-size: 11.5px;
+    text-align: center;
+    padding: 0 14px;
+    line-height: 1.7;
+  }
+
+  .hikari-connect-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .hikari-connect-info p { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; margin-bottom: 14px; }
+
+  .hikari-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border-radius: 999px;
+    background: var(--bg-deep);
+    color: var(--ink-2);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .hikari-status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor;
+  }
+  .hikari-status.wait { background: #fff6db; color: #8a6d1f; }
+  .hikari-status.wait .hikari-status-dot { animation: hikariPulse 1.6s ease infinite; }
+  .hikari-status.ok { background: #e0f5e7; color: var(--success); }
+  @keyframes hikariPulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50%      { transform: scale(1.45); opacity: 0.4; }
+  }
+
+  /* ---- 受信待ち / 受信済みカード ---- */
+  .hikari-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .hikari-sec-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .hikari-sec-head h3 { font-size: 14px; font-weight: 700; }
+  .hikari-sec-sub { font-size: 11.5px; color: var(--ink-muted); margin-bottom: 12px; }
+
+  .hikari-accept-all {
+    padding: 7px 15px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 110ms ease;
+  }
+  .hikari-accept-all:hover { background: var(--accent-deep); }
+  .hikari-accept-all:active { transform: scale(0.96); }
+
+  .hikari-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .hikari-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-md);
+    padding: 10px 14px;
+  }
+  .hikari-row-thumb {
+    width: 44px; height: 44px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    font-size: 19px;
+    overflow: hidden;
+  }
+  .hikari-row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hikari-row-body { flex: 1; min-width: 0; }
+  .hikari-row-name {
+    font-size: 12.5px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hikari-row-size { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+  .hikari-row-accept {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 110ms ease;
+  }
+  .hikari-row-accept:hover:not(:disabled) { background: var(--accent-deep); }
+  .hikari-row-accept:active:not(:disabled) { transform: scale(0.96); }
+  .hikari-row-accept:disabled { opacity: 0.6; cursor: default; }
+  .hikari-row-dismiss {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: var(--bg-deep);
+    color: var(--ink-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+  .hikari-row-dismiss:hover { background: #fde5e5; color: #b03030; }
+  .hikari-row-done-mark { font-size: 11.5px; color: var(--success); font-weight: 600; flex-shrink: 0; }
+
+  @media (max-width: 720px) {
+    .hikari-connect { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  }

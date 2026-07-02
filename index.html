@@ -3930,6 +3930,212 @@
     }
   }
 
+
+  /* ============================================================ */
+  /* Hikari(スマホ転送)モード — .hikari-* 接頭辞で隔離             */
+  /* ============================================================ */
+  .hikari-loading {
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 13px;
+    padding: 48px 0;
+  }
+
+  .hikari-offline {
+    text-align: center;
+    padding: 44px 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .hikari-offline-icon { font-size: 34px; margin-bottom: 10px; }
+  .hikari-offline-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .hikari-offline-sub { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; }
+
+  .hikari-main { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---- 接続カード(QR + 波紋) ---- */
+  .hikari-connect {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 28px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 26px 30px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .hikari-qr-stage {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hikari-ripple {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 28px;
+    border: 1.5px solid var(--accent-glow);
+    opacity: 0;
+    animation: hikariRipple 3.6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+    pointer-events: none;
+  }
+  .hikari-ripple.hr2 { animation-delay: 1.2s; }
+  .hikari-ripple.hr3 { animation-delay: 2.4s; }
+  @keyframes hikariRipple {
+    0%   { transform: scale(0.92); opacity: 0; }
+    18%  { opacity: 1; }
+    100% { transform: scale(1.42); opacity: 0; }
+  }
+  .hikari-qr-stage.connected .hikari-ripple { animation: none; opacity: 0; }
+
+  .hikari-qr {
+    position: relative;
+    z-index: 1;
+    width: 180px;
+    height: 180px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hikari-qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .hikari-qr-skeleton {
+    color: var(--ink-faint);
+    font-size: 11.5px;
+    text-align: center;
+    padding: 0 14px;
+    line-height: 1.7;
+  }
+
+  .hikari-connect-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .hikari-connect-info p { font-size: 12.5px; color: var(--ink-muted); line-height: 1.8; margin-bottom: 14px; }
+
+  .hikari-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border-radius: 999px;
+    background: var(--bg-deep);
+    color: var(--ink-2);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .hikari-status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor;
+  }
+  .hikari-status.wait { background: #fff6db; color: #8a6d1f; }
+  .hikari-status.wait .hikari-status-dot { animation: hikariPulse 1.6s ease infinite; }
+  .hikari-status.ok { background: #e0f5e7; color: var(--success); }
+  @keyframes hikariPulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50%      { transform: scale(1.45); opacity: 0.4; }
+  }
+
+  /* ---- 受信待ち / 受信済みカード ---- */
+  .hikari-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .hikari-sec-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .hikari-sec-head h3 { font-size: 14px; font-weight: 700; }
+  .hikari-sec-sub { font-size: 11.5px; color: var(--ink-muted); margin-bottom: 12px; }
+
+  .hikari-accept-all {
+    padding: 7px 15px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 110ms ease;
+  }
+  .hikari-accept-all:hover { background: var(--accent-deep); }
+  .hikari-accept-all:active { transform: scale(0.96); }
+
+  .hikari-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .hikari-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-md);
+    padding: 10px 14px;
+  }
+  .hikari-row-thumb {
+    width: 44px; height: 44px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    font-size: 19px;
+    overflow: hidden;
+  }
+  .hikari-row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hikari-row-body { flex: 1; min-width: 0; }
+  .hikari-row-name {
+    font-size: 12.5px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hikari-row-size { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+  .hikari-row-accept {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 110ms ease;
+  }
+  .hikari-row-accept:hover:not(:disabled) { background: var(--accent-deep); }
+  .hikari-row-accept:active:not(:disabled) { transform: scale(0.96); }
+  .hikari-row-accept:disabled { opacity: 0.6; cursor: default; }
+  .hikari-row-dismiss {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: var(--bg-deep);
+    color: var(--ink-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+  .hikari-row-dismiss:hover { background: #fde5e5; color: #b03030; }
+  .hikari-row-done-mark { font-size: 11.5px; color: var(--success); font-weight: 600; flex-shrink: 0; }
+
+  @media (max-width: 720px) {
+    .hikari-connect { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  }
 </style>
 </head>
 <body>
@@ -4046,6 +4252,15 @@
         <rect x="7" y="10" width="10" height="4" rx="0.5" fill="currentColor" stroke="none"/>
       </svg>
       <span>黒塗り</span>
+    </button>
+    <button class="mode-tab" data-mode="hikari">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="2" width="10" height="20" rx="2"/>
+        <path d="M2 12h3"/>
+        <path d="M3.5 10.5L2 12l1.5 1.5"/>
+        <line x1="12" y1="18" x2="12.01" y2="18"/>
+      </svg>
+      <span>スマホ転送</span>
     </button>
   </div>
 
@@ -4906,6 +5121,58 @@
         <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
         <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Hikari(スマホ写真転送) — オンライン専用 ============ -->
+  <div class="mode-panel" id="modeHikari">
+    <header class="hero">
+      <div class="hero-headline">
+        <h1>スマホの写真を、<br><em>このパソコンへ。</em></h1>
+        <p class="hero-sub">
+          QRコードを読み取るだけで、スマートフォンの写真やファイルを受け取れます。<br>
+          アプリのインストール不要 ・ 同じWi-Fiでなくても届きます。<br>
+          転送は暗号化され、受け取り後にサーバーから自動削除されます。
+        </p>
+      </div>
+    </header>
+
+    <div class="hikari-loading" id="hikariLoading">接続の準備をしています…</div>
+
+    <div class="hikari-offline" id="hikariOffline" hidden>
+      <div class="hikari-offline-icon">📡</div>
+      <div class="hikari-offline-title">インターネット接続が必要です</div>
+      <div class="hikari-offline-sub">スマホ転送はオンライン専用の機能です。ほかのタブはオフラインのまま使えます。<br>接続を確認して、ページを再読み込みしてください。</div>
+    </div>
+
+    <div class="hikari-main" id="hikariMain" hidden>
+      <div class="hikari-connect">
+        <div class="hikari-qr-stage" id="hikariQrStage">
+          <div class="hikari-ripple hr1"></div>
+          <div class="hikari-ripple hr2"></div>
+          <div class="hikari-ripple hr3"></div>
+          <div class="hikari-qr" id="hikariQr"><div class="hikari-qr-skeleton">QRコードを準備しています…</div></div>
+        </div>
+        <div class="hikari-connect-info">
+          <h3>スマートフォンでQRコードを読み取る</h3>
+          <p>カメラをかざすと送信ページが開きます。<br>写真を選ぶと、ここに受信待ちとして表示されます。</p>
+          <div class="hikari-status" id="hikariStatus"><span class="hikari-status-dot"></span>準備中…</div>
+        </div>
+      </div>
+
+      <div class="hikari-card" id="hikariPendingCard" hidden>
+        <div class="hikari-sec-head">
+          <h3>受信待ち</h3>
+          <button class="hikari-accept-all" id="hikariAcceptAll" type="button">すべて受信</button>
+        </div>
+        <p class="hikari-sec-sub">「受信」を押すと、ブラウザのダウンロードフォルダに保存されます。</p>
+        <div class="hikari-list" id="hikariPendingList"></div>
+      </div>
+
+      <div class="hikari-card" id="hikariDoneCard" hidden>
+        <div class="hikari-sec-head"><h3>受信済み</h3></div>
+        <div class="hikari-list" id="hikariDoneList"></div>
       </div>
     </div>
   </div>
@@ -8565,7 +8832,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.10.0';
+  const APP_VERSION = '3.11.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -10542,7 +10809,8 @@ window.PdfSanitize = (function () {
         convert: 'modeConvert',
         pdfedit: 'modePdfEdit',
         imgplace: 'modeImgPlace',
-        redact: 'modeRedact'
+        redact: 'modeRedact',
+        hikari: 'modeHikari'
       };
       const targetId = panelIdMap[target] || 'modeCompress';
       const targetPanel = document.getElementById(targetId);
@@ -17898,6 +18166,248 @@ window.PdfSanitize = (function () {
     window.__redactState = st;
   })();
 
+  // ============================================================
+  // モード: スマホ転送 (Hikari) — オンライン専用
+  //   スマホ→ブラウザのファイル受信。Firebase RTDB(通知) + Cloudflare R2 Worker(中継)。
+  //   SDK はタブ初回選択時に動的ロード(他タブのオフライン動作を一切妨げない)。
+  //   本体アプリ「PC便利ツール集」の Hikari と同じバックエンドを共有する。
+  // ============================================================
+  (function hikariModule(){
+    'use strict';
+
+    // ---- バックエンド設定 (Firebase Web config は公開前提の識別子。認可は DB ルール側) ----
+    var HIKARI_FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyCq5SJuZQPVxp5HtWvPwT_G0V2UpUqnhoc',
+      authDomain: 'hikari-toolkit.firebaseapp.com',
+      databaseURL: 'https://hikari-toolkit-default-rtdb.asia-southeast1.firebasedatabase.app',
+      projectId: 'hikari-toolkit'
+    };
+    var HIKARI_WORKER_URL = 'https://hikari-toolkit.cfa2greatwall.workers.dev';
+    var HIKARI_PHONE_URL = 'https://hikari-toolkit.web.app';
+    var SDK_APP = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js';
+    var SDK_DB  = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js';
+    var QR_LIB  = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+
+    var tab = document.querySelector('.mode-tab[data-mode="hikari"]');
+    var elLoading = document.getElementById('hikariLoading');
+    var elOffline = document.getElementById('hikariOffline');
+    var elMain = document.getElementById('hikariMain');
+    var elQrStage = document.getElementById('hikariQrStage');
+    var elQr = document.getElementById('hikariQr');
+    var elStatus = document.getElementById('hikariStatus');
+    var pendingCard = document.getElementById('hikariPendingCard');
+    var pendingList = document.getElementById('hikariPendingList');
+    var acceptAllBtn = document.getElementById('hikariAcceptAll');
+    var doneCard = document.getElementById('hikariDoneCard');
+    var doneList = document.getElementById('hikariDoneList');
+    if (!tab || !elQr || !elMain || !pendingList) return;
+
+    var initStarted = false;
+    var db = null, roomRef = null, roomId = null, token = null;
+    var pendingMeta = {};   // fileId -> {meta, row}
+
+    // タブ初回選択で初期化(それまで SDK は一切読み込まない)
+    tab.addEventListener('click', function(){
+      if (initStarted) return;
+      initStarted = true;
+      init();
+    });
+
+    function loadScript(src){
+      return new Promise(function(resolve, reject){
+        var s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = function(){ reject(new Error('スクリプトの読み込みに失敗: ' + src)); };
+        document.head.appendChild(s);
+      });
+    }
+
+    function randomHex(len){
+      var bytes = new Uint8Array(len / 2);
+      crypto.getRandomValues(bytes);
+      return Array.prototype.map.call(bytes, function(b){ return ('0' + b.toString(16)).slice(-2); }).join('');
+    }
+
+    function showOffline(){
+      elLoading.hidden = true;
+      elMain.hidden = true;
+      elOffline.hidden = false;
+    }
+
+    function setStatus(kind, text){
+      elStatus.className = 'hikari-status ' + kind;
+      elStatus.innerHTML = '<span class="hikari-status-dot"></span>' + escapeHtml(text);
+    }
+
+    function init(){
+      elLoading.hidden = false;
+      if (!navigator.onLine){ showOffline(); return; }
+      loadScript(SDK_APP)
+        .then(function(){ return loadScript(SDK_DB); })
+        .then(function(){ return loadScript(QR_LIB); })
+        .then(start)
+        .catch(function(e){
+          console.warn('[hikari] init failed:', e);
+          showOffline();
+        });
+    }
+
+    function start(){
+      if (!window.firebase.apps.length) window.firebase.initializeApp(HIKARI_FIREBASE_CONFIG);
+      db = window.firebase.database();
+      roomId = randomHex(32);
+      token = randomHex(32);
+      roomRef = db.ref('rooms/' + roomId);
+      roomRef.set({
+        createdAt: window.firebase.database.ServerValue.TIMESTAMP,
+        token: token,
+        r2: { workerUrl: HIKARI_WORKER_URL }
+      }).then(function(){
+        roomRef.onDisconnect().remove();   // タブを閉じたら部屋も消す
+        renderQr();
+        watchPresence();
+        watchTransfers();
+        elLoading.hidden = true;
+        elMain.hidden = false;
+        setStatus('wait', 'スマートフォンを待っています');
+      }).catch(function(e){
+        console.warn('[hikari] room create failed:', e);
+        showOffline();
+      });
+    }
+
+    function renderQr(){
+      var url = HIKARI_PHONE_URL + '/?room=' + roomId + '&t=' + token;
+      var qr = window.qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      elQr.innerHTML = qr.createImgTag(5, 8);
+      var img = elQr.querySelector('img');
+      if (img) img.alt = 'QRコード(スマートフォンで読み取ってください)';
+    }
+
+    // スマホの在席監視(接続されたら波紋を止めて表示を切替)
+    function watchPresence(){
+      db.ref('rooms/' + roomId + '/phonePresence').on('value', function(snap){
+        var count = snap.numChildren();
+        if (count > 0){
+          setStatus('ok', 'スマートフォンと接続中');
+          elQrStage.classList.add('connected');
+        } else {
+          setStatus('wait', 'スマートフォンを待っています');
+          elQrStage.classList.remove('connected');
+        }
+      });
+    }
+
+    // スマホからの送信通知 → 受信待ちに追加
+    function watchTransfers(){
+      db.ref('rooms/' + roomId + '/transfers').on('child_added', function(snap){
+        var meta = snap.val();
+        if (!meta || meta.from !== 'phone' || pendingMeta[snap.key]) return;
+        addPendingRow(snap.key, meta);
+      });
+    }
+
+    function addPendingRow(fileId, meta){
+      pendingCard.hidden = false;
+      var isImage = meta.mime && meta.mime.indexOf('image/') === 0;
+      var row = document.createElement('div');
+      row.className = 'hikari-row';
+      row.innerHTML =
+        '<div class="hikari-row-thumb">' + (isImage ? '🖼' : '📄') + '</div>' +
+        '<div class="hikari-row-body">' +
+          '<div class="hikari-row-name">' + escapeHtml(meta.name || 'ファイル') + '</div>' +
+          '<div class="hikari-row-size">' + formatBytes(meta.size || 0) + '</div>' +
+        '</div>' +
+        '<button class="hikari-row-accept" type="button">受信</button>' +
+        '<button class="hikari-row-dismiss" type="button" title="見送る">✕</button>';
+      if (meta.thumb){
+        var thumbBox = row.querySelector('.hikari-row-thumb');
+        thumbBox.textContent = '';
+        var img = document.createElement('img');
+        img.src = meta.thumb;
+        img.alt = meta.name || '';
+        thumbBox.appendChild(img);
+      }
+      row.querySelector('.hikari-row-accept').addEventListener('click', function(){
+        receiveOne(fileId);
+      });
+      row.querySelector('.hikari-row-dismiss').addEventListener('click', function(){
+        cleanupRemote(fileId, meta);
+        removePendingRow(fileId);
+      });
+      pendingList.appendChild(row);
+      pendingMeta[fileId] = { meta: meta, row: row };
+    }
+
+    function removePendingRow(fileId){
+      var entry = pendingMeta[fileId];
+      if (entry && entry.row) entry.row.remove();
+      delete pendingMeta[fileId];
+      if (pendingList.children.length === 0) pendingCard.hidden = true;
+    }
+
+    function receiveOne(fileId){
+      var entry = pendingMeta[fileId];
+      if (!entry) return;
+      var meta = entry.meta;
+      var btn = entry.row.querySelector('.hikari-row-accept');
+      btn.disabled = true;
+      btn.textContent = '受信中…';
+      fetch(HIKARI_WORKER_URL + '/download?key=' + encodeURIComponent(meta.key))
+        .then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.blob();
+        })
+        .then(function(blob){
+          triggerDownload(blob, meta.name || 'file');
+          cleanupRemote(fileId, meta);
+          removePendingRow(fileId);
+          addDoneRow(meta);
+        })
+        .catch(function(e){
+          console.warn('[hikari] download failed:', e);
+          btn.disabled = false;
+          btn.textContent = '再試行';
+        });
+    }
+
+    function addDoneRow(meta){
+      doneCard.hidden = false;
+      var isImage = meta.mime && meta.mime.indexOf('image/') === 0;
+      var row = document.createElement('div');
+      row.className = 'hikari-row done';
+      row.innerHTML =
+        '<div class="hikari-row-thumb">' + (isImage ? '🖼' : '📄') + '</div>' +
+        '<div class="hikari-row-body">' +
+          '<div class="hikari-row-name">' + escapeHtml(meta.name || 'ファイル') + '</div>' +
+          '<div class="hikari-row-size">' + formatBytes(meta.size || 0) + '</div>' +
+        '</div>' +
+        '<span class="hikari-row-done-mark">ダウンロード済み</span>';
+      if (meta.thumb){
+        var thumbBox = row.querySelector('.hikari-row-thumb');
+        thumbBox.textContent = '';
+        var img = document.createElement('img');
+        img.src = meta.thumb;
+        img.alt = meta.name || '';
+        thumbBox.appendChild(img);
+      }
+      doneList.insertBefore(row, doneList.firstChild);
+    }
+
+    // クラウド上のデータ掃除(R2 実体 + RTDB 通知ノード)
+    function cleanupRemote(fileId, meta){
+      fetch(HIKARI_WORKER_URL + '/delete?key=' + encodeURIComponent(meta.key), { method: 'DELETE' })
+        .catch(function(){});
+      db.ref('rooms/' + roomId + '/transfers/' + fileId).remove().catch(function(){});
+    }
+
+    acceptAllBtn.addEventListener('click', function(){
+      Object.keys(pendingMeta).forEach(function(fileId){ receiveOne(fileId); });
+    });
+  })();
   /* ===== 設定モーダル wiring (success-modal と同じ開閉作法) ===== */
   var PDFC_SETTINGS_KEY = 'pdfc_settings_v1';
   var PDFC_SETTINGS_DEFAULTS = {

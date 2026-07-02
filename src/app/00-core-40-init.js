@@ -99,7 +99,8 @@
         convert: 'modeConvert',
         pdfedit: 'modePdfEdit',
         imgplace: 'modeImgPlace',
-        redact: 'modeRedact'
+        redact: 'modeRedact',
+        hikari: 'modeHikari'
       };
       const targetId = panelIdMap[target] || 'modeCompress';
       const targetPanel = document.getElementById(targetId);

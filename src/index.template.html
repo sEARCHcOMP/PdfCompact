@@ -142,6 +142,15 @@
       </svg>
       <span>黒塗り</span>
     </button>
+    <button class="mode-tab" data-mode="hikari">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="2" width="10" height="20" rx="2"/>
+        <path d="M2 12h3"/>
+        <path d="M3.5 10.5L2 12l1.5 1.5"/>
+        <line x1="12" y1="18" x2="12.01" y2="18"/>
+      </svg>
+      <span>スマホ転送</span>
+    </button>
   </div>
 
   <div class="mode-panel active" id="modeCompress">
@@ -1001,6 +1010,58 @@
         <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
         <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Hikari(スマホ写真転送) — オンライン専用 ============ -->
+  <div class="mode-panel" id="modeHikari">
+    <header class="hero">
+      <div class="hero-headline">
+        <h1>スマホの写真を、<br><em>このパソコンへ。</em></h1>
+        <p class="hero-sub">
+          QRコードを読み取るだけで、スマートフォンの写真やファイルを受け取れます。<br>
+          アプリのインストール不要 ・ 同じWi-Fiでなくても届きます。<br>
+          転送は暗号化され、受け取り後にサーバーから自動削除されます。
+        </p>
+      </div>
+    </header>
+
+    <div class="hikari-loading" id="hikariLoading">接続の準備をしています…</div>
+
+    <div class="hikari-offline" id="hikariOffline" hidden>
+      <div class="hikari-offline-icon">📡</div>
+      <div class="hikari-offline-title">インターネット接続が必要です</div>
+      <div class="hikari-offline-sub">スマホ転送はオンライン専用の機能です。ほかのタブはオフラインのまま使えます。<br>接続を確認して、ページを再読み込みしてください。</div>
+    </div>
+
+    <div class="hikari-main" id="hikariMain" hidden>
+      <div class="hikari-connect">
+        <div class="hikari-qr-stage" id="hikariQrStage">
+          <div class="hikari-ripple hr1"></div>
+          <div class="hikari-ripple hr2"></div>
+          <div class="hikari-ripple hr3"></div>
+          <div class="hikari-qr" id="hikariQr"><div class="hikari-qr-skeleton">QRコードを準備しています…</div></div>
+        </div>
+        <div class="hikari-connect-info">
+          <h3>スマートフォンでQRコードを読み取る</h3>
+          <p>カメラをかざすと送信ページが開きます。<br>写真を選ぶと、ここに受信待ちとして表示されます。</p>
+          <div class="hikari-status" id="hikariStatus"><span class="hikari-status-dot"></span>準備中…</div>
+        </div>
+      </div>
+
+      <div class="hikari-card" id="hikariPendingCard" hidden>
+        <div class="hikari-sec-head">
+          <h3>受信待ち</h3>
+          <button class="hikari-accept-all" id="hikariAcceptAll" type="button">すべて受信</button>
+        </div>
+        <p class="hikari-sec-sub">「受信」を押すと、ブラウザのダウンロードフォルダに保存されます。</p>
+        <div class="hikari-list" id="hikariPendingList"></div>
+      </div>
+
+      <div class="hikari-card" id="hikariDoneCard" hidden>
+        <div class="hikari-sec-head"><h3>受信済み</h3></div>
+        <div class="hikari-list" id="hikariDoneList"></div>
       </div>
     </div>
   </div>

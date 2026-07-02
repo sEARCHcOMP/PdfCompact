@@ -1415,6 +1415,18 @@
         <div class="tool-desc">見せたくない所を本当に消す。文字クリックで黒塗り、出力前に消去を自動チェック。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
+      <a href="#part-hikari" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2" width="10" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 07</div>
+        <div class="tool-name">スマホ転送</div>
+        <div class="tool-desc">スマホの写真をQRコードだけでパソコンへ。アプリ不要、受信後はサーバから自動削除。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
     </div>
 
     <nav class="jumpnav">
@@ -1424,6 +1436,7 @@
       <a href="#part-edit">PDF編集</a>
       <a href="#part-imgplace">画像配置</a>
       <a href="#part-redact">黒塗り</a>
+      <a href="#part-hikari">スマホ転送</a>
       <a href="#filename">ファイル名</a>
       <a href="#scenarios">活用シーン</a>
       <a href="#faq">よくある質問</a>
@@ -2649,6 +2662,75 @@
 
 
   <!-- ==========================================================
+       PART 7: PHONE TRANSFER (スマホ転送)
+       ========================================================== -->
+  <section id="part-hikari" class="part-divider">
+    <div class="part-label-pill">PART 07 / PHONE TRANSFER</div>
+    <h1 class="part-title">スマホ転送<em>(写真をパソコンへ)</em>の使い方</h1>
+    <p class="part-lead">
+      現場で撮った写真を、ケーブルも専用アプリも使わずにこのパソコンへ。QRコードを読み取るだけで、スマートフォンの写真やファイルをブラウザで受け取れます。
+    </p>
+  </section>
+
+  <section id="hikari-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで完了します</h2>
+      <p class="section-lead">タブを開く → スマホで読み取る → 受信する。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">OPEN</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <path d="M14 14h3v3h-3z" fill="currentColor" stroke="none"/>
+            <path d="M18 18h3v3h-3z" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">タブを開く</h3>
+        <p class="step-text">「スマホ転送」タブを開くと、接続用のQRコードが表示されます。この機能だけインターネット接続が必要です(ほかのタブは今までどおりオフラインで使えます)。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">SCAN</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2" width="10" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">スマホで読み取る</h3>
+        <p class="step-text">スマートフォンのカメラでQRコードを読み取ると、送信ページが開きます。アプリのインストールは不要です。画面が「スマートフォンと接続中」に変われば準備完了。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">RECEIVE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">受信する</h3>
+        <p class="step-text">スマートフォンから写真を送ると「受信待ち」に届きます。「受信」を押すとブラウザのダウンロードフォルダに保存されます。まとめて保存するときは「すべて受信」が便利です。</p>
+      </div>
+    </div>
+
+    <div class="heic-note">
+      <strong>受信専用です</strong>:このタブで送れるのはスマートフォン→パソコンの一方向だけです。不要なファイルは右の✕で見送りできます(パソコンには保存されず、サーバからも消えます)。
+    </div>
+    <div class="heic-note">
+      <strong>データの扱い</strong>:転送したファイルは、受信または見送りした時点で中継サーバから削除されます。タブを閉じると接続そのものが消え、QRコードは開くたびに新しく発行されます。QRコードは接続の鍵なので、画面の写真を共有する際は写り込みにご注意ください。
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
        SHARED: FILENAME & TIMESTAMP
        ========================================================== -->
   <section id="filename">
@@ -3275,6 +3357,23 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v3.11.0 (2026-07-02) — 📲 スマホ転送</summary>
+        <div class="faq-body">
+          <p><strong>新しいタブ「スマホ転送」を追加。</strong>QRコードを読み取るだけで、スマートフォンの写真・ファイルをこのパソコンで受け取れます(PART 07 参照)。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>スマートフォン側はカメラで読むだけ。アプリのインストール不要</li>
+            <li>受信・見送りした時点で中継サーバからデータを削除。タブを閉じれば接続も消えます</li>
+            <li>この機能だけオンライン専用。ほかのタブは今までどおりオフラインで動作します</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v3.10.0 (2026-07-02) — 🚚 配布サーバ移転</summary>
+        <div class="faq-body">
+          <p>アプリの配布と自動更新の取得先を新しいサーバへ移転しました。<strong>機能・操作に変更はありません。</strong>あわせて取扱説明書に PART 06(黒塗り)を追加しました。</p>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.9.0 (2026-06-29) — 🔄 軽量化の自動フォールバック</summary>
         <div class="faq-body">
           <p><strong>「圧縮しても元のまま」だったPDFを、自動で画像化して確実に縮めます。</strong></p>

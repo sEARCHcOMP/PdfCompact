@@ -1,6 +1,6 @@
 # PDF Compact launcher (PowerShell, exe 化用)
-# 起動 → GitHub から最新バージョン取得 → 新版あれば自動 DL + 上書き → ブラウザでバンドル開く
-# ps2exe で .exe にコンパイル予定。BASE URL は base64 で隠蔽
+# 起動 → 配布サーバから最新バージョン取得 → 新版あれば自動 DL + 上書き → ブラウザでバンドル開く
+# ps2exe で .exe にコンパイル (-noConsole)。BASE URL は base64 で隠蔽
 
 $ErrorActionPreference = 'SilentlyContinue'
 # 実行ファイル(.exe)のフォルダに移動
@@ -10,9 +10,9 @@ try {
     Set-Location $exeDir
 } catch { }
 
-# base URL (base64 隠蔽) — 'https://raw.githubusercontent.com/sEARCHcOMP/PdfCompact/main/'
+# base URL (base64 隠蔽)。平文URLは exe に埋まるためコメントにも書かない
 $base = [Text.Encoding]::UTF8.GetString(
-    [Convert]::FromBase64String('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==')
+    [Convert]::FromBase64String('aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=')
 )
 
 try {

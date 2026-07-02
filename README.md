@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 3.9.0** · 2026-06-29
+> **Version 3.10.0** · 2026-07-02
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(3.9.0)-1a85ff?style=for-the-badge)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(3.10.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -27,7 +27,7 @@
 
 下のリンクから ZIP をダウンロードして解凍 → `PDF Compact.exe` をダブルクリック
 
-📦 **[ダウンロード (ZIP)](https://github.com/sEARCHcOMP/PdfCompact/raw/main/PDF_Compact.zip)**
+📦 **[ダウンロード (ZIP)](https://pdfcompact.pages.dev/PDF_Compact.zip)**
 
 - 初回起動時にネット接続が必要(本体を自動DL)
 - 2回目以降はオフラインでも動作
@@ -44,6 +44,13 @@
 ---
 
 ## 📋 更新履歴
+
+### v3.10.0 (2026-07-02) — Minor (🚚 配布サーバ移転 + 📖 取説に黒塗りの章)
+- **配布サーバを Cloudflare Pages (pdfcompact.pages.dev) に移転**: 本体・version.json・ZIP を新配布先から配信。main へ push すると約1分で自動反映
+- 配布本体を `pdf_compact_bundle.html` → `index.html` にリネーム(公開URLのルートで直接開けるように)。ZIP内・ローカルのファイル名は従来どおりで互換維持
+- 旧配布先(GitHub raw)経由のクライアントもこの更新を受け取った時点で新配布先へ自動で切り替わる
+- **取扱説明書に PART 06「黒塗り(墨消し)」を追加**: 黒塗りタブを開くと取説が該当ページへ移動するように修正。軽量化の自動画像化(v3.9.0)の注記と更新履歴も追記
+- アプリの機能・操作に変更なし
 
 ### v3.9.0 (2026-06-29) — Minor (🔄 軽量化の自動フォールバック)
 - **書類モードで縮まないPDFを自動で画像化圧縮**: スクショ入りWord(PNG/FlateDecode画像)・白黒スキャン(CCITT/JBIG2)・透過マスク付き等、従来「元のまま(圧縮効果なし)」だったPDFを、おまかせ(自動)モード時に写真モードへ自動フォールバックして確実に縮める

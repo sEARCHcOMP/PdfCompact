@@ -3,20 +3,21 @@
   // -------------------------------------------------------------------
   // 設定方法:
   //   1. 新版を出すたびに APP_VERSION を上げる (semver: x.y.z)
-  //   2. _BASE_B64 を更新したい場合は btoa('https://raw.githubusercontent.com/USER/REPO/main/')
-  //      で base64 化した文字列に差替える (username 隠蔽のため)
-  //   3. リポジトリに次の2ファイルを置く:
+  //   2. _BASE_B64 を更新したい場合は btoa('https://HOST/') で base64 化した
+  //      文字列に差替える (配布元の隠蔽のため、平文URLはコメントにも書かない)
+  //   3. 配布サーバ(リポジトリ直結)に次の2ファイルを置く:
   //        - version.json:  { "version": "2.2.0", "notes": "..." [, "download_path": "..." ] }
   //        - index.html (新版本体。旧名 pdf_compact_bundle.html から改名済)
-  //   4. CORS 全開で安定する GitHub raw を使用 (Google Drive は CORS で大半失敗)
+  //   4. 配信は Cloudflare Pages (Access-Control-Allow-Origin: * を実測確認済み。
+  //      v3.9.x までは GitHub raw。Google Drive は CORS で大半失敗するため不可)
   // 隠蔽方式 (casual viewer 向け):
-  //   - URL は base64 にして source 直読みでは username 見えない
+  //   - URL は base64 にして source 直読みでは配布元が見えない
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.9.0';
+  const APP_VERSION = '3.10.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
-  const _BASE_B64 = 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3NFQVJDSGNPTVAvUGRmQ29tcGFjdC9tYWluLw==';
+  const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
     try { return atob(_BASE_B64); } catch (_e) { return ''; }
   }

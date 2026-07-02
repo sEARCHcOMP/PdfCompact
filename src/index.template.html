@@ -1018,11 +1018,11 @@
   <div class="mode-panel" id="modeHikari">
     <header class="hero">
       <div class="hero-headline">
-        <h1>スマホの写真を、<br><em>このパソコンへ。</em></h1>
+        <h1>スマホとパソコンを、<br><em>QRでつなぐ。</em></h1>
         <p class="hero-sub">
-          QRコードを読み取るだけで、スマートフォンの写真やファイルを受け取れます。<br>
+          QRコードを読み取るだけで、スマートフォンとこのパソコンの間で写真やファイルを送り合えます。<br>
           アプリのインストール不要 ・ 同じWi-Fiでなくても届きます。<br>
-          転送は暗号化され、受け取り後にサーバーから自動削除されます。
+          転送は暗号化され、受け渡しが済んだファイルはサーバーから自動削除されます。
         </p>
       </div>
     </header>
@@ -1045,9 +1045,20 @@
         </div>
         <div class="hikari-connect-info">
           <h3>スマートフォンでQRコードを読み取る</h3>
-          <p>カメラをかざすと送信ページが開きます。<br>写真を選ぶと、ここに受信待ちとして表示されます。</p>
+          <p>カメラをかざすと転送ページが開きます。<br>スマートフォンから送った写真は、ここに受信待ちとして届きます。</p>
           <div class="hikari-status" id="hikariStatus"><span class="hikari-status-dot"></span>準備中…</div>
         </div>
+      </div>
+
+      <div class="hikari-card" id="hikariSendCard">
+        <div class="hikari-sec-head"><h3>スマートフォンへ送る</h3></div>
+        <p class="hikari-sec-sub" id="hikariSendHint">スマートフォンと接続すると送信できます。</p>
+        <div class="hikari-send-drop" id="hikariSendDrop">
+          <input type="file" id="hikariSendInput" multiple hidden>
+          <button class="hikari-send-btn" id="hikariSendBtn" type="button" disabled>ファイルを選んで送る</button>
+          <div class="hikari-send-note">ここにドラッグ&amp;ドロップでも送れます(1ファイル 100MB まで)</div>
+        </div>
+        <div class="hikari-list" id="hikariSendList"></div>
       </div>
 
       <div class="hikari-card" id="hikariPendingCard" hidden>

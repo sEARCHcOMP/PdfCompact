@@ -4133,6 +4133,61 @@
   .hikari-row-dismiss:hover { background: #fde5e5; color: #b03030; }
   .hikari-row-done-mark { font-size: 11.5px; color: var(--success); font-weight: 600; flex-shrink: 0; }
 
+  /* ---- PC → スマホ 送信 ---- */
+  .hikari-send-drop {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 22px 16px;
+    border: 2px dashed var(--line);
+    border-radius: var(--r-md);
+    background: var(--bg-deep);
+    text-align: center;
+    transition: border-color 160ms ease, background-color 160ms ease, opacity 160ms ease;
+    opacity: 0.62;
+  }
+  .hikari-send-drop.ready { opacity: 1; }
+  .hikari-send-drop.dragover { border-color: var(--accent); background: #eef2ff; }
+  .hikari-send-btn {
+    padding: 12px 26px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: var(--accent);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 110ms ease;
+  }
+  .hikari-send-btn:hover:not(:disabled) { background: var(--accent-deep); }
+  .hikari-send-btn:active:not(:disabled) { transform: scale(0.96); }
+  .hikari-send-btn:disabled { opacity: 0.55; cursor: default; }
+  .hikari-send-note { font-size: 11px; color: var(--ink-faint); }
+  #hikariSendCard .hikari-list { margin-top: 10px; }
+  .hikari-list:empty { display: none; }
+  .hikari-up-row {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--bg-deep);
+  }
+  .hikari-up-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .hikari-up-name {
+    font-size: 12.5px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hikari-up-state { font-size: 11.5px; color: var(--ink-muted); flex-shrink: 0; }
+  .hikari-up-track { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .hikari-up-bar {
+    height: 100%; width: 0%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .hikari-up-row.done .hikari-up-bar { background: var(--success); }
+  .hikari-up-row.done .hikari-up-state { color: var(--success); font-weight: 600; }
+  .hikari-up-row.failed { border-color: #f2c5c5; background: #fdf2f2; }
+  .hikari-up-row.failed .hikari-up-state { color: #b03030; font-weight: 600; }
+  .hikari-up-row.failed .hikari-up-track { display: none; }
+
   @media (max-width: 720px) {
     .hikari-connect { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   }
@@ -5129,11 +5184,11 @@
   <div class="mode-panel" id="modeHikari">
     <header class="hero">
       <div class="hero-headline">
-        <h1>スマホの写真を、<br><em>このパソコンへ。</em></h1>
+        <h1>スマホとパソコンを、<br><em>QRでつなぐ。</em></h1>
         <p class="hero-sub">
-          QRコードを読み取るだけで、スマートフォンの写真やファイルを受け取れます。<br>
+          QRコードを読み取るだけで、スマートフォンとこのパソコンの間で写真やファイルを送り合えます。<br>
           アプリのインストール不要 ・ 同じWi-Fiでなくても届きます。<br>
-          転送は暗号化され、受け取り後にサーバーから自動削除されます。
+          転送は暗号化され、受け渡しが済んだファイルはサーバーから自動削除されます。
         </p>
       </div>
     </header>
@@ -5156,9 +5211,20 @@
         </div>
         <div class="hikari-connect-info">
           <h3>スマートフォンでQRコードを読み取る</h3>
-          <p>カメラをかざすと送信ページが開きます。<br>写真を選ぶと、ここに受信待ちとして表示されます。</p>
+          <p>カメラをかざすと転送ページが開きます。<br>スマートフォンから送った写真は、ここに受信待ちとして届きます。</p>
           <div class="hikari-status" id="hikariStatus"><span class="hikari-status-dot"></span>準備中…</div>
         </div>
+      </div>
+
+      <div class="hikari-card" id="hikariSendCard">
+        <div class="hikari-sec-head"><h3>スマートフォンへ送る</h3></div>
+        <p class="hikari-sec-sub" id="hikariSendHint">スマートフォンと接続すると送信できます。</p>
+        <div class="hikari-send-drop" id="hikariSendDrop">
+          <input type="file" id="hikariSendInput" multiple hidden>
+          <button class="hikari-send-btn" id="hikariSendBtn" type="button" disabled>ファイルを選んで送る</button>
+          <div class="hikari-send-note">ここにドラッグ&amp;ドロップでも送れます(1ファイル 100MB まで)</div>
+        </div>
+        <div class="hikari-list" id="hikariSendList"></div>
       </div>
 
       <div class="hikari-card" id="hikariPendingCard" hidden>
@@ -6757,7 +6823,7 @@
         </div>
         <div class="tool-label">PART 07</div>
         <div class="tool-name">スマホ転送</div>
-        <div class="tool-desc">スマホの写真をQRコードだけでパソコンへ。アプリ不要、受信後はサーバから自動削除。</div>
+        <div class="tool-desc">スマホとパソコンの写真・ファイルをQRコードだけで相互転送。アプリ不要、受け渡し後はサーバから自動削除。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
     </div>
@@ -7999,9 +8065,9 @@
        ========================================================== -->
   <section id="part-hikari" class="part-divider">
     <div class="part-label-pill">PART 07 / PHONE TRANSFER</div>
-    <h1 class="part-title">スマホ転送<em>(写真をパソコンへ)</em>の使い方</h1>
+    <h1 class="part-title">スマホ転送<em>(スマホとパソコンで送り合う)</em>の使い方</h1>
     <p class="part-lead">
-      現場で撮った写真を、ケーブルも専用アプリも使わずにこのパソコンへ。QRコードを読み取るだけで、スマートフォンの写真やファイルをブラウザで受け取れます。
+      現場で撮った写真を、ケーブルも専用アプリも使わずにやり取り。QRコードを読み取るだけで、スマートフォンとこのパソコンの間で写真やファイルを送り合えます。
     </p>
   </section>
 
@@ -8055,10 +8121,10 @@
     </div>
 
     <div class="heic-note">
-      <strong>受信専用です</strong>:このタブで送れるのはスマートフォン→パソコンの一方向だけです。不要なファイルは右の✕で見送りできます(パソコンには保存されず、サーバからも消えます)。
+      <strong>パソコンからも送れます</strong>:接続後に「スマートフォンへ送る」の「ファイルを選んで送る」を押す(またはファイルをドラッグ&amp;ドロップ)と、スマートフォン側に「保存」ボタン付きで届きます。受信側は、不要なファイルを✕で見送りできます(保存されず、サーバからも消えます)。
     </div>
     <div class="heic-note">
-      <strong>データの扱い</strong>:転送したファイルは、受信または見送りした時点で中継サーバから削除されます。タブを閉じると接続そのものが消え、QRコードは開くたびに新しく発行されます。QRコードは接続の鍵なので、画面の写真を共有する際は写り込みにご注意ください。
+      <strong>データの扱い</strong>:転送したファイルは、受け取り側が保存または見送りした時点で中継サーバから削除されます。タブを閉じると接続そのものが消え、QRコードは開くたびに新しく発行されます。QRコードは接続の鍵なので、画面の写真を共有する際は写り込みにご注意ください。
     </div>
   </section>
 
@@ -8690,6 +8756,17 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v3.12.0 (2026-07-02) — 📲 スマホ転送がパソコン→スマホにも対応</summary>
+        <div class="faq-body">
+          <p><strong>スマホ転送が双方向になりました。</strong>「スマートフォンへ送る」からファイルを選ぶ(またはドラッグ&amp;ドロップ)と、スマートフォン側に「保存」ボタン付きで届きます。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>スマートフォンと接続すると送信ボタンが有効になります(1ファイル 100MB まで)</li>
+            <li>送信の進捗をバーで表示。画像は保存前プレビュー(サムネイル)付きで届きます</li>
+            <li>受け取り側が保存・見送りした時点で中継サーバからデータを削除(従来どおり)</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v3.11.0 (2026-07-02) — 📲 スマホ転送</summary>
         <div class="faq-body">
           <p><strong>新しいタブ「スマホ転送」を追加。</strong>QRコードを読み取るだけで、スマートフォンの写真・ファイルをこのパソコンで受け取れます(PART 07 参照)。</p>
@@ -8931,7 +9008,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '3.11.1';
+  const APP_VERSION = '3.12.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -18268,7 +18345,9 @@ window.PdfSanitize = (function () {
 
   // ============================================================
   // モード: スマホ転送 (Hikari) — オンライン専用
-  //   スマホ→ブラウザのファイル受信。Firebase RTDB(通知) + Cloudflare R2 Worker(中継)。
+  //   スマホ⇔ブラウザの双方向ファイル転送。Firebase RTDB(通知) + Cloudflare R2 Worker(中継)。
+  //   受信: transfers の from:'phone' を監視 / 送信: R2 へ PUT 後 from:'pc' で通知
+  //   (スマホ側 phone.js は from:'pc' を監視して「保存」ボタンを出す実装が既にある)
   //   SDK はタブ初回選択時に動的ロード(他タブのオフライン動作を一切妨げない)。
   //   本体アプリ「PC便利ツール集」の Hikari と同じバックエンドを共有する。
   // ============================================================
@@ -18300,6 +18379,11 @@ window.PdfSanitize = (function () {
     var acceptAllBtn = document.getElementById('hikariAcceptAll');
     var doneCard = document.getElementById('hikariDoneCard');
     var doneList = document.getElementById('hikariDoneList');
+    var sendHint = document.getElementById('hikariSendHint');
+    var sendDrop = document.getElementById('hikariSendDrop');
+    var sendInput = document.getElementById('hikariSendInput');
+    var sendBtn = document.getElementById('hikariSendBtn');
+    var sendList = document.getElementById('hikariSendList');
     if (!tab || !elQr || !elMain || !pendingList) return;
 
     var initStarted = false;
@@ -18394,9 +18478,11 @@ window.PdfSanitize = (function () {
         if (count > 0){
           setStatus('ok', 'スマートフォンと接続中');
           elQrStage.classList.add('connected');
+          updateSendUI(true);
         } else {
           setStatus('wait', 'スマートフォンを待っています');
           elQrStage.classList.remove('connected');
+          updateSendUI(false);
         }
       });
     }
@@ -18507,6 +18593,171 @@ window.PdfSanitize = (function () {
     acceptAllBtn.addEventListener('click', function(){
       Object.keys(pendingMeta).forEach(function(fileId){ receiveOne(fileId); });
     });
+
+    // ============================================================
+    // パソコン → スマートフォン 送信 (スマホ側 phone.js の uploadOne と対称)
+    // ============================================================
+    var phoneConnected = false;
+    var MAX_SEND_SIZE = 100 * 1024 * 1024;   // Worker 側の上限(100MB)と一致させる
+
+    function updateSendUI(connected){
+      phoneConnected = connected;
+      if (!sendBtn) return;
+      sendBtn.disabled = !connected;
+      if (sendDrop) sendDrop.classList.toggle('ready', connected);
+      if (sendHint) sendHint.textContent = connected
+        ? '写真・PDFなど、どんなファイルでも送れます。スマートフォン側に「保存」ボタン付きで届きます。'
+        : 'スマートフォンと接続すると送信できます。';
+    }
+
+    // ファイル名の無害化(スマホ側 phone.js と同一ルール)
+    function sanitizeFileName(name){
+      var safe = String(name || '');
+      try { safe = safe.normalize('NFKC'); } catch (_e) {}
+      safe = safe.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_');
+      if (!safe || safe === '.' || safe === '..') safe = 'file_' + Date.now();
+      return safe;
+    }
+
+    // 画像ならスマホ側の保存前プレビュー用サムネイルを生成(非画像・失敗時は null)
+    function makeThumb(file){
+      if (!file.type || file.type.indexOf('image/') !== 0) return Promise.resolve(null);
+      if (typeof createImageBitmap !== 'function') return Promise.resolve(null);
+      return createImageBitmap(file).then(function(bitmap){
+        var scale = Math.min(1, 240 / Math.max(bitmap.width, bitmap.height));
+        var w = Math.max(1, Math.round(bitmap.width * scale));
+        var h = Math.max(1, Math.round(bitmap.height * scale));
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+        if (bitmap.close) bitmap.close();
+        var dataUrl = cv.toDataURL('image/jpeg', 0.7);
+        return dataUrl.length > 120 * 1024 ? null : dataUrl;  // RTDBノード肥大化防止(スマホ側と同じ上限)
+      }).catch(function(){ return null; });
+    }
+
+    // 進捗付き PUT (fetch は upload 進捗が取れないため XHR)
+    function xhrPut(url, file, onProgress){
+      return new Promise(function(resolve, reject){
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.upload.onprogress = function(e){
+          if (e.lengthComputable && onProgress) onProgress(e.loaded, e.total);
+        };
+        xhr.onload = function(){
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error('HTTP ' + xhr.status));
+        };
+        xhr.onerror = function(){ reject(new Error('network error')); };
+        xhr.send(file);
+      });
+    }
+
+    function addSendRow(name){
+      var row = document.createElement('div');
+      row.className = 'hikari-up-row';
+      row.innerHTML =
+        '<div class="hikari-up-head">' +
+          '<span class="hikari-up-name">' + escapeHtml(name) + '</span>' +
+          '<span class="hikari-up-state">0%</span>' +
+        '</div>' +
+        '<div class="hikari-up-track"><div class="hikari-up-bar"></div></div>';
+      sendList.appendChild(row);
+      return { row: row, bar: row.querySelector('.hikari-up-bar'), state: row.querySelector('.hikari-up-state') };
+    }
+
+    function addSendError(message){
+      var row = document.createElement('div');
+      row.className = 'hikari-up-row failed';
+      row.innerHTML = '<div class="hikari-up-head"><span class="hikari-up-name">' + escapeHtml(message) + '</span></div>';
+      sendList.appendChild(row);
+    }
+
+    function sendOne(file){
+      if (file.size > MAX_SEND_SIZE){
+        addSendError('「' + file.name + '」は送信できません。1ファイルあたり 100MB までです。');
+        return Promise.resolve();
+      }
+      var fileId = randomHex(16);
+      var safeName = sanitizeFileName(file.name);
+      var key = 'transfers/' + roomId + '/' + fileId + '/' + encodeURIComponent(safeName);
+      var row = addSendRow(file.name);
+      return makeThumb(file).then(function(thumb){
+        var url = HIKARI_WORKER_URL + '/upload?key=' + encodeURIComponent(key) +
+                  '&ct=' + encodeURIComponent(file.type || 'application/octet-stream');
+        return xhrPut(url, file, function(loaded, total){
+          var pct = total ? Math.round(loaded / total * 100) : 0;
+          row.bar.style.width = pct + '%';
+          row.state.textContent = pct + '%';
+        }).then(function(){
+          var payload = {
+            name: file.name,
+            safeName: safeName,
+            size: file.size,
+            mime: file.type || 'application/octet-stream',
+            key: key,
+            from: 'pc',
+            uploadedAt: window.firebase.database.ServerValue.TIMESTAMP
+          };
+          if (thumb) payload.thumb = thumb;
+          return db.ref('rooms/' + roomId + '/transfers/' + fileId).set(payload);
+        });
+      }).then(function(){
+        row.bar.style.width = '100%';
+        row.state.textContent = '送信しました';
+        row.row.classList.add('done');
+      }).catch(function(e){
+        console.warn('[hikari] send failed:', e);
+        row.state.textContent = '失敗しました';
+        row.row.classList.add('failed');
+        // 上げかけの実体が孤児にならないよう掃除(ベストエフォート)
+        fetch(HIKARI_WORKER_URL + '/delete?key=' + encodeURIComponent(key), { method: 'DELETE' }).catch(function(){});
+      });
+    }
+
+    // 複数ファイルは直列送信(帯域の奪い合いと進捗の混線を避ける)
+    function sendFiles(files){
+      var arr = Array.prototype.slice.call(files || []);
+      if (!arr.length) return;
+      // ファイル選択ダイアログを開いている間に切断された場合など:
+      // 無言で捨てると「送ったつもり」事故になるため、必ず痕跡を残す
+      if (!phoneConnected || !db){
+        addSendError('接続が切れたため送信できませんでした。スマートフォンでQRコードをもう一度読み取ってください。');
+        return;
+      }
+      var chain = Promise.resolve();
+      arr.forEach(function(f){
+        chain = chain.then(function(){ return sendOne(f); });
+      });
+    }
+
+    if (sendBtn){
+      sendBtn.addEventListener('click', function(){ sendInput.click(); });
+      sendInput.addEventListener('change', function(){
+        sendFiles(sendInput.files);
+        sendInput.value = '';   // 同じファイルを続けて送り直せるように
+      });
+      // D&D は他タブの共通ドロップ処理に取られないよう伝播を止める
+      ['dragenter', 'dragover'].forEach(function(ev){
+        sendDrop.addEventListener(ev, function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          if (phoneConnected) sendDrop.classList.add('dragover');
+        });
+      });
+      sendDrop.addEventListener('dragleave', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        sendDrop.classList.remove('dragover');
+      });
+      sendDrop.addEventListener('drop', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        sendDrop.classList.remove('dragover');
+        sendFiles(e.dataTransfer && e.dataTransfer.files);   // 未接続時は sendFiles 側が案内を出す
+      });
+    }
   })();
   /* ===== 設定モーダル wiring (success-modal と同じ開閉作法) ===== */
   var PDFC_SETTINGS_KEY = 'pdfc_settings_v1';

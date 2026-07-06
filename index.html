@@ -4311,7 +4311,7 @@
         <rect x="3" y="3" width="18" height="18" rx="2"/>
         <rect x="7" y="10" width="10" height="4" rx="0.5" fill="currentColor" stroke="none"/>
       </svg>
-      <span>黒塗り</span>
+      <span>塗りつぶし</span>
     </button>
     <button class="mode-tab" data-mode="hikari">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -6819,7 +6819,7 @@
           </svg>
         </div>
         <div class="tool-label">PART 06</div>
-        <div class="tool-name">黒塗り(墨消し)</div>
+        <div class="tool-name">塗りつぶし(墨消し)</div>
         <div class="tool-desc">見せたくない所を本当に消す。塗りつぶしは黒/背景色を選択、出力前に消去を自動チェック。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
@@ -6843,7 +6843,7 @@
       <a href="#part-convert">変換</a>
       <a href="#part-edit">PDF編集</a>
       <a href="#part-imgplace">画像配置</a>
-      <a href="#part-redact">黒塗り</a>
+      <a href="#part-redact">塗りつぶし</a>
       <a href="#part-hikari">スマホ転送</a>
       <a href="#filename">ファイル名</a>
       <a href="#scenarios">活用シーン</a>
@@ -8009,7 +8009,7 @@
        ========================================================== -->
   <section id="part-redact" class="part-divider">
     <div class="part-label-pill">PART 06 / REDACTION</div>
-    <h1 class="part-title">黒塗り<em>(墨消し)</em>の使い方</h1>
+    <h1 class="part-title">塗りつぶし<em>(墨消し)</em>の使い方</h1>
     <p class="part-lead">
       契約書・施主情報・図面の見せたくない箇所を「本当に」消します。塗りつぶす色は「黒」と「背景色(紙の色)」から選べ、どちらも四角を上に重ねるだけの見せかけではなく、下の文字データごと物理的に消去。コピー&amp;ペーストや検索でも取り出せません。
     </p>
@@ -8768,6 +8768,12 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.1.2 (2026-07-06) — 📖 タブ名を「塗りつぶし」に変更</summary>
+        <div class="faq-body">
+          <p>上部タブの「黒塗り」を<strong>「塗りつぶし」</strong>に変更しました(取扱説明書の章名も同様)。黒と背景色のどちらでも塗れる機能になったためです。機能・操作に変更はありません。</p>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.1.1 (2026-07-06) — 📖 文言の手直し(機能変更なし)</summary>
         <div class="faq-body">
           <p>「背景色で消す」の追加(v4.1.0)に合わせて、画面と取扱説明書の文言を整理しました。黒を前提にした説明を「塗りつぶし」に統一し、<strong>背景色で消した場合の出力ファイル名を「修正_日付.pdf」に変更</strong>(ファイル名でも消した痕跡を出しません。黒は従来どおり「墨消し_日付.pdf」)。機能・操作に変更はありません。</p>
@@ -9048,7 +9054,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.1.1';
+  const APP_VERSION = '4.1.2';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {

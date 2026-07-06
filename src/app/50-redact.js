@@ -39,8 +39,8 @@
           : 'このページは文字データが無いので「自由に四角」で囲ってください(スキャン画像/CAD出力など)。';
       } else if (modeHint) {
         modeHint.textContent = (m === 'text')
-          ? '文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。'
-          : 'ページ上をドラッグして、黒塗りする範囲を四角で描きます。';
+          ? '文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。'
+          : 'ページ上をドラッグして、塗りつぶす範囲を四角で描きます。';
       }
       st.mode = m;
       wrap.classList.toggle('mode-text', m === 'text');
@@ -197,7 +197,7 @@
         cell.style.width=(r.w*100)+'%'; cell.style.height=(r.h*100)+'%';
         var del = document.createElement('button');
         del.className='redact-cell-delete'; del.type='button'; del.textContent='×';
-        del.setAttribute('aria-label','この黒塗りを削除');
+        del.setAttribute('aria-label','この塗りつぶしを削除');
         del.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
         // ×はセル右上の外側へ10pxはみ出すため、text モードで隣の語や直上の行を
         // 塗ろうとしたクリックを横取りすることがある。確認なしで splice すると
@@ -206,7 +206,7 @@
         del.addEventListener('click', function(e){
           e.stopPropagation();
           if (st.exporting){ rdStatus('出力中は編集できません。完了までお待ちください。', true); return; }
-          if (!confirm('この黒塗りを削除しますか?')) return;
+          if (!confirm('この塗りつぶしを削除しますか?')) return;
           list.splice(ri,1); renderCells();
         });
         cell.appendChild(del);
@@ -459,7 +459,7 @@
         var rects = st.rects[i] || [];
         if (rects.length){
           affected.push(i);
-          rdStatus('黒塗りページを画像化中… (ページ ' + (i+1) + ')');
+          rdStatus('塗りつぶしたページを画像化中… (ページ ' + (i+1) + ')');
           await new Promise(function(r){ setTimeout(r, 0); });   // 進捗をUIへ反映
           var page = await st.pdf.getPage(i+1);
           var vp = page.getViewport({ scale: RDPI / 72 });
@@ -519,12 +519,12 @@
 
     async function runExport(){
       if (!st.pdf) return;
-      if (rdTotalRects() === 0){ alert('黒塗りが1つもありません。隠したい所をなぞる、または四角で囲ってください。'); return; }
+      if (rdTotalRects() === 0){ alert('塗りつぶしが1つもありません。隠したい所をなぞる、または四角で囲ってください。'); return; }
       var affN = rdAffectedPages().length;
       var ok = confirm(
         affN + ' ページが画像に変換されます。\n\n' +
         '・そのページは文字のコピー/検索ができなくなり、解像度はやや下がります(情報を物理的に消すための仕様です)\n' +
-        '・黒塗りの無いページは高画質のまま残ります\n\n' +
+        '・塗りつぶしの無いページは高画質のまま残ります\n\n' +
         '出力しますか?'
       );
       if (!ok) return;
@@ -544,12 +544,13 @@
         if (window.PdfSanitize){ try { blob = await window.PdfSanitize.process(blob); } catch(_){ } }  // 設定のメタ除去/透かしも適用
         var now = new Date();
         var ymd = '' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
-        rdTriggerDownload(blob, '墨消し_' + ymd + '.pdf');
+        var prefix = st.fillMode === 'paper' ? '修正_' : '墨消し_';   // 背景色モードはファイル名でも痕跡を出さない
+        rdTriggerDownload(blob, prefix + ymd + '.pdf');
         rdStatus('✓ 出力しました(' + gen.affected.length + 'ページを画像化して文字を物理消去)。配布前に必ず中身をご確認ください。');
       } catch(e){
         console.error('redact export failed', e);
         var enc = e && /encrypt/i.test(String(e.message || e));
-        rdStatus('❌ ' + (enc ? '暗号化されたPDFは黒塗りできません(パスワードを解除してから読み込んでください)。'
+        rdStatus('❌ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
                               : '出力に失敗しました: ' + (e && e.message ? e.message : e)), true);
         if (btn) btn.disabled = false;
         return;

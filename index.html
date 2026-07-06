@@ -5127,7 +5127,7 @@
       <div class="hero-headline">
         <h1>見せたくない所を、<br><em>本当に消す。</em></h1>
         <p class="hero-sub">
-          契約書・施主情報・図面の一部を黒く塗って隠します。<br>
+          契約書・施主情報・図面の一部を塗りつぶして隠します。<br>
           塗ったページは画像化して、下の文字を物理的に消去(コピペで抜けません)。<br>
           すべてブラウザ内で完結 ・ 通信ゼロ。
         </p>
@@ -5143,7 +5143,7 @@
         </svg>
       </div>
       <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
-      <div class="rz-sub">黒塗りしたいPDFを開きます ・ ファイルは外部送信されません</div>
+      <div class="rz-sub">塗りつぶして隠したいPDFを開きます ・ ファイルは外部送信されません</div>
       <input type="file" id="redactFileInput" accept="application/pdf" hidden>
     </div>
 
@@ -5154,7 +5154,7 @@
           <span class="redact-pageinfo" id="redactPageInfo">1 / 1</span>
           <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
-        <div class="redact-modetoggle" role="group" aria-label="黒塗りの方法">
+        <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの方法">
           <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
           <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
         </div>
@@ -5164,7 +5164,7 @@
         </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
-      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
+      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
       <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
 
       <div class="redact-stage">
@@ -5178,12 +5178,12 @@
 
       <div class="redact-warn">
         <b>⚠ 仮表示です。</b> いまの枠は半透明で、下の文字はまだ生きています。
-        <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。黒塗りの無いページは高画質のまま温存されます。
+        <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。塗りつぶしの無いページは高画質のまま温存されます。
       </div>
 
       <div class="redact-actions">
         <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
-        <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
+        <span class="redact-export-note" id="redactExportNote">塗りつぶした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
       </div>
     </div>
@@ -6820,7 +6820,7 @@
         </div>
         <div class="tool-label">PART 06</div>
         <div class="tool-name">黒塗り(墨消し)</div>
-        <div class="tool-desc">見せたくない所を本当に消す。文字クリックで黒塗り、出力前に消去を自動チェック。</div>
+        <div class="tool-desc">見せたくない所を本当に消す。塗りつぶしは黒/背景色を選択、出力前に消去を自動チェック。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
       <a href="#part-hikari" class="tool-card">
@@ -8011,7 +8011,7 @@
     <div class="part-label-pill">PART 06 / REDACTION</div>
     <h1 class="part-title">黒塗り<em>(墨消し)</em>の使い方</h1>
     <p class="part-lead">
-      契約書・施主情報・図面の見せたくない箇所を「本当に」消します。黒い四角を上に重ねるだけの見せかけではなく、下の文字データごと物理的に消去。コピー&amp;ペーストや検索でも取り出せません。
+      契約書・施主情報・図面の見せたくない箇所を「本当に」消します。塗りつぶす色は「黒」と「背景色(紙の色)」から選べ、どちらも四角を上に重ねるだけの見せかけではなく、下の文字データごと物理的に消去。コピー&amp;ペーストや検索でも取り出せません。
     </p>
   </section>
 
@@ -8019,7 +8019,7 @@
     <div class="section-head">
       <div class="section-num">STEP-BY-STEP</div>
       <h2 class="section-title">3ステップで完了します</h2>
-      <p class="section-lead">PDFを入れる → 隠す場所を選ぶ → 黒塗りして出力。</p>
+      <p class="section-lead">PDFを入れる → 隠す場所を選ぶ → 塗りつぶして出力。</p>
     </div>
     <div class="steps-grid">
       <div class="step-card">
@@ -8043,7 +8043,7 @@
           </svg>
         </div>
         <h3 class="step-title-h">隠す場所を選ぶ</h3>
-        <p class="step-text">文字をクリック(またはなぞって選択)すると黒塗りが付きます。マウスを乗せて青く光る文字が対象の合図。重なった黒塗りは自動でひとつにまとまります。</p>
+        <p class="step-text">文字をクリック(またはなぞって選択)すると塗りつぶしが付きます。マウスを乗せて青く光る文字が対象の合図。重なった塗りつぶしは自動でひとつにまとまります。</p>
       </div>
       <div class="step-card">
         <div class="step-badge">03</div>
@@ -8055,19 +8055,19 @@
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
         </div>
-        <h3 class="step-title-h">黒塗りして出力</h3>
-        <p class="step-text">「黒塗りして出力」を押すと、本当に消えたかを自動チェックしてからダウンロード。1文字でも残っていれば出力を中止する安全設計です。</p>
+        <h3 class="step-title-h">塗りつぶして出力</h3>
+        <p class="step-text">出力ボタンを押すと、本当に消えたかを自動チェックしてからダウンロード。1文字でも残っていれば出力を中止する安全設計です。</p>
       </div>
     </div>
 
     <div class="heic-note">
-      <strong>3つの塗り方</strong>:①文字をクリック(1か所ずつ確実に) ②文字をなぞって選択(まとめて) ③「自由に四角」で囲む(スキャンPDF・図面の一部など文字データが無い場所はこちら。案内が自動で表示されます)。タブレットはタップか長押しでOK。間違えたら黒塗り右上の×で削除できます(確認つき)。
+      <strong>3つの塗り方</strong>:①文字をクリック(1か所ずつ確実に) ②文字をなぞって選択(まとめて) ③「自由に四角」で囲む(スキャンPDF・図面の一部など文字データが無い場所はこちら。案内が自動で表示されます)。タブレットはタップか長押しでOK。間違えたら塗りつぶし右上の×で削除できます(確認つき)。
     </div>
     <div class="heic-note">
-      <strong>塗りつぶしの色</strong>:「黒で塗る」のほかに「背景色で消す」を選べます。消したい場所の周囲から紙の色を自動で読み取って塗るため、消した痕が目立ちません(黄ばんだスキャンにも馴染みます)。契約書など「消した事実」を示す正式な墨消しには黒がおすすめです。どちらの色でも、文字を物理的に消す仕組みと出力前の自動チェックは同じです。
+      <strong>塗りつぶしの色</strong>:「黒で塗る」のほかに「背景色で消す」を選べます。消したい場所の周囲から紙の色を自動で読み取って塗るため、消した痕が目立ちません(黄ばんだスキャンにも馴染みます)。契約書など「消した事実」を示す正式な墨消しには黒がおすすめです。どちらの色でも、文字を物理的に消す仕組みと出力前の自動チェックは同じです。出力ファイル名は黒が「墨消し_日付.pdf」、背景色が「修正_日付.pdf」になります(背景色はファイル名でも消した痕跡を出しません)。
     </div>
     <div class="heic-note">
-      <strong>大事な仕様</strong>:黒塗りしたページは画像に変換され、そのページは文字の検索・コピーができなくなります(情報を物理的に消すための仕様です)。黒塗りの無いページは高画質のまま保持されます。<strong>配布前に必ず出力PDFの中身をご確認ください。</strong>
+      <strong>大事な仕様</strong>:塗りつぶしたページは画像に変換され、そのページは文字の検索・コピーができなくなります(情報を物理的に消すための仕様です)。塗りつぶしの無いページは高画質のまま保持されます。<strong>配布前に必ず出力PDFの中身をご確認ください。</strong>
     </div>
   </section>
 
@@ -8768,6 +8768,12 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.1.1 (2026-07-06) — 📖 文言の手直し(機能変更なし)</summary>
+        <div class="faq-body">
+          <p>「背景色で消す」の追加(v4.1.0)に合わせて、画面と取扱説明書の文言を整理しました。黒を前提にした説明を「塗りつぶし」に統一し、<strong>背景色で消した場合の出力ファイル名を「修正_日付.pdf」に変更</strong>(ファイル名でも消した痕跡を出しません。黒は従来どおり「墨消し_日付.pdf」)。機能・操作に変更はありません。</p>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.1.0 (2026-07-06) — ⬜ 黒塗りに「背景色で消す」を追加</summary>
         <div class="faq-body">
           <p><strong>黒い帯ではなく、周囲の紙の色で塗りつぶせるようになりました。</strong>図面から名前を消しても、消した痕が目立ちません。</p>
@@ -9042,7 +9048,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.1.0';
+  const APP_VERSION = '4.1.1';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -17892,8 +17898,8 @@ window.PdfSanitize = (function () {
           : 'このページは文字データが無いので「自由に四角」で囲ってください(スキャン画像/CAD出力など)。';
       } else if (modeHint) {
         modeHint.textContent = (m === 'text')
-          ? '文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。'
-          : 'ページ上をドラッグして、黒塗りする範囲を四角で描きます。';
+          ? '文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。'
+          : 'ページ上をドラッグして、塗りつぶす範囲を四角で描きます。';
       }
       st.mode = m;
       wrap.classList.toggle('mode-text', m === 'text');
@@ -18050,7 +18056,7 @@ window.PdfSanitize = (function () {
         cell.style.width=(r.w*100)+'%'; cell.style.height=(r.h*100)+'%';
         var del = document.createElement('button');
         del.className='redact-cell-delete'; del.type='button'; del.textContent='×';
-        del.setAttribute('aria-label','この黒塗りを削除');
+        del.setAttribute('aria-label','この塗りつぶしを削除');
         del.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
         // ×はセル右上の外側へ10pxはみ出すため、text モードで隣の語や直上の行を
         // 塗ろうとしたクリックを横取りすることがある。確認なしで splice すると
@@ -18059,7 +18065,7 @@ window.PdfSanitize = (function () {
         del.addEventListener('click', function(e){
           e.stopPropagation();
           if (st.exporting){ rdStatus('出力中は編集できません。完了までお待ちください。', true); return; }
-          if (!confirm('この黒塗りを削除しますか?')) return;
+          if (!confirm('この塗りつぶしを削除しますか?')) return;
           list.splice(ri,1); renderCells();
         });
         cell.appendChild(del);
@@ -18312,7 +18318,7 @@ window.PdfSanitize = (function () {
         var rects = st.rects[i] || [];
         if (rects.length){
           affected.push(i);
-          rdStatus('黒塗りページを画像化中… (ページ ' + (i+1) + ')');
+          rdStatus('塗りつぶしたページを画像化中… (ページ ' + (i+1) + ')');
           await new Promise(function(r){ setTimeout(r, 0); });   // 進捗をUIへ反映
           var page = await st.pdf.getPage(i+1);
           var vp = page.getViewport({ scale: RDPI / 72 });
@@ -18372,12 +18378,12 @@ window.PdfSanitize = (function () {
 
     async function runExport(){
       if (!st.pdf) return;
-      if (rdTotalRects() === 0){ alert('黒塗りが1つもありません。隠したい所をなぞる、または四角で囲ってください。'); return; }
+      if (rdTotalRects() === 0){ alert('塗りつぶしが1つもありません。隠したい所をなぞる、または四角で囲ってください。'); return; }
       var affN = rdAffectedPages().length;
       var ok = confirm(
         affN + ' ページが画像に変換されます。\n\n' +
         '・そのページは文字のコピー/検索ができなくなり、解像度はやや下がります(情報を物理的に消すための仕様です)\n' +
-        '・黒塗りの無いページは高画質のまま残ります\n\n' +
+        '・塗りつぶしの無いページは高画質のまま残ります\n\n' +
         '出力しますか?'
       );
       if (!ok) return;
@@ -18397,12 +18403,13 @@ window.PdfSanitize = (function () {
         if (window.PdfSanitize){ try { blob = await window.PdfSanitize.process(blob); } catch(_){ } }  // 設定のメタ除去/透かしも適用
         var now = new Date();
         var ymd = '' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
-        rdTriggerDownload(blob, '墨消し_' + ymd + '.pdf');
+        var prefix = st.fillMode === 'paper' ? '修正_' : '墨消し_';   // 背景色モードはファイル名でも痕跡を出さない
+        rdTriggerDownload(blob, prefix + ymd + '.pdf');
         rdStatus('✓ 出力しました(' + gen.affected.length + 'ページを画像化して文字を物理消去)。配布前に必ず中身をご確認ください。');
       } catch(e){
         console.error('redact export failed', e);
         var enc = e && /encrypt/i.test(String(e.message || e));
-        rdStatus('❌ ' + (enc ? '暗号化されたPDFは黒塗りできません(パスワードを解除してから読み込んでください)。'
+        rdStatus('❌ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
                               : '出力に失敗しました: ' + (e && e.message ? e.message : e)), true);
         if (btn) btn.disabled = false;
         return;

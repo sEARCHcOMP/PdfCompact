@@ -956,7 +956,7 @@
       <div class="hero-headline">
         <h1>見せたくない所を、<br><em>本当に消す。</em></h1>
         <p class="hero-sub">
-          契約書・施主情報・図面の一部を黒く塗って隠します。<br>
+          契約書・施主情報・図面の一部を塗りつぶして隠します。<br>
           塗ったページは画像化して、下の文字を物理的に消去(コピペで抜けません)。<br>
           すべてブラウザ内で完結 ・ 通信ゼロ。
         </p>
@@ -972,7 +972,7 @@
         </svg>
       </div>
       <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
-      <div class="rz-sub">黒塗りしたいPDFを開きます ・ ファイルは外部送信されません</div>
+      <div class="rz-sub">塗りつぶして隠したいPDFを開きます ・ ファイルは外部送信されません</div>
       <input type="file" id="redactFileInput" accept="application/pdf" hidden>
     </div>
 
@@ -983,7 +983,7 @@
           <span class="redact-pageinfo" id="redactPageInfo">1 / 1</span>
           <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
-        <div class="redact-modetoggle" role="group" aria-label="黒塗りの方法">
+        <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの方法">
           <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
           <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
         </div>
@@ -993,7 +993,7 @@
         </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
-      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
+      <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
       <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
 
       <div class="redact-stage">
@@ -1007,12 +1007,12 @@
 
       <div class="redact-warn">
         <b>⚠ 仮表示です。</b> いまの枠は半透明で、下の文字はまだ生きています。
-        <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。黒塗りの無いページは高画質のまま温存されます。
+        <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。塗りつぶしの無いページは高画質のまま温存されます。
       </div>
 
       <div class="redact-actions">
         <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
-        <span class="redact-export-note" id="redactExportNote">黒塗りした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
+        <span class="redact-export-note" id="redactExportNote">塗りつぶした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
       </div>
     </div>

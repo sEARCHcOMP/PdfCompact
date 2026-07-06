@@ -987,6 +987,10 @@
           <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
           <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
         </div>
+        <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの色">
+          <button class="redact-modebtn active" id="redactFillBlack" type="button">🖤 黒で塗る</button>
+          <button class="redact-modebtn" id="redactFillPaper" type="button">⬜ 背景色で消す</button>
+        </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
       <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に黒塗りが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
@@ -1002,7 +1006,7 @@
       </div>
 
       <div class="redact-warn">
-        <b>⚠ 仮表示です。</b> いまの黒い枠は半透明で、下の文字はまだ生きています。
+        <b>⚠ 仮表示です。</b> いまの枠は半透明で、下の文字はまだ生きています。
         <b>出力して初めて</b>そのページが画像化され、文字が物理的に消えます(画像化でそのページは文字選択・検索が不可、解像度はやや低下)。黒塗りの無いページは高画質のまま温存されます。
       </div>
 

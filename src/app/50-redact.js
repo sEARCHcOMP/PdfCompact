@@ -411,13 +411,50 @@
     function rdTotalRects(){ var n=0; for (var k in st.rects){ if (st.rects[k]) n += st.rects[k].length; } return n; }
     function rdAffectedPages(){ return Object.keys(st.rects).filter(function(k){ return st.rects[k] && st.rects[k].length; }); }
 
-    // 影響ページを高DPIラスタ化(canvasで黒焼き=テキスト物理消滅)、非影響はベクター温存
+    // 矩形の周囲(8px幅のリング)のピクセルから紙の色を推察する(v4.1.0「背景色で消す」用)。
+    // 文字や罫線の混入に強いよう各チャンネルの中央値を採用。他の黒塗り矩形の内側
+    // (=これから消す秘密の文字)はサンプルに入れない。標本が足りなければ白に倒す。
+    function samplePaperColor(ctx, rp, allRects, cw, ch){
+      var M = 8, STEP = 3;
+      var rs = [], gs = [], bs = [];
+      function insideAny(px, py){
+        for (var q = 0; q < allRects.length; q++){
+          var a = allRects[q];
+          if (px >= a.x && px < a.x + a.w && py >= a.y && py < a.y + a.h) return true;
+        }
+        return false;
+      }
+      function grab(sx, sy, sw, sh){
+        var cx = Math.max(0, sx), cy = Math.max(0, sy);
+        sw -= (cx - sx); sh -= (cy - sy);
+        sw = Math.min(cw - cx, sw); sh = Math.min(ch - cy, sh);
+        if (sw <= 0 || sh <= 0) return;
+        var d = ctx.getImageData(cx, cy, sw, sh).data;
+        for (var yy = 0; yy < sh; yy += STEP){
+          for (var xx = 0; xx < sw; xx += STEP){
+            if (insideAny(cx + xx, cy + yy)) continue;
+            var o = (yy * sw + xx) * 4;
+            rs.push(d[o]); gs.push(d[o + 1]); bs.push(d[o + 2]);
+          }
+        }
+      }
+      grab(rp.x - M, rp.y - M, rp.w + M * 2, M);      // 上辺の外側
+      grab(rp.x - M, rp.y + rp.h, rp.w + M * 2, M);   // 下辺の外側
+      grab(rp.x - M, rp.y, M, rp.h);                  // 左辺の外側
+      grab(rp.x + rp.w, rp.y, M, rp.h);               // 右辺の外側
+      if (rs.length < 12) return '#fff';
+      function med(arr){ arr.sort(function(a, b){ return a - b; }); return arr[arr.length >> 1]; }
+      return 'rgb(' + med(rs) + ',' + med(gs) + ',' + med(bs) + ')';
+    }
+
+    // 影響ページを高DPIラスタ化(canvasで焼き込み=テキスト物理消滅)、非影響はベクター温存
     async function generateRedactedPdf(){
       var PDFLib = window.PDFLib;
       var srcDoc = await PDFLib.PDFDocument.load(st.bytes);   // 暗号化PDFはここでthrow→runExportでハンドル
       var outDoc = await PDFLib.PDFDocument.create();
       var affected = [];
       var RDPI = 200;
+      var paperMode = st.fillMode === 'paper';   // 出力開始時点で固定(途中でトグルされてもページ間で混ざらない)
       for (var i = 0; i < st.numPages; i++){
         var rects = st.rects[i] || [];
         if (rects.length){
@@ -431,13 +468,22 @@
           var ctx = cv.getContext('2d');
           ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
           await page.render({ canvasContext: ctx, viewport: vp }).promise;
-          // ★黒は必ず canvas の fillRect でのみ焼く。pdf-lib drawRectangle で被せる
+          // ★塗りは必ず canvas の fillRect でのみ焼く。pdf-lib drawRectangle で被せる
           //   「偽リダクション(下の文字が残る)」は構造的に作らない。
-          ctx.fillStyle = '#000';
-          for (var j = 0; j < rects.length; j++){
-            var r = rects[j];
-            ctx.fillRect(Math.round(r.x*cv.width), Math.round(r.y*cv.height),
-                         Math.round(r.w*cv.width), Math.round(r.h*cv.height));
+          //   色は黒(従来) or 背景色(周囲の紙の色を推察)。どちらも消去の実体は
+          //   同一(画像化+上書き)で、安全性・検証は色に依存しない。
+          var rectsPx = rects.map(function(rr){
+            return { x: Math.round(rr.x*cv.width), y: Math.round(rr.y*cv.height),
+                     w: Math.round(rr.w*cv.width), h: Math.round(rr.h*cv.height) };
+          });
+          // 塗る前に全矩形の色を確定する(先に塗ると隣接矩形のサンプリングが
+          // 塗り済みピクセルで汚れ、推察色が連鎖的にズレるため)
+          var fills = rectsPx.map(function(rp){
+            return paperMode ? samplePaperColor(ctx, rp, rectsPx, cv.width, cv.height) : '#000';
+          });
+          for (var j = 0; j < rectsPx.length; j++){
+            ctx.fillStyle = fills[j];
+            ctx.fillRect(rectsPx[j].x, rectsPx[j].y, rectsPx[j].w, rectsPx[j].h);
           }
           var jpg = cv.toDataURL('image/jpeg', 0.85);
           var bytes = Uint8Array.from(atob(jpg.split(',')[1]), function(c){ return c.charCodeAt(0); });
@@ -520,6 +566,30 @@
       st.exporting = true;
       try { await runExport(); } finally { st.exporting = false; }
     }); }
+    // ---- 塗りつぶしの色 (v4.1.0): black=従来の黒塗り / paper=背景色を推察して塗る ----
+    var _rdFillBlack = document.getElementById('redactFillBlack');
+    var _rdFillPaper = document.getElementById('redactFillPaper');
+    function setFillMode(mode){
+      st.fillMode = mode;
+      var paper = mode === 'paper';
+      if (_rdFillBlack) _rdFillBlack.classList.toggle('active', !paper);
+      if (_rdFillPaper) _rdFillPaper.classList.toggle('active', paper);
+      var wrap = document.getElementById('redactCanvasWrap');
+      if (wrap) wrap.classList.toggle('fill-paper', paper);   // 仮表示セルの見た目を追随
+      var btn = document.getElementById('redactExportBtn');
+      if (btn) btn.textContent = paper ? '⬜ 背景色で消して出力' : '🖤 黒塗りして出力';
+    }
+    if (_rdFillBlack && _rdFillPaper){
+      _rdFillBlack.addEventListener('click', function(){
+        if (st.exporting){ rdStatus('出力中は変更できません。完了までお待ちください。', true); return; }
+        setFillMode('black');
+      });
+      _rdFillPaper.addEventListener('click', function(){
+        if (st.exporting){ rdStatus('出力中は変更できません。完了までお待ちください。', true); return; }
+        setFillMode('paper');
+      });
+    }
+    setFillMode('black');            // 初期は黒(正式な墨消しの既定)
     setMode('text');                 // 初期は文字選択モード
     window.__redactState = st;
   })();

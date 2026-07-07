@@ -110,10 +110,66 @@
     function isValidInput(file) {
       return isValidImage(file) || isPdf(file);
     }
+    // HEIC/HEIF は通常 heic2any(同梱の旧 libheif)で変換する。ただし Apple の HDR HEIC
+    // (ゲインマップ付き・マルチイメージ・10bit 等)は旧 libheif が
+    // "ERR_LIBHEIF format not supported" で弾く。その時だけ新しい libheif(wasm)を
+    // 遅延ロードして再デコードする(初回起動を重くしないよう、失敗時に初めて取得)。
+    let _libheifPromise = null;
+    function loadLibheif() {
+      if (_libheifPromise) return _libheifPromise;
+      _libheifPromise = new Promise((resolve, reject) => {
+        if (window.libheif) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/libheif-js@1.18.2/libheif-wasm/libheif-bundle.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('高機能HEICデコーダの読み込みに失敗しました(この画像形式にはネット接続が必要です)'));
+        document.head.appendChild(s);
+      }).then(() => (typeof window.libheif === 'function' ? window.libheif() : window.libheif));
+      // 読込失敗(一時的なネット断など)はキャッシュを捨てて次回リトライ可能にする
+      _libheifPromise.catch(() => { _libheifPromise = null; });
+      return _libheifPromise;
+    }
+    // 新 libheif で HEIC → JPEG(File)。irot 回転はデコード時に適用され、canvas 出力は
+    // EXIF を持たないため、生成時の EXIF 回転処理と二重適用にならない。
+    // decoder は使い回す: HeifDecoder は内部に heif_context(WASMヒープ)を1本持ち解放APIが無い。
+    // 毎回 new すると context が漏れ続けるため、共有インスタンスにする(decode() は呼ぶたび
+    // 前回 context を自動 free するので、生存 context は常に最大1個に抑えられる)。
+    let _sharedHeifDecoder = null;
+    async function convertHeicViaLibheif(file) {
+      const lib = await loadLibheif();
+      if (!_sharedHeifDecoder) _sharedHeifDecoder = new lib.HeifDecoder();
+      const imgs = _sharedHeifDecoder.decode(new Uint8Array(await file.arrayBuffer()));
+      if (!imgs || imgs.length === 0) throw new Error('HEIF: 画像が見つかりません');
+      const img = imgs[0];
+      try {
+        const w = img.get_width(), h = img.get_height();
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.createImageData(w, h);
+        await new Promise((resolve, reject) => {
+          img.display(imageData, (d) => d ? resolve() : reject(new Error('HEIF: 画像の展開に失敗しました')));
+        });
+        ctx.putImageData(imageData, 0, 0);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+        canvas.width = 0; canvas.height = 0;
+        if (!blob) throw new Error('HEIF→JPEG 変換に失敗しました');
+        return new File([blob], file.name.replace(/\.hei[cf]$/i, '.jpg'), { type: 'image/jpeg' });
+      } finally {
+        // libheif の画像はメモリ解放が必要(バッチで複数枚処理する時のリーク防止)
+        for (const im of imgs) { try { if (im && im.free) im.free(); } catch (_) {} }
+      }
+    }
     async function convertHeicToJpeg(file) {
-      const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
-      const result = Array.isArray(blob) ? blob[0] : blob;
-      return new File([result], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), { type: 'image/jpeg' });
+      try {
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+        const result = Array.isArray(blob) ? blob[0] : blob;
+        return new File([result], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), { type: 'image/jpeg' });
+      } catch (e) {
+        // 旧 libheif が弾く HDR/マルチイメージ HEIC → 新 libheif で再挑戦(ここが唯一のフォールバック)
+        console.warn('[img2pdf] heic2any 失敗、libheif で再挑戦:', e && e.message);
+        return await convertHeicViaLibheif(file);
+      }
     }
     // TIFF → PNG (UTIF.js). Handles multi-page TIFFs by returning array of File objects.
     async function convertTiffToPng(file) {
@@ -133,6 +189,9 @@
         imgData.data.set(rgba);
         ctx.putImageData(imgData, 0, 0);
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        // toBlob は巨大TIFF(canvasの辺/面積上限超え)で null を返す。そのまま new File([null])
+        // すると中身 "null" の壊れたPNGになり、下流の img.onload が発火せずハングする。明示エラーで止める
+        if (!blob) { canvas.width = 0; canvas.height = 0; throw new Error(`TIFF→PNG 変換に失敗しました (ページ ${i + 1}: 画像が大きすぎます)`); }
         const suffix = ifds.length > 1 ? `_page${i + 1}` : '';
         const baseName = file.name.replace(/\.(tiff?|TIFF?)$/i, '');
         results.push(new File([blob], `${baseName}${suffix}.png`, { type: 'image/png' }));

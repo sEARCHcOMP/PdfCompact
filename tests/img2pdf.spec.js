@@ -89,4 +89,43 @@ test.describe('画像→PDF', () => {
     expect(r.px.bottom.r).toBeLessThan(100);
   });
 
+  // heic2any が弾く HDR/マルチイメージ HEIC は 新 libheif フォールバックへ回す(v4.2.0)。
+  // 実 2MB wasm の取得はテストで避け、libheif スクリプト注入が試みられることで配線を固定する。
+  test('HEIC: heic2any が非対応形式で失敗したら libheif フォールバックを試みる', async ({ page }) => {
+    await openApp(page);
+    await gotoTab(page, '画像');
+    const r = await page.evaluate(async () => {
+      // heic2any を必ず「非対応形式」で失敗させる(Apple HDR HEIC の実挙動を再現)
+      window.heic2any = () => Promise.reject(new Error('ERR_LIBHEIF format not supported'));
+      // libheif スクリプト注入を捕捉し、実取得せず即 onerror(2MB回避)。注入されたこと=フォールバック配線の証明
+      let libheifRequested = false;
+      const origAppend = Node.prototype.appendChild;
+      Node.prototype.appendChild = function (node) {
+        if (node && node.tagName === 'SCRIPT' && /libheif/.test(node.src || '')) {
+          libheifRequested = true;
+          setTimeout(() => node.onerror && node.onerror(new Event('error')), 0);
+          return node;   // DOM に足さない(実ロードさせない)
+        }
+        return origAppend.call(this, node);
+      };
+      // .heic をファイル入力へ(中身はダミー。heic2any は上のスタブで即失敗する)
+      const inp = document.getElementById('imgFileInput');
+      const dt = new DataTransfer();
+      dt.items.add(new File([new Uint8Array([1, 2, 3, 4])], 'hdr.heic', { type: '' }));
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+      // 「読み込めません」まで待つ(フォールバックも失敗させたので最終的に失敗表示になる)
+      let status = '';
+      for (let i = 0; i < 60; i++) {
+        await new Promise(res => setTimeout(res, 100));
+        status = (document.getElementById('imgStatusMsg') || {}).textContent || '';
+        if (libheifRequested && /読み込めません/.test(status)) break;
+      }
+      Node.prototype.appendChild = origAppend;
+      return { libheifRequested, status };
+    });
+    expect(r.libheifRequested).toBe(true);          // フォールバックが試みられた(=配線が生きている)
+    expect(r.status).toMatch(/読み込めません/);      // 最終的な失敗は無言でなく明示される
+  });
+
 });

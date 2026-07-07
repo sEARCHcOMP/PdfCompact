@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 4.1.2** · 2026-07-06
+> **Version 4.2.0** · 2026-07-07
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(4.1.2)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.2.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -46,6 +46,12 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.2.0 (2026-07-07) — Minor (🖼 HDR HEIC 対応)
+- **画像→PDF で読めなかった HEIC(Apple HDR/ゲインマップ付き・マルチイメージ等)に対応**: 従来の heic2any(旧 libheif)が `ERR_LIBHEIF format not supported` で弾いていた形式を、新しい libheif(wasm)へのフォールバックで救済
+- フォールバックは**heic2any が失敗した時だけ**発火(通常の HEIC は無改変=回帰なし)。libheif は初回起動を重くしないよう**必要時に遅延ロード**(wasm 埋込バンドル、~2MB)
+- 向きは安全: libheif は irot をデコード時に適用し canvas 出力は EXIF を持たないため、生成時の EXIF 回転処理と二重適用にならない
+- 実機検証: 1.3MB の Apple HDR HEIC(4032×3024、auxC/grpl/10bit hvcC)で heic2any 失敗→libheif で正しくデコード→A4横 PDF 生成まで確認。テスト+1本(フォールバック配線の固定)
 
 ### v4.1.2 (2026-07-06) — Patch (📖 タブ名変更)
 - 上部タブ「黒塗り」→「塗りつぶし」(黒と背景色のどちらでも塗れる機能になったため)。取説の章名・ツールカード・ナビも同様に変更。data-mode 等の内部IDは redact のまま(互換維持)

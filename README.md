@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 4.2.0** · 2026-07-07
+> **Version 4.3.0** · 2026-07-10
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(4.2.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.3.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -46,6 +46,11 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.3.0 (2026-07-07) — Minor (📲 スマホ転送を既定タブに + 送受信の自動スクロール)
+- **スマホ転送タブを一番左に移動し、起動時の初期表示に変更**(SDKは起動時に読み込み開始。オフライン起動は案内表示に落ち、他タブは無傷=番犬テストを新仕様に書き換え)
+- **送受信で行が増えたら自動スクロール**: PC側(受信待ち/送信進捗/受信済み)とスマホ側(受信行/送信進捗行)の両方。PC側は他タブで作業中は画面を動かさない
+- スマホ側UI(phone.js)も更新・Firebase Hosting へ配信
 
 ### v4.2.0 (2026-07-07) — Minor (🖼 HDR HEIC 対応)
 - **画像→PDF で読めなかった HEIC(Apple HDR/ゲインマップ付き・マルチイメージ等)に対応**: 従来の heic2any(旧 libheif)が `ERR_LIBHEIF format not supported` で弾いていた形式を、新しい libheif(wasm)へのフォールバックで救済

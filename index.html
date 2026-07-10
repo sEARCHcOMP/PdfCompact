@@ -4264,7 +4264,16 @@
   </div>
 
   <div class="mode-tabs">
-    <button class="mode-tab active" data-mode="compress">
+    <button class="mode-tab active" data-mode="hikari">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="2" width="10" height="20" rx="2"/>
+        <path d="M2 12h3"/>
+        <path d="M3.5 10.5L2 12l1.5 1.5"/>
+        <line x1="12" y1="18" x2="12.01" y2="18"/>
+      </svg>
+      <span>スマホ転送</span>
+    </button>
+    <button class="mode-tab" data-mode="compress">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="4 14 10 14 10 20"/>
         <polyline points="20 10 14 10 14 4"/>
@@ -4313,18 +4322,9 @@
       </svg>
       <span>塗りつぶし</span>
     </button>
-    <button class="mode-tab" data-mode="hikari">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="7" y="2" width="10" height="20" rx="2"/>
-        <path d="M2 12h3"/>
-        <path d="M3.5 10.5L2 12l1.5 1.5"/>
-        <line x1="12" y1="18" x2="12.01" y2="18"/>
-      </svg>
-      <span>スマホ転送</span>
-    </button>
   </div>
 
-  <div class="mode-panel active" id="modeCompress">
+  <div class="mode-panel" id="modeCompress">
     <header class="hero">
       <div class="hero-headline">
       <h1>重いPDFを、<br><em>一瞬で軽く。</em></h1>
@@ -5190,7 +5190,7 @@
   </div>
 
   <!-- ============ Hikari(スマホ写真転送) — オンライン専用 ============ -->
-  <div class="mode-panel" id="modeHikari">
+  <div class="mode-panel active" id="modeHikari">
     <header class="hero">
       <div class="hero-headline">
         <h1>スマホとパソコンを、<br><em>QRでつなぐ。</em></h1>
@@ -8087,7 +8087,7 @@
     <div class="section-head">
       <div class="section-num">STEP-BY-STEP</div>
       <h2 class="section-title">3ステップで完了します</h2>
-      <p class="section-lead">タブを開く → スマホで読み取る → 受信する。</p>
+      <p class="section-lead">アプリを開く → スマホで読み取る → 受信する。</p>
     </div>
     <div class="steps-grid">
       <div class="step-card">
@@ -8102,8 +8102,8 @@
             <path d="M18 18h3v3h-3z" fill="currentColor" stroke="none"/>
           </svg>
         </div>
-        <h3 class="step-title-h">タブを開く</h3>
-        <p class="step-text">「スマホ転送」タブを開くと、接続用のQRコードが表示されます。この機能だけインターネット接続が必要です(ほかのタブは今までどおりオフラインで使えます)。</p>
+        <h3 class="step-title-h">アプリを開く</h3>
+        <p class="step-text">アプリを開くと最初に「スマホ転送」が表示され(上部タブの一番左)、接続用のQRコードが自動で出ます。この機能だけインターネット接続が必要です(ほかのタブは今までどおりオフラインで使えます)。</p>
       </div>
       <div class="step-card">
         <div class="step-badge">02</div>
@@ -8768,6 +8768,17 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.3.0 (2026-07-07) — 📲 スマホ転送が最初の画面になりました</summary>
+        <div class="faq-body">
+          <p><strong>アプリを開くと最初に「スマホ転送」が表示されるようになりました(上部タブの一番左)。</strong>QRコードがすぐ出るので、現場写真の取り込みが速くなります。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>ファイルを送ったり受け取ったりすると、新しい行まで自動で画面がスクロールします(パソコン側・スマートフォン側とも)</li>
+            <li>ほかのタブで作業中は画面を動かしません(転送は裏で受け付けたまま)</li>
+            <li>オフラインで開いた場合は案内を表示。ほかのタブは今までどおりオフラインで使えます</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.2.0 (2026-07-07) — 🖼 iPhoneのHDR写真(HEIC)が読めるように</summary>
         <div class="faq-body">
           <p><strong>これまで「画像→PDF」で読み込めなかった一部のHEIC写真(iPhoneのHDR写真など)が読み込めるようになりました。</strong></p>
@@ -9064,7 +9075,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.2.0';
+  const APP_VERSION = '4.3.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -18576,12 +18587,27 @@ window.PdfSanitize = (function () {
     var db = null, roomRef = null, roomId = null, token = null;
     var pendingMeta = {};   // fileId -> {meta, row}
 
-    // タブ初回選択で初期化(それまで SDK は一切読み込まない)
+    // タブ初回選択で初期化(未選択のうちは SDK を読み込まない)
     tab.addEventListener('click', function(){
       if (initStarted) return;
       initStarted = true;
       init();
     });
+    // v4.3.0: スマホ転送が起動時の既定タブになったため、初期表示なら即初期化する。
+    // オフライン起動でも init() 内の onLine 判定で案内表示に落ち、他タブは無傷。
+    // (既定タブを将来戻しても、上のクリック遅延ロードがそのまま生きる)
+    if (tab.classList.contains('active') && !initStarted){
+      initStarted = true;
+      init();
+    }
+
+    // 送受信で行が増えたら、その行まで画面を自動スクロール。
+    // 他タブで作業中(転送は裏で生きている)に画面を奪わないよう、表示中のみ動かす
+    function scrollRowIntoView(el){
+      var panel = document.getElementById('modeHikari');
+      if (!panel || !panel.classList.contains('active')) return;
+      try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(_e){}
+    }
 
     function loadScript(src){
       return new Promise(function(resolve, reject){
@@ -18712,6 +18738,7 @@ window.PdfSanitize = (function () {
       });
       pendingList.appendChild(row);
       pendingMeta[fileId] = { meta: meta, row: row };
+      scrollRowIntoView(row);   // スマホから届いたら受信待ちの行まで自動スクロール
     }
 
     function removePendingRow(fileId){
@@ -18767,6 +18794,7 @@ window.PdfSanitize = (function () {
         thumbBox.appendChild(img);
       }
       doneList.insertBefore(row, doneList.firstChild);
+      scrollRowIntoView(row);   // 受信完了の行が見える位置へ
     }
 
     // クラウド上のデータ掃除(R2 実体 + RTDB 通知ノード)
@@ -18855,6 +18883,7 @@ window.PdfSanitize = (function () {
         '</div>' +
         '<div class="hikari-up-track"><div class="hikari-up-bar"></div></div>';
       sendList.appendChild(row);
+      scrollRowIntoView(row);   // 送信を始めたら進捗の行まで自動スクロール
       return { row: row, bar: row.querySelector('.hikari-up-bar'), state: row.querySelector('.hikari-up-state') };
     }
 

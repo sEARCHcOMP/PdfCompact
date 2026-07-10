@@ -45,12 +45,27 @@
     var db = null, roomRef = null, roomId = null, token = null;
     var pendingMeta = {};   // fileId -> {meta, row}
 
-    // タブ初回選択で初期化(それまで SDK は一切読み込まない)
+    // タブ初回選択で初期化(未選択のうちは SDK を読み込まない)
     tab.addEventListener('click', function(){
       if (initStarted) return;
       initStarted = true;
       init();
     });
+    // v4.3.0: スマホ転送が起動時の既定タブになったため、初期表示なら即初期化する。
+    // オフライン起動でも init() 内の onLine 判定で案内表示に落ち、他タブは無傷。
+    // (既定タブを将来戻しても、上のクリック遅延ロードがそのまま生きる)
+    if (tab.classList.contains('active') && !initStarted){
+      initStarted = true;
+      init();
+    }
+
+    // 送受信で行が増えたら、その行まで画面を自動スクロール。
+    // 他タブで作業中(転送は裏で生きている)に画面を奪わないよう、表示中のみ動かす
+    function scrollRowIntoView(el){
+      var panel = document.getElementById('modeHikari');
+      if (!panel || !panel.classList.contains('active')) return;
+      try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(_e){}
+    }
 
     function loadScript(src){
       return new Promise(function(resolve, reject){
@@ -181,6 +196,7 @@
       });
       pendingList.appendChild(row);
       pendingMeta[fileId] = { meta: meta, row: row };
+      scrollRowIntoView(row);   // スマホから届いたら受信待ちの行まで自動スクロール
     }
 
     function removePendingRow(fileId){
@@ -236,6 +252,7 @@
         thumbBox.appendChild(img);
       }
       doneList.insertBefore(row, doneList.firstChild);
+      scrollRowIntoView(row);   // 受信完了の行が見える位置へ
     }
 
     // クラウド上のデータ掃除(R2 実体 + RTDB 通知ノード)
@@ -324,6 +341,7 @@
         '</div>' +
         '<div class="hikari-up-track"><div class="hikari-up-bar"></div></div>';
       sendList.appendChild(row);
+      scrollRowIntoView(row);   // 送信を始めたら進捗の行まで自動スクロール
       return { row: row, bar: row.querySelector('.hikari-up-bar'), state: row.querySelector('.hikari-up-state') };
     }
 

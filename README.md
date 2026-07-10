@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 4.3.0** · 2026-07-10
+> **Version 4.3.1** · 2026-07-10
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(4.3.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.3.1)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -46,6 +46,12 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.3.1 (2026-07-10) — Patch (📖 取説の章順をタブ順に統一)
+- スマホ転送の既定タブ化(v4.3.0)に合わせ、取説の章順も「スマホ転送」を PART 01 に移動して全章を振り直し(ピル/ツールカード/ジャンプナビ/コメントヘッダ)
+- 章の id(part-hikari 等)は不変=タブ連動スクロール・リンクは無傷
+- 履歴内の「PART 0X 参照」を章名参照に変更(今後番号が変わっても腐らない形)
+- 内容・機能に変更なし
 
 ### v4.3.0 (2026-07-07) — Minor (📲 スマホ転送を既定タブに + 送受信の自動スクロール)
 - **スマホ転送タブを一番左に移動し、起動時の初期表示に変更**(SDKは起動時に読み込み開始。オフライン起動は案内表示に落ち、他タブは無傷=番犬テストを新仕様に書き換え)

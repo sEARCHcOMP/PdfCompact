@@ -71,4 +71,61 @@ test.describe('PDF編集', () => {
     await expect(page.locator('#editStatusMsg')).toContainText('broken.pdf');
   });
 
+  // v4.4.0: 編集ロック付き(オーナーパスワード)PDF を、確認のうえ画像化して受け入れる。
+  // 実際の暗号化PDFはブラウザ側で合成できないため、pdf.js の保護判定
+  // (getPermissions が配列を返す=保護付き)だけを差し替えて経路を固定する。
+  async function loadWithFakeProtection(page, { accept }) {
+    await page.evaluate(async (accept) => {
+      window.__confirmMsg = null;
+      window.confirm = (m) => { window.__confirmMsg = m; return accept; };
+      // getPermissions を「保護付き」に見せる(復号自体は不要=中身は通常PDF)。
+      // PDFDocumentProxy のプロトタイプを差し替える(task.promise は再代入不可のため)
+      const probe = await window.pdfjsLib.getDocument({
+        data: await (await window.PDFLib.PDFDocument.create()).save(),
+      }).promise;
+      Object.getPrototypeOf(probe).getPermissions = async function () { return [2]; };
+      const { PDFDocument, StandardFonts } = window.PDFLib;
+      const d = await PDFDocument.create();
+      const font = await d.embedFont(StandardFonts.Helvetica);
+      for (const t of ['LOCK-1', 'LOCK-2']) {
+        const p = d.addPage([300, 300]);
+        p.drawText(t, { x: 40, y: 150, size: 20, font });
+      }
+      const bytes = await d.save();
+      const inp = document.getElementById('editFileInput');
+      const dt = new DataTransfer();
+      dt.items.add(new File([new Blob([bytes], { type: 'application/pdf' })], 'locked.pdf', { type: 'application/pdf' }));
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    }, accept);
+    await page.waitForFunction(() => window.__confirmMsg !== null, null, { timeout: 30_000 });
+  }
+
+  test('編集ロック付きPDF: 確認OKなら画像化して読み込む(文字レイヤー無し=壊れPDFでない)', async ({ page }) => {
+    await openApp(page);
+    await gotoTab(page, 'PDF編集');
+    await loadWithFakeProtection(page, { accept: true });
+    expect(await page.evaluate(() => window.__confirmMsg)).toContain('編集ロック');
+    await page.waitForFunction(
+      () => document.querySelectorAll('#editPageGrid .edit-page-card').length === 2, null, { timeout: 60_000 });
+    await armCapture(page);
+    await page.evaluate(() => document.getElementById('editGenerateBtn').click());
+    const idx = await waitCapture(page, '%PDF', 60_000);
+    const texts = await pdfTexts(page, idx);
+    expect(texts.length).toBe(2);                    // 全ページ出力された
+    expect(texts.every(t => t === '')).toBe(true);   // 画像化済み(元の文字は焼き込まれている)
+  });
+
+  test('編集ロック付きPDF: 確認キャンセルなら読み込まず理由を表示', async ({ page }) => {
+    await openApp(page);
+    await gotoTab(page, 'PDF編集');
+    await loadWithFakeProtection(page, { accept: false });
+    await page.waitForFunction(() => {
+      const st = document.getElementById('editStatusMsg')?.textContent || '';
+      return /読み込めませんでした/.test(st) && /編集ロック/.test(st);
+    }, null, { timeout: 30_000 });
+    expect(await page.evaluate(() =>
+      document.querySelectorAll('#editPageGrid .edit-page-card').length)).toBe(0);
+  });
+
 });

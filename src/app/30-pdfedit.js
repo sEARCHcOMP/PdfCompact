@@ -135,7 +135,7 @@
           await addPdf(file);
         } catch (err) {
           console.error('PDF load failed:', file.name, err);
-          failedNames.push(file.name + (String(err && err.message).indexOf('PROTECTED_PDF') >= 0 ? '(保護付きPDFのため編集不可)' : ''));
+          failedNames.push(file.name + (String(err && err.message).indexOf('PROTECTED_PDF') >= 0 ? '(編集ロック付き: 画像化を選ばなかったため読み込みません)' : ''));
         }
         loaded++;
       }
@@ -148,18 +148,63 @@
       });
     }
 
+    // 保護付き(編集ロック)PDF を「画像化した非保護PDF」に変換する。
+    // pdf.js は閲覧のために透過復号できるので、そのレンダ結果を JPEG にして
+    // 新しい PDF へ焼き直す(墨消しと同じ canvas 焼き込み方式)。これにより
+    // 下流(戦略A/B・回転・分割)は暗号化を一切意識せず、壊れたPDFも出得ない。
+    // 代償: 文字のコピー/検索が不可・画質は 150DPI 相当に低下 → 必ず事前確認する。
+    async function rasterizeProtectedPdf(pdfDoc, fileName) {
+      const { PDFDocument } = PDFLib;
+      const outDoc = await PDFDocument.create();
+      const DPI = 150;
+      for (let p = 1; p <= pdfDoc.numPages; p++) {
+        setStatus(`保護付きPDFを画像化中... ${fileName} ${p}/${pdfDoc.numPages}`, 'info');
+        await new Promise(r => setTimeout(r, 0));
+        const page = await pdfDoc.getPage(p);
+        const vp = page.getViewport({ scale: DPI / 72 });
+        const cv = document.createElement('canvas');
+        cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const dataUrl = cv.toDataURL('image/jpeg', 0.85);
+        cv.width = 0; cv.height = 0;
+        const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]), c => c.charCodeAt(0));
+        const img = await outDoc.embedJpg(bytes);
+        const vp1 = page.getViewport({ scale: 1 });   // 出力は元の紙サイズ(回転適用後)
+        const op = outDoc.addPage([vp1.width, vp1.height]);
+        op.drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+      }
+      return await outDoc.save({ updateMetadata: false });
+    }
+
     async function addPdf(file) {
-      const buffer = await file.arrayBuffer();
+      let buffer = await file.arrayBuffer();
       const pdfJsBuf = buffer.slice(0);
-      const pdfDoc = await pdfjsLib.getDocument({ data: pdfJsBuf }).promise;
-      // 保護付き(オーナーパスワード/編集制限)PDF は読込時点で弾く。
-      // pdf-lib 1.17.1 は復号できないため、ignoreEncryption:true で強行すると
+      let pdfDoc = await pdfjsLib.getDocument({ data: pdfJsBuf }).promise;
+      // 保護付き(オーナーパスワード/編集制限)PDF の扱い。
+      // pdf-lib 1.17.1 は復号できないため、そのまま ignoreEncryption:true で通すと
       // 「成功」表示のまま中身の壊れたPDFを出力してしまう(プレビューは pdf.js が
       // 透過復号するので正常に見え、提出後に発覚する最悪パターン)。
+      // v4.4.0: 無条件に弾くのをやめ、確認のうえ画像化して受け入れる経路を追加。
       // getPermissions() は暗号化なしなら null、保護付きなら権限配列を返す。
       let _perms = null;
       try { _perms = await pdfDoc.getPermissions(); } catch (_e) { /* 判定不能は通す(誤遮断防止) */ }
-      if (_perms !== null) throw new Error('PROTECTED_PDF');
+      if (_perms !== null) {
+        const ok = confirm(
+          '「' + file.name + '」は編集ロックがかかっています。\n\n' +
+          '画像に変換してから編集できます(この方法なら安全に扱えます)。\n' +
+          '・文字のコピーや検索はできなくなります\n' +
+          '・画質はやや下がります(印刷には十分な150dpi)\n\n' +
+          '画像に変換して読み込みますか?'
+        );
+        if (!ok) throw new Error('PROTECTED_PDF');
+        const rasterBytes = await rasterizeProtectedPdf(pdfDoc, file.name);
+        // 以降は「画像化済みの非保護PDF」を原本として扱う(下流は暗号化を意識しない)
+        buffer = rasterBytes.buffer.slice(rasterBytes.byteOffset, rasterBytes.byteOffset + rasterBytes.byteLength);
+        try { await pdfDoc.destroy(); } catch (_e) {}
+        pdfDoc = await pdfjsLib.getDocument({ data: buffer.slice(0) }).promise;
+      }
       // しおり(目次)の有無を記録 — 複数PDF結合 (copyPages) ではしおりが引き継がれないため、生成時の通知に使う。
       // getOutline() はしおり無しなら null、有りなら配列を返す (pdf.js)
       let _outline = null;

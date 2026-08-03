@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 4.3.1** · 2026-07-10
+> **Version 4.4.0** · 2026-08-03
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(4.3.1)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.4.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -46,6 +46,12 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.4.0 (2026-08-03) — Minor (✂️ 編集ロック付きPDFを画像化して受け入れ)
+- **PDF編集: 保護付き(オーナーパスワード/編集制限)PDF を無条件に弾くのをやめ、確認のうえ画像化して読み込む経路を追加**。点検報告書など作成ソフトが自動でロックを付けたPDFが対象
+- 画像化は 150DPI/JPEG0.85 で pdf.js のレンダ結果を焼き込み、非保護PDFに変換してから通常フロー(戦略A/B・回転・分割)に乗せる → 下流は暗号化を一切意識せず、**壊れたPDFが出る経路が構造的に無い**(墨消しと同じ canvas 焼き込み方式)
+- キャンセル時は従来どおり読み込まず、理由(編集ロック付き)を消えない表示で明示
+- テスト+2本(確認OKで画像化・文字レイヤー無し / キャンセルで未読込+理由表示)。実在の編集ロックPDF(社外秘)でも実機検証済み・痕跡は全削除
 
 ### v4.3.1 (2026-07-10) — Patch (📖 取説の章順をタブ順に統一)
 - スマホ転送の既定タブ化(v4.3.0)に合わせ、取説の章順も「スマホ転送」を PART 01 に移動して全章を振り直し(ピル/ツールカード/ジャンプナビ/コメントヘッダ)

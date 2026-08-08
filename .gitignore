@@ -1,6 +1,45 @@
+# ===== 依存・ビルド中間物 =====
 node_modules/
 test-results/
 playwright-report/
 .claude/
+
 # ZIP展開の残骸(ステージング用、成果物ではない)
 /PDF_Compact/
+
+# ===== Python(将来スクリプトを足した時用) =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ===== ログ・一時ファイル =====
+*.log
+npm-debug.log*
+*.tmp
+*.bak
+
+# ===== OS が勝手に作るゴミ =====
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+._*
+
+# ===== 検証用の実データ(顧客情報・実ファイルは絶対にコミットしない) =====
+# 不具合調査で一時的に置く実PDF/実写真の受け皿。中身は都度削除すること
+/_scratch/
+/_hdrtest.*
+/_locked_test.*
+/_*_test.pdf
+*.HEIC
+*.heic
+# samples/ の生成ダミーは追跡する(_gen_dummies.js で作れるもののみ)
+
+# ===== 秘密情報(このプロジェクトでは現状ゼロ。将来入れる時はここへ) =====
+# 例: 実キーは *.local.js に置き、*.example.js だけコミットする
+*.local.js
+*.local.json
+.env
+.env.*
+!.env.example

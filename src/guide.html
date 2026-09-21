@@ -1437,7 +1437,7 @@
         </div>
         <div class="tool-label">PART 08</div>
         <div class="tool-name">図面変換</div>
-        <div class="tool-desc">CADのPDF図面を、Jw_cad の図面ファイル(JWW)に。寸法1か所で実寸に合わせ、線の色も設定どおり。</div>
+        <div class="tool-desc">CADのPDF図面・メーカーのDXFを、Jw_cad の図面ファイル(JWW)に。寸法1か所で実寸に合わせ、線の色も設定どおり。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
     </div>
@@ -2752,9 +2752,9 @@
        ========================================================== -->
   <section id="part-pdf2dxf" class="part-divider">
     <div class="part-label-pill">PART 08 / PDF TO JWW</div>
-    <h1 class="part-title">図面変換<em>(PDF→JWW / DXF)</em>の使い方</h1>
+    <h1 class="part-title">図面変換<em>(PDF・DXF→JWW)</em>の使い方</h1>
     <p class="part-lead">
-      CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します。線・円・円弧・文字を取り出し、図面の寸法を1か所指定するだけで実寸に合わせます。線の色と線種は Jw_cad の線色1〜8・線種1〜8に入るので、画面の色も印刷の太さも、お使いの設定どおりになります。DXF でも保存できます。すべてこのパソコンの中で処理され、外部には送信されません。
+      CADから出力したPDFの図面、またはメーカーからもらった DXF を、Jw_cad の図面ファイル(JWW)に変換します。PDFからは線・円・円弧・文字を取り出し、図面の寸法を1か所指定するだけで実寸に合わせます。DXF は実寸のまま取り込み、Jw_cad が読めずに線が途切れる原因(自由曲線・楕円)を直します。線の色と線種は Jw_cad の線色1〜8・線種1〜8に入るので、画面の色も印刷の太さも、お使いの設定どおりになります。DXF でも保存できます。すべてこのパソコンの中で処理され、外部には送信されません。
     </p>
   </section>
 
@@ -2762,7 +2762,7 @@
     <div class="section-head">
       <div class="section-num">STEP-BY-STEP</div>
       <h2 class="section-title">3ステップで完了します</h2>
-      <p class="section-lead">PDFを入れる → 縮尺を合わせる → 確かめて保存。</p>
+      <p class="section-lead">PDF か DXF を入れる → 縮尺を合わせる → 確かめて保存。(DXF は縮尺を合わせる手順が要りません)</p>
     </div>
     <div class="steps-grid">
       <div class="step-card">
@@ -2775,7 +2775,7 @@
           </svg>
         </div>
         <h3 class="step-title-h">PDFを入れる</h3>
-        <p class="step-text">「図面変換」タブに図面のPDFをドラッグ&amp;ドロップします。取り出せた線は青く表示されます。スキャンした図面(画像)は線のデータを持たないため、変換できません。</p>
+        <p class="step-text">「図面変換」タブに図面のPDF、またはメーカーからもらったDXFをドラッグ&amp;ドロップします。取り出せた線は青く表示されます。スキャンした図面(画像)は線のデータを持たないため、変換できません。</p>
       </div>
       <div class="step-card">
         <div class="step-badge">02</div>
@@ -2815,6 +2815,34 @@
     </div>
     <div class="heic-note">
       <strong>変換されないもの</strong>:寸法線は線と文字に分かれ、Jw_cad の寸法図形にはなりません。ハッチングは細かい線の集まりになります。文字を図形化(アウトライン化)したPDFでは、文字は変換されません。塗りつぶしの面、非表示に設定されたレイヤ、用紙の外や切り抜かれて見えていない部分は変換しません。PDFに貼り付けられた画像(写真・画面の切り抜き・スキャンした図)の中の線も変換できません。Excel や Word に図面の絵を貼って作ったPDFがこれに当たり、画面でお知らせします。見分け方:PDFを大きく拡大しても線がくっきりしていれば変換でき、ぼやけたりギザギザになれば画像です。Jw_cad で扱えない文字は「?」に置き換わり、その数を画面でお知らせします。
+    </div>
+  </section>
+
+  <section id="pdf2dxf-dxfin">
+    <div class="section-head">
+      <div class="section-num">DXF INPUT</div>
+      <h2 class="section-title">メーカーのDXFを読み込む</h2>
+      <p class="section-lead">Jw_cad で開くと線が途切れるDXFを、開ける形に直します。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        エアコンや住宅設備のメーカーが配っている DXF は、3次元CADから書き出したものが多く、<strong>自由曲線(スプライン)や楕円</strong>を含んでいます。Jw_cad はこれらを黙って読み飛ばすため、<strong>外形が途切れ途切れに見えます</strong>。
+        このタブに DXF を入れると、そうした曲線を<strong>円弧と細かい線に置き換えて</strong>から渡すので、外形がつながった状態で開けます。ブロック(部品のまとまり)・寸法・連続線も、線と文字に分解します。
+      </p>
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2); margin-top:12px;">
+        <li><strong>縮尺を合わせる手順は要りません</strong>:DXF は実寸のデータなので、そのまま実寸で取り込みます。A3 の用紙に収まる縮尺を自動で選びます(あとから選び直せます)。</li>
+        <li><strong>レイヤはそのまま</strong>:元の図面のレイヤ名が、出てきた順に Jw_cad のレイヤへ入ります。</li>
+        <li><strong>置き換えのずれを数で出します</strong>:曲線を円弧や線にした時、元の形からどれだけ離れたかを機械で測って画面に出します(実測で 0.005mm 程度)。</li>
+        <li><strong>DXFで保存もできます</strong>:曲線を直しただけの DXF が要る時は、保存する形式で「DXF」を選んでください。実寸のまま出ます。</li>
+      </ul>
+    </div>
+
+    <div class="heic-note">
+      <strong>読み込めないDXF</strong>:バイナリ形式(テキストでない)の DXF や、図形の入っていないファイルは、理由を表示してお断りします。図形が1つも取り出せなかった時も、何が読めて何を読み飛ばしたかを表示します。
+    </div>
+    <div class="heic-note">
+      <strong>大きなDXFでも待たされません</strong>:1MB・図形2万個ほどのメーカーDXFで、読み込みから表示まで 0.2〜0.4 秒です。すべてこのパソコンの中で処理され、外部には送信されません。
     </div>
   </section>
 
@@ -3519,6 +3547,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.6.0 (2026-09-21) — 📐 図面変換でメーカーのDXFも読めるように</summary>
+        <div class="faq-body">
+          <p><strong>「図面変換」タブに、メーカーからもらった DXF もそのまま入れられるようになりました。</strong>Jw_cad で開くと外形が途切れてしまう DXF を、開ける形に直します(PART 08 参照)。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>Jw_cad が読み飛ばす自由曲線(スプライン)・楕円を、円弧と細かい線に置き換えます。置き換えのずれは機械で測って画面に出します</li>
+            <li>DXF は実寸のデータなので、縮尺を合わせる手順は出しません。A3 の用紙に収まる縮尺を自動で選びます(選び直せます)</li>
+            <li>元の図面のレイヤ名が、そのまま Jw_cad のレイヤに入ります</li>
+            <li>JWW でも DXF でも保存できます。線の色の割り当て・ひな形の登録は PDF の時と同じです</li>
+            <li>1MB・図形2万個ほどのメーカーDXFで、読み込みから表示まで 0.2〜0.4 秒です</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.5.0 (2026-09-21) — 📐 図面変換(PDF→JWW / DXF)</summary>
         <div class="faq-body">
           <p><strong>新しいタブ「図面変換」を追加しました。</strong>CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します(PART 08 参照)。DXF でも保存できます。</p>

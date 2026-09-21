@@ -5400,14 +5400,14 @@
     </div>
   </div>
 
-  <!-- ============ 図面変換 (PDF→JWW/DXF) — v4.5.0 ============ -->
+  <!-- ============ 図面変換 (PDF/DXF→JWW/DXF) — v4.5.0 で追加、v4.6.0 で DXF 入力 ============ -->
   <div class="mode-panel" id="modePdf2Dxf">
     <header class="hero">
       <div class="hero-headline">
         <h1>PDFの図面を、<br><em>Jw_cad で開ける形に。</em></h1>
         <p class="hero-sub">
-          CADから出力したPDFの線・円・文字を取り出して、Jw_cad の図面ファイル(JWW)に変換します。<br>
-          図面の寸法を1か所指定するだけで実寸に合わせます ・ 線の色も線種も、お使いの設定どおりに。<br>
+          CADから出力したPDF、またはメーカー提供のDXFを、Jw_cad の図面ファイル(JWW)に変換します。<br>
+          PDFは寸法を1か所指定するだけで実寸に ・ DXFは途切れる線を直して実寸のまま ・ 線の色も線種もお使いの設定どおりに。<br>
           すべてブラウザ内で完結 ・ 通信ゼロ。
         </p>
       </div>
@@ -5422,9 +5422,9 @@
           <path d="M8.5 18v-4.5l3.5-2.5 3.5 2.5V18"/>
         </svg>
       </div>
-      <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
-      <div class="rz-sub">CADから出力した図面PDFを開きます ・ JWW / DXF で保存できます ・ スキャンした図面は変換できません ・ ファイルは外部送信されません</div>
-      <input type="file" id="p2dFileInput" accept="application/pdf" hidden>
+      <div class="rz-title">PDF または DXF をドロップ、またはクリックして選択</div>
+      <div class="rz-sub">CADから出力した図面PDF、またはメーカー提供の DXF を開きます ・ JWW / DXF で保存できます ・ スキャンした図面は変換できません ・ ファイルは外部送信されません</div>
+      <input type="file" id="p2dFileInput" accept="application/pdf,.dxf,.DXF" hidden>
     </div>
     <div class="p2d-loadmsg" id="p2dLoadMsg"></div>
 
@@ -5458,6 +5458,7 @@
           </div>
           <div class="p2d-caution" id="p2dShortWarn" hidden>短い寸法です。図面にもっと長い寸法があれば、そちらで合わせると誤差が小さくなります(このままでも合わせられます)。</div>
         </div>
+        <div class="redact-modehint" id="p2dDxfHint" hidden></div>
         <div id="p2dPresetBody" hidden>
           <div class="p2d-row">
             <select id="p2dPreset" aria-label="縮尺">
@@ -5468,7 +5469,7 @@
             </select>
             <button class="p2d-btn" id="p2dApplyPreset" type="button">この縮尺にする</button>
           </div>
-          <div class="redact-modehint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
+          <div class="redact-modehint" id="p2dPresetHint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
         </div>
         <div class="p2d-scale-status" id="p2dScaleStatus">縮尺: 未設定</div>
         <div class="p2d-caution" id="p2dCalNote"></div>
@@ -7136,7 +7137,7 @@
         </div>
         <div class="tool-label">PART 08</div>
         <div class="tool-name">図面変換</div>
-        <div class="tool-desc">CADのPDF図面を、Jw_cad の図面ファイル(JWW)に。寸法1か所で実寸に合わせ、線の色も設定どおり。</div>
+        <div class="tool-desc">CADのPDF図面・メーカーのDXFを、Jw_cad の図面ファイル(JWW)に。寸法1か所で実寸に合わせ、線の色も設定どおり。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
     </div>
@@ -8451,9 +8452,9 @@
        ========================================================== -->
   <section id="part-pdf2dxf" class="part-divider">
     <div class="part-label-pill">PART 08 / PDF TO JWW</div>
-    <h1 class="part-title">図面変換<em>(PDF→JWW / DXF)</em>の使い方</h1>
+    <h1 class="part-title">図面変換<em>(PDF・DXF→JWW)</em>の使い方</h1>
     <p class="part-lead">
-      CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します。線・円・円弧・文字を取り出し、図面の寸法を1か所指定するだけで実寸に合わせます。線の色と線種は Jw_cad の線色1〜8・線種1〜8に入るので、画面の色も印刷の太さも、お使いの設定どおりになります。DXF でも保存できます。すべてこのパソコンの中で処理され、外部には送信されません。
+      CADから出力したPDFの図面、またはメーカーからもらった DXF を、Jw_cad の図面ファイル(JWW)に変換します。PDFからは線・円・円弧・文字を取り出し、図面の寸法を1か所指定するだけで実寸に合わせます。DXF は実寸のまま取り込み、Jw_cad が読めずに線が途切れる原因(自由曲線・楕円)を直します。線の色と線種は Jw_cad の線色1〜8・線種1〜8に入るので、画面の色も印刷の太さも、お使いの設定どおりになります。DXF でも保存できます。すべてこのパソコンの中で処理され、外部には送信されません。
     </p>
   </section>
 
@@ -8461,7 +8462,7 @@
     <div class="section-head">
       <div class="section-num">STEP-BY-STEP</div>
       <h2 class="section-title">3ステップで完了します</h2>
-      <p class="section-lead">PDFを入れる → 縮尺を合わせる → 確かめて保存。</p>
+      <p class="section-lead">PDF か DXF を入れる → 縮尺を合わせる → 確かめて保存。(DXF は縮尺を合わせる手順が要りません)</p>
     </div>
     <div class="steps-grid">
       <div class="step-card">
@@ -8474,7 +8475,7 @@
           </svg>
         </div>
         <h3 class="step-title-h">PDFを入れる</h3>
-        <p class="step-text">「図面変換」タブに図面のPDFをドラッグ&amp;ドロップします。取り出せた線は青く表示されます。スキャンした図面(画像)は線のデータを持たないため、変換できません。</p>
+        <p class="step-text">「図面変換」タブに図面のPDF、またはメーカーからもらったDXFをドラッグ&amp;ドロップします。取り出せた線は青く表示されます。スキャンした図面(画像)は線のデータを持たないため、変換できません。</p>
       </div>
       <div class="step-card">
         <div class="step-badge">02</div>
@@ -8514,6 +8515,34 @@
     </div>
     <div class="heic-note">
       <strong>変換されないもの</strong>:寸法線は線と文字に分かれ、Jw_cad の寸法図形にはなりません。ハッチングは細かい線の集まりになります。文字を図形化(アウトライン化)したPDFでは、文字は変換されません。塗りつぶしの面、非表示に設定されたレイヤ、用紙の外や切り抜かれて見えていない部分は変換しません。PDFに貼り付けられた画像(写真・画面の切り抜き・スキャンした図)の中の線も変換できません。Excel や Word に図面の絵を貼って作ったPDFがこれに当たり、画面でお知らせします。見分け方:PDFを大きく拡大しても線がくっきりしていれば変換でき、ぼやけたりギザギザになれば画像です。Jw_cad で扱えない文字は「?」に置き換わり、その数を画面でお知らせします。
+    </div>
+  </section>
+
+  <section id="pdf2dxf-dxfin">
+    <div class="section-head">
+      <div class="section-num">DXF INPUT</div>
+      <h2 class="section-title">メーカーのDXFを読み込む</h2>
+      <p class="section-lead">Jw_cad で開くと線が途切れるDXFを、開ける形に直します。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        エアコンや住宅設備のメーカーが配っている DXF は、3次元CADから書き出したものが多く、<strong>自由曲線(スプライン)や楕円</strong>を含んでいます。Jw_cad はこれらを黙って読み飛ばすため、<strong>外形が途切れ途切れに見えます</strong>。
+        このタブに DXF を入れると、そうした曲線を<strong>円弧と細かい線に置き換えて</strong>から渡すので、外形がつながった状態で開けます。ブロック(部品のまとまり)・寸法・連続線も、線と文字に分解します。
+      </p>
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2); margin-top:12px;">
+        <li><strong>縮尺を合わせる手順は要りません</strong>:DXF は実寸のデータなので、そのまま実寸で取り込みます。A3 の用紙に収まる縮尺を自動で選びます(あとから選び直せます)。</li>
+        <li><strong>レイヤはそのまま</strong>:元の図面のレイヤ名が、出てきた順に Jw_cad のレイヤへ入ります。</li>
+        <li><strong>置き換えのずれを数で出します</strong>:曲線を円弧や線にした時、元の形からどれだけ離れたかを機械で測って画面に出します(実測で 0.005mm 程度)。</li>
+        <li><strong>DXFで保存もできます</strong>:曲線を直しただけの DXF が要る時は、保存する形式で「DXF」を選んでください。実寸のまま出ます。</li>
+      </ul>
+    </div>
+
+    <div class="heic-note">
+      <strong>読み込めないDXF</strong>:バイナリ形式(テキストでない)の DXF や、図形の入っていないファイルは、理由を表示してお断りします。図形が1つも取り出せなかった時も、何が読めて何を読み飛ばしたかを表示します。
+    </div>
+    <div class="heic-note">
+      <strong>大きなDXFでも待たされません</strong>:1MB・図形2万個ほどのメーカーDXFで、読み込みから表示まで 0.2〜0.4 秒です。すべてこのパソコンの中で処理され、外部には送信されません。
     </div>
   </section>
 
@@ -9218,6 +9247,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.6.0 (2026-09-21) — 📐 図面変換でメーカーのDXFも読めるように</summary>
+        <div class="faq-body">
+          <p><strong>「図面変換」タブに、メーカーからもらった DXF もそのまま入れられるようになりました。</strong>Jw_cad で開くと外形が途切れてしまう DXF を、開ける形に直します(PART 08 参照)。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>Jw_cad が読み飛ばす自由曲線(スプライン)・楕円を、円弧と細かい線に置き換えます。置き換えのずれは機械で測って画面に出します</li>
+            <li>DXF は実寸のデータなので、縮尺を合わせる手順は出しません。A3 の用紙に収まる縮尺を自動で選びます(選び直せます)</li>
+            <li>元の図面のレイヤ名が、そのまま Jw_cad のレイヤに入ります</li>
+            <li>JWW でも DXF でも保存できます。線の色の割り当て・ひな形の登録は PDF の時と同じです</li>
+            <li>1MB・図形2万個ほどのメーカーDXFで、読み込みから表示まで 0.2〜0.4 秒です</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.5.0 (2026-09-21) — 📐 図面変換(PDF→JWW / DXF)</summary>
         <div class="faq-body">
           <p><strong>新しいタブ「図面変換」を追加しました。</strong>CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します(PART 08 参照)。DXF でも保存できます。</p>
@@ -9561,7 +9603,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.5.0';
+  const APP_VERSION = '4.6.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -19568,6 +19610,8 @@ window.PdfSanitize = (function () {
     const applyDimBtn = $('p2dApplyDim');
     const presetSel = $('p2dPreset');
     const applyPresetBtn = $('p2dApplyPreset');
+    const dxfHint = $('p2dDxfHint');
+    const presetHint = $('p2dPresetHint');
     const scaleStatus = $('p2dScaleStatus');
     const checkBox = $('p2dCheck');
     const checkResult = $('p2dCheckResult');
@@ -19615,6 +19659,10 @@ window.PdfSanitize = (function () {
     const AMBIG_PX = 6;                 // 吸い付く点からこの距離(画面px)以内に別の候補点があれば、確定せずに選び直しの小窓を開く
     const MERGE_PT = 0.01;              // この距離(pt)以内の候補点は同じ点としてまとめる
     const LOUPE_PX = 168, LOUPE_MAG = 8, LOUPE_GAP = 24, LOUPE_TOUCH_GAP = 56;   // ルーペ: 大きさ(画面px)・倍率(画面表示に対して)・カーソル/指からの離れ
+    // 入力が DXF の時の控え。null なら PDF。画面の組み立てより先に読まれる必要があるので、ここで持つ
+    let dxfIn = null;   // { name, bytes, primsDoc, report, den }
+    const isDxf = () => !!dxfIn;
+
     // 保存の設定(形式・線の色・ひな形)。中身は下の「3.6 JWW の書き出し」。画面の組み立てより先に読まれる必要があるので、ここで持つ
     const FMT_KEY = 'p2dOutFormat', COLOR_KEY = 'p2dColorMode';
     const TMPL_DB = 'pdfCompactP2D', TMPL_STORE = 'template', TMPL_KEY = 'jww';
@@ -20393,6 +20441,7 @@ window.PdfSanitize = (function () {
     window.__p2dTest = { encodeCP932, buildDxf, aciOf, linetypeOf, estimateQuantum, precisionClass, nominalDecision, measureError, verdictOf, scaleLabel: (k, u) => scaleLabel(k, u),
       // JWW 書き出し(第2段)。テストからは、保存せずに中身だけを取り出せるようにする
       buildJww: () => buildJww(curPg()), primsOf: (g, u) => primsOf(g, u), paperFor: (g, p, u) => paperFor(g, p, u), denOf: (pg, sc) => denOf(pg, sc),
+      dxfIn: () => dxfIn, geomFromPrims: (d, n) => geomFromPrims(d, n), autoDen: (d) => autoDen(d),
       snapCandidates: (p, rad) => snapCandidates(curPg(), p, rad),
       // 連続するベジェ曲線の列を、円・円弧・折れ線にした結果(切り抜きなし)。q = 座標の刻み(pt)。乱数の総当たりの確認用
       fitCurves: (run, q) => {
@@ -20529,6 +20578,15 @@ window.PdfSanitize = (function () {
     function precisionInfo(pg) {
       const r = { text: '', caution: false, text2: '', caution2: false, text3: '' };
       if (!pg || !pg.k || !pg.geom) return r;
+      // DXF は実寸の図形データなので、PDF のような「線の位置の丸め」が無い。残るのは曲線を円弧・折れ線に置き換えた分だけ
+      if (isDxf()) {
+        const d = dxfIn.report.worstDeviation || 0;
+        r.text = '精度の目安: DXFは実寸の図形データなので、線の位置の読み取り誤差はありません。';
+        r.text2 = d > 0
+          ? '変換で生じるずれは、曲線を円弧や折れ線に置き換えた分だけです(最大 ' + (d < 0.01 ? '0.01' : String(Math.round(d * 100) / 100)) + 'mm)。'
+          : '変換で形が変わる曲線はありませんでした。';
+        return r;
+      }
       const cls = precisionClass(pg.geom.quantum, pg.k);
       if (cls === 'few') { r.text = '精度の目安: 線が少ないため計算できません。図面の寸法文字と突き合わせて確かめてください。'; r.caution = true; return r; }
       if (cls === 'unknown') { r.text = '精度の目安: 線の位置の細かさを調べられませんでした。図面の寸法文字と突き合わせて確かめてください。'; r.caution = true; return r; }
@@ -20605,6 +20663,14 @@ window.PdfSanitize = (function () {
       modePresetBtn.classList.toggle('active', st.mode === 'preset');
       dimBody.hidden = st.mode !== 'dim';
       presetBody.hidden = st.mode !== 'preset';
+      // DXF は実寸のデータなので、縮尺を合わせる手順は出さない(用紙に収める縮尺を選ぶだけ)
+      if (dxfHint) {
+        dxfHint.hidden = !isDxf();
+        if (isDxf()) dxfHint.textContent = 'この DXF は実寸のデータなので、縮尺を合わせる必要はありません。A3 の用紙に収まる縮尺(1/' + dxfIn.den + ')を選びました。変えたい時は下から選んで「この縮尺にする」を押してください。';
+      }
+      const dimToggle = modeDimBtn.parentElement;
+      if (dimToggle) dimToggle.hidden = isDxf();
+      if (presetHint) presetHint.hidden = isDxf();   // 縮んだPDFの話は DXF には当てはまらない
 
       if (pg.k) { scaleStatus.textContent = '縮尺: ' + pg.kLabel; scaleStatus.classList.add('set'); }
       else { scaleStatus.textContent = '縮尺: 未設定(保存するには縮尺を合わせてください)'; scaleStatus.classList.remove('set'); }
@@ -21297,6 +21363,17 @@ window.PdfSanitize = (function () {
       bringIntoView(scaleStatus);   // 「戻しました」の文より、縮尺の行(いまの状態)が見えることを優先する
     });
     applyPresetBtn.addEventListener('click', () => {
+      // DXF は、縮尺で用紙の中の大きさが変わるので、図面データごと作り直す(画面の表示と保存の中身をずらさないため)
+      if (isDxf()) {
+        const den = parseFloat(presetSel.value);
+        if (!(den > 0)) return;
+        clearNotes();
+        applyDxfScale(den);
+        dropPicks();
+        renderPage(0);
+        bringIntoView(scaleStatus);
+        return;
+      }
       const pg = curPg();
       if (!pg) return;
       const den = parseFloat(presetSel.value);
@@ -21505,7 +21582,102 @@ window.PdfSanitize = (function () {
       refreshOutputUI();
     });
 
+    // ===================== 4. DXF を入力にする(第3段) =====================
+    // メーカー提供の DXF は SPLINE(自由曲線)・ELLIPSE(楕円)などを含み、Jw_cad はそれを黙って飛ばすので外形が途切れて見える。
+    // ここで分解して、円弧にできるものは円弧に・できないものは細かい折れ線にしてから渡す(分解そのものは 71-dxf-flatten.js)。
+    // 画面では、分解した部品を「PDF と同じ形の図面データ」に作り直して使う。こうすると、青い線の表示・吸着・ルーペ・確かめる・保存が、
+    // PDF の時と同じ部品のまま動く(DXF 専用の描画や操作を作らずに済む)
+    const A3_MM = [420, 297];                                      // Jw_cad の A3(用紙は横置きだけ)
+    const A3_PT = [A3_MM[0] / PT2MM, A3_MM[1] / PT2MM];
+    const dxfNS = () => {
+      const NS = window.P2D;
+      if (!NS || !NS.dxfFlatten) throw new Error('DXF を読む部品が読み込まれていません');
+      return NS.dxfFlatten;
+    };
+    // 部品(実寸mm)→ 画面で使う図面データ(用紙上pt・A3 の中央に置く)
+    function geomFromPrims(primsDoc, den) {
+      const s = 1 / (PT2MM * den), b = primsDoc.bbox;
+      const ox = (b[0] + b[2]) / 2, oy = (b[1] + b[3]) / 2;
+      const X = (x) => (x - ox) * s + A3_PT[0] / 2, Y = (y) => (y - oy) * s + A3_PT[1] / 2;
+      const g = { lines: [], circles: [], arcs: [], texts: [], images: 0, imageAreaPct: 0,
+        vpW: A3_PT[0], vpH: A3_PT[1], unit: 1, quantum: null, hiddenLayer: false, hiddenTextUnsure: false, nonRectClip: false };
+      for (const p of primsDoc.prims) {
+        const lt = p.lt || 'CONTINUOUS', col = p.aci;
+        if (p.t === 'L') g.lines.push({ x1: X(p.a.x), y1: Y(p.a.y), x2: X(p.b.x), y2: Y(p.b.y), col, lt });
+        else if (p.t === 'C') g.circles.push({ cx: X(p.cx), cy: Y(p.cy), r: p.r * s, col, lt });
+        else if (p.t === 'A') g.arcs.push({ cx: X(p.cx), cy: Y(p.cy), r: p.r * s, a1: p.a1, a2: p.a2, col, lt });
+        else if (p.t === 'T') g.texts.push({ x: X(p.x), y: Y(p.y), h: p.h * s, s: p.s, rot: p.rot || 0 });
+        else if (p.t === 'S') {
+          // 塗り(ソリッド)は、画面では外周の線として見せる(保存の時は部品のまま塗りとして入る)
+          const q = p.q, o = [q[0], q[1], q[3], q[2]];
+          for (let i = 0; i < 4; i++) { const a = o[i], c = o[(i + 1) % 4]; g.lines.push({ x1: X(a.x), y1: Y(a.y), x2: X(c.x), y2: Y(c.y), col, lt: 'CONTINUOUS' }); }
+        }
+      }
+      return g;
+    }
+    // 用紙(A3)に余白つきで収まる、いちばん小さい縮尺分母
+    function autoDen(primsDoc) {
+      const P = jwwNS().primsToJww, b = primsDoc.bbox;
+      const framed = P.hasSheetFrame(primsDoc.prims, b);
+      return P.chooseScale(b[2] - b[0], b[3] - b[1], framed, 3);
+    }
+    // 縮尺を決めて、画面の図面データを作り直す(縮尺を変えた時にも呼ぶ)
+    function applyDxfScale(den) {
+      dxfIn.den = den;
+      const pg = { geom: geomFromPrims(dxfIn.primsDoc, den), k: PT2MM * den, kLabel: '1/' + den, kFrom: null,
+        cal: { preset: true, nominal: den }, prev: null, index: null };
+      st.pages = { 0: pg };
+      // プルダウンに無い分母(1/2・1/5 など)は、その場で足して選ばせる
+      if (!Array.from(presetSel.options).some((o) => parseFloat(o.value) === den)) {
+        const op = document.createElement('option');
+        op.value = String(den); op.textContent = '1/' + den;
+        const at = Array.from(presetSel.options).find((o) => parseFloat(o.value) > den);
+        presetSel.insertBefore(op, at || null);
+      }
+      presetSel.value = String(den);
+    }
+    // 保存した後の文(DXF 由来)。分解で何が起きたかを数で知らせる
+    function dxfNotes() {
+      const r = dxfIn.report, out = [];
+      const cur = (r.arcsFromCurves || 0) + (r.linesFromCurves || 0);
+      if (r.curves) out.push('Jw_cad が読めない曲線(自由曲線・楕円など)' + fmtInt(r.curves) + ' 本を、円弧 ' + fmtInt(r.arcsFromCurves || 0) + ' 個と線 ' + fmtInt(r.linesFromCurves || 0) + ' 本に置き換えました(元の形からのずれは最大 ' + (r.worstDeviation < 0.01 ? '0.01' : String(r.worstDeviation)) + 'mm)。');
+      const skipped = Object.keys(r.skipped || {}).map((k) => k + ' ' + fmtInt(r.skipped[k]) + '個');
+      if (skipped.length) out.push('扱えない要素は入れていません(' + skipped.join('、') + ')。');
+      const far = Object.keys(r.farOutliersDropped || {}).reduce((n, k) => n + r.farOutliersDropped[k], 0);
+      if (far) out.push('図面から遠く離れた位置にあるごみ ' + fmtInt(far) + ' 個を除きました。');
+      if (r.flatArcsToLines) out.push('ほぼ真っすぐな円弧 ' + fmtInt(r.flatArcsToLines) + ' 個は線にしました。');
+      return out;
+    }
+
     // ---- 保存 ----
+    // DXF 由来の保存。JWW は部品から直接組み立て、DXF は分解し直したものをそのまま出す
+    function exportFromDxf(stamp) {
+      const base = (dxfIn.name || 'dxf').replace(/[.][^.]*$/, '');
+      if (outFmt === 'jww') {
+        const NS = jwwNS(), b = dxfIn.primsDoc.bbox;
+        const opt = { colorMode, scale: dxfIn.den, paperCode: 3, origin: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2] };
+        if (!userTmpl) opt.expectPalette = NS.jwwTemplate.BUILTIN_PALETTE;
+        const r = NS.primsToJww.convert(dxfIn.primsDoc, userTmpl ? userTmpl.bytes : NS.jwwTemplate.builtinTemplate(), opt);
+        triggerDownload(new Blob([r.bytes], { type: 'application/octet-stream' }), base + '_' + stamp + '.jww');
+        const i = r.info, c = i.stats, prims = i.prims, n = (t) => prims.filter((p) => p.t === t).length;
+        const bits = dxfNotes();
+        if (c.unencodable_chars) bits.push('Jw_cad で扱えない文字が ' + fmtInt(c.unencodable_chars) + ' 個あったため「?」に置き換えました。');
+        if (!userTmpl) bits.push('標準のひな形で書き出しました。線の色や印刷の設定をご自分の Jw_cad に合わせたい時は、下の「Jw_cad の設定を登録」からひな形を登録してください。');
+        setNote('保存しました(線 ' + fmtInt(n('L')) + ' 本・円/円弧 ' + fmtInt(n('C') + n('A')) + ' 個・文字 ' + fmtInt(n('T')) + ' 個)。' +
+          '用紙 ' + paperLabel(i.paperCode) + ' ・ 縮尺 ' + denLabel(i.headerScale) + ' ・ レイヤは元の図面のレイヤ名のまま。' +
+          'Jw_cad の「ファイル」→「開く」でそのまま開けます。' + (bits.length ? ' ' + bits.join(' ') : ''), 'done');
+        return;
+      }
+      // DXF で保存: 色の割り当てに合わせて分解し直す(元の色に近い = 色を変えない)
+      const F = dxfNS();
+      const out = F.flattenDxf(dxfIn.bytes, { keepColors: colorMode === 'original', sourceName: dxfIn.name });
+      triggerDownload(new Blob([out.flatDxfBytes], { type: 'application/dxf' }), base + '_' + stamp + '.dxf');
+      const bits = dxfNotes();
+      if (out.report.unencodableChars) bits.push('Jw_cad で扱えない文字が ' + fmtInt(out.report.unencodableChars) + ' 個あったため「?」に置き換えました。');
+      const wrote = Object.keys(out.report.written || {}).reduce((n, k) => n + out.report.written[k], 0);
+      setNote('保存しました(図形 ' + fmtInt(wrote) + ' 個)。実寸のまま、Jw_cad の「ファイル」→「DXFファイルを開く」で開けます。' +
+        (bits.length ? ' ' + bits.join(' ') : ''), 'done');
+    }
     function doneText(pg, r) {
       const g = pg.geom;
       return '保存しました(線 ' + fmtInt(g.lines.length) + ' 本・円/円弧 ' + fmtInt(g.circles.length + g.arcs.length) +
@@ -21518,6 +21690,7 @@ window.PdfSanitize = (function () {
       if (st.busy || !pg || !pg.k || !pg.geom) return;
       try {
         const stamp = makeTimestamp() + '_' + pad2(st.pageIndex + 1);
+        if (isDxf()) { exportFromDxf(makeTimestamp()); return; }
         if (outFmt === 'jww') {
           const r = buildJww(pg);
           triggerDownload(new Blob([r.bytes], { type: 'application/octet-stream' }), 'JWW変換_' + stamp + '.jww');
@@ -21585,9 +21758,9 @@ window.PdfSanitize = (function () {
       st.rendering = true;
       if (idx !== st.pageIndex) realLen.value = '';   // ほかのページで入れた寸法を持ち越さない
       st.pageIndex = idx; dropPicks(); st.hover = null; st.cursor = null; st.aim = null; hideLoupe(); clearNotes();
-      const page = await st.pdf.getPage(idx + 1);
+      const page = isDxf() ? null : await st.pdf.getPage(idx + 1);   // DXF の時は下敷きにする絵が無い(白紙に青い線だけを描く)
       if (gen !== st.renderGen) return;
-      const vp1 = page.getViewport({ scale: 1 });
+      const vp1 = page ? page.getViewport({ scale: 1 }) : { width: A3_PT[0], height: A3_PT[1] };
       const stageEl = wrap.closest('.redact-stage');
       let availW = stageEl ? stageEl.clientWidth : 0;
       fitW = availW;
@@ -21598,7 +21771,7 @@ window.PdfSanitize = (function () {
       let rs = Math.max(ds * dpr * 1.5, 1.5);
       const maxR = Math.max(vp1.width, vp1.height) * rs;
       if (maxR > 4000) rs = rs * 4000 / maxR;
-      const rvp = page.getViewport({ scale: rs });
+      const rvp = page ? page.getViewport({ scale: rs }) : { width: vp1.width * rs, height: vp1.height * rs };
       const DW = Math.floor(vp1.width * ds), DH = Math.floor(vp1.height * ds);
       canvas.width = Math.ceil(rvp.width); canvas.height = Math.ceil(rvp.height);
       canvas.style.width = DW + 'px'; canvas.style.height = DH + 'px';
@@ -21610,10 +21783,10 @@ window.PdfSanitize = (function () {
       st.ds = ds; st.dpr = dpr;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      try { await page.render({ canvasContext: ctx, viewport: rvp }).promise; } catch (_) { /* 表示だけの失敗は変換に影響しない */ }
+      if (page) { try { await page.render({ canvasContext: ctx, viewport: rvp }).promise; } catch (_) { /* 表示だけの失敗は変換に影響しない */ } }
       if (gen !== st.renderGen) return;
       if (!st.pages[idx]) st.pages[idx] = newPg();
-      if (!st.pages[idx].geom) {
+      if (!st.pages[idx].geom && page) {
         try { st.pages[idx].geom = await extractPage(page, st.occ); }
         catch (e) {
           console.error('[p2d] extract failed', e);
@@ -21651,12 +21824,12 @@ window.PdfSanitize = (function () {
     // ---- 読み込み ----
     async function loadPdf(file) {
       setLoadMsg('');
-      if (!file || (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || ''))) { setLoadMsg('PDFファイルを選んでください。', 'error'); return; }
+      if (!file || (file.type !== 'application/pdf' && !/[.]pdf$/i.test(file.name || ''))) { setLoadMsg('PDF または DXF のファイルを選んでください。', 'error'); return; }
       try {
         setLoadMsg('読み込んでいます…');
         st.renderGen++; st.rendering = true;   // 読み込み中は前のPDFのページで操作・保存させない
         const pdf = await L.getDocument({ data: await file.arrayBuffer() }).promise;
-        st.pdf = pdf; st.numPages = pdf.numPages; st.pages = {}; st.pageIndex = 0; dropPicks(); clearNotes();
+        st.pdf = pdf; st.numPages = pdf.numPages; st.pages = {}; st.pageIndex = 0; dxfIn = null; dropPicks(); clearNotes();
         st.occ = null;
         try { st.occ = await pdf.getOptionalContentConfig(); } catch (_) { /* レイヤ情報が読めなければ全部表示扱い */ }
         st.mode = 'dim'; realLen.value = '';
@@ -21678,18 +21851,53 @@ window.PdfSanitize = (function () {
           : 'PDFの読み込みに失敗しました: ' + (e && e.message ? e.message : e), 'error');
       }
     }
+    // DXF を読み込む。分解 → 部品 → 画面用の図面データ の順。縮尺は用紙(A3)に収まるものを自動で選ぶ
+    async function loadDxf(file) {
+      setLoadMsg('');
+      try {
+        setLoadMsg('読み込んでいます…(大きな DXF は少し時間がかかります)');
+        st.renderGen++; st.rendering = true;
+        await new Promise((r) => setTimeout(r, 0));   // 「読み込んでいます」を先に出す
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const out = dxfNS().flattenDxf(bytes, { keepColors: true, sourceName: file.name });
+        st.pdf = { dxf: true };   // 「読み込み済み」の印(ページ送り・描き直しの判定で使う)
+        st.occ = null; st.numPages = 1; st.pageIndex = 0; st.pages = {};
+        dxfIn = { name: file.name, bytes, primsDoc: out.primsDoc, report: out.report, den: 1 };
+        dropPicks(); clearNotes();
+        st.mode = 'preset'; realLen.value = '';
+        applyDxfScale(autoDen(out.primsDoc));
+        setLoadMsg('');
+        upload.style.display = 'none';
+        editor.classList.add('active');
+        await renderPage(0);
+        requestAnimationFrame(() => {
+          const bar = editor.querySelector('.redact-toolbar');
+          if (!bar || !st.pdf || !panel.classList.contains('active')) return;
+          try { bar.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }); } catch (_) { /* 無視 */ }
+        });
+      } catch (e) {
+        console.error('[p2d] dxf load failed', e);
+        st.rendering = false; st.pdf = null; dxfIn = null;
+        setLoadMsg('DXFの読み込みに失敗しました: ' + (e && e.message ? e.message : e), 'error');
+      }
+    }
+    // 落とされたファイルの種類で振り分ける
+    function loadFile(f) {
+      if (!f) return;
+      if (/[.]dxf$/i.test(f.name || '')) loadDxf(f); else loadPdf(f);
+    }
     upload.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; fileInput.value = ''; if (f) loadPdf(f); });
+    fileInput.addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; fileInput.value = ''; loadFile(f); });
     upload.addEventListener('dragover', (e) => { e.preventDefault(); upload.classList.add('dragover'); });
     upload.addEventListener('dragleave', () => upload.classList.remove('dragover'));
     upload.addEventListener('drop', (e) => {
       e.preventDefault(); upload.classList.remove('dragover');
       const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) loadPdf(f);
+      loadFile(f);
     });
     resetBtn.addEventListener('click', () => {
       st.renderGen++;
-      st.pdf = null; st.occ = null; st.numPages = 0; st.pages = {}; dropPicks(); clearNotes(); st.rendering = false;
+      st.pdf = null; st.occ = null; st.numPages = 0; st.pages = {}; dxfIn = null; dropPicks(); clearNotes(); st.rendering = false;
       st.hover = null; st.cursor = null; st.aim = null; hideLoupe();
       editor.classList.remove('active');
       upload.style.display = '';

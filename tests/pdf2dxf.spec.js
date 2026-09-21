@@ -2516,3 +2516,182 @@ test.describe('図面変換: JWW 書き出し', () => {
     expect(r.fp).toBe(r.want);
   });
 });
+
+// ---- 第3段: DXF を入力にする(メーカー提供の DXF を、そのまま Jw_cad で開ける形に) ----
+test.describe('図面変換: DXF の読み込み', () => {
+  const NL2 = String.fromCharCode(13, 10);
+  /** テスト用の小さな DXF(外形の四角・破線・円・円弧・文字・自由曲線・楕円)。実寸 1000×600mm */
+  function makeDxf() {
+    const o = [];
+    const P = (c, v) => { o.push(String(c)); o.push(String(v)); };
+    P(0, 'SECTION'); P(2, 'ENTITIES');
+    P(0, 'LINE'); P(8, 'OUTER'); P(62, 1); P(10, 0); P(20, 0); P(11, 1000); P(21, 0);
+    P(0, 'LINE'); P(8, 'OUTER'); P(62, 1); P(10, 1000); P(20, 0); P(11, 1000); P(21, 600);
+    P(0, 'LINE'); P(8, 'OUTER'); P(62, 1); P(10, 1000); P(20, 600); P(11, 0); P(21, 600);
+    P(0, 'LINE'); P(8, 'OUTER'); P(62, 1); P(10, 0); P(20, 600); P(11, 0); P(21, 0);
+    P(0, 'LINE'); P(8, 'HIDDEN'); P(62, 5); P(6, 'DASHED'); P(10, 0); P(20, 300); P(11, 1000); P(21, 300);
+    P(0, 'CIRCLE'); P(8, 'PARTS'); P(62, 3); P(10, 250); P(20, 300); P(40, 120);
+    P(0, 'ARC'); P(8, 'PARTS'); P(62, 3); P(10, 750); P(20, 300); P(40, 120); P(50, 0); P(51, 90);
+    P(0, 'TEXT'); P(8, 'MOJI'); P(62, 7); P(10, 100); P(20, 480); P(40, 40); P(1, 'TEST');
+    // 自由曲線(3次・制御点4個)と楕円。どちらも Jw_cad はそのままでは読めない
+    P(0, 'SPLINE'); P(8, 'OUTER'); P(62, 1); P(70, 8); P(71, 3); P(72, 8); P(73, 4); P(74, 0);
+    for (const k of [0, 0, 0, 0, 1, 1, 1, 1]) P(40, k);
+    for (const c of [[100, 100], [300, 250], [700, 40], [900, 200]]) { P(10, c[0]); P(20, c[1]); }
+    P(0, 'ELLIPSE'); P(8, 'PARTS'); P(62, 3); P(10, 500); P(20, 150); P(11, 150); P(21, 0); P(40, 0.5); P(41, 0); P(42, 6.283185307179586);
+    P(0, 'ENDSEC'); P(0, 'EOF');
+    return o.join(NL2) + NL2;
+  }
+  /** DXF を図面変換タブに読み込ませる */
+  async function loadDxfIn(page, text, name) {
+    await gotoTab(page, 'pdf2dxf');
+    await page.evaluate((a) => {
+      const b = new Uint8Array(a.t.length);
+      for (let i = 0; i < a.t.length; i++) b[i] = a.t.charCodeAt(i) & 0xFF;
+      const inp = document.getElementById('p2dFileInput'), dt = new DataTransfer();
+      dt.items.add(new File([b], a.n, { type: 'application/octet-stream' }));
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    }, { t: text, n: name || 'part.dxf' });
+    await page.waitForFunction(() => { const s = window.__p2dState; return s && s.pdf && !s.rendering && s.pages[0] && s.pages[0].geom; }, null, { timeout: 60_000 });
+    await page.waitForTimeout(300);
+  }
+  const jwwOf = (page) => page.evaluate(() => {
+    const doc = window.P2D.jwwWriter.parseJww(window.__lastJww);
+    const idx = doc.header.index, pens = {}, kinds = {}, styles = {};
+    for (const e of doc.entities) {
+      pens[e.pen_color] = (pens[e.pen_color] || 0) + 1;
+      kinds[e.kind] = (kinds[e.kind] || 0) + 1;
+      if (e.kind === 'line' || e.kind === 'arc') styles[e.pen_style] = (styles[e.pen_style] || 0) + 1;
+    }
+    const names = [];
+    for (let g = 0; g < 16; g++) for (const v of idx.get('lay_names_' + g).vals) if (v) names.push(v);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const e of doc.entities) {
+      if (e.kind !== 'line') continue;
+      x0 = Math.min(x0, e.x1, e.x2); x1 = Math.max(x1, e.x1, e.x2);
+      y0 = Math.min(y0, e.y1, e.y2); y1 = Math.max(y1, e.y1, e.y2);
+    }
+    return { version: doc.header.version, trailing: doc.trailingBytes, entities: doc.entities.length,
+      paper: idx.get('paper_size').vals[0], scale: idx.get('scale_0').vals[0], pens, kinds, styles, names,
+      lineBox: [x0, y0, x1, y1] };
+  });
+  /** 保存ボタンを押して、出たバイト列を window.__lastJww に取り込む */
+  async function saveAndGrab(page, fmt) {
+    await setOutFmt(page, fmt);
+    await page.evaluate(() => {
+      window.__lastJww = null;
+      const orig = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = function (b) { b.arrayBuffer().then((buf) => { window.__lastJww = new Uint8Array(buf); }); return orig(b); };
+      HTMLAnchorElement.prototype.click = function () {};
+      document.getElementById('p2dExportBtn').click();
+    });
+    await page.waitForFunction(() => !!window.__lastJww, null, { timeout: 30_000 });
+  }
+
+  test('DXFを読み込むと、実寸のまま取り込んで縮尺を自動で決める。縮尺を合わせる手順は出さない', async ({ page }) => {
+    await openApp(page);
+    await loadDxfIn(page, makeDxf());
+    // 縮尺を合わせる手順(寸法2点)は出さない。DXF 用の案内と、縮尺のプルダウンだけ
+    await expect(page.locator('#p2dDxfHint')).toBeVisible();
+    await expect(page.locator('#p2dDxfHint')).toContainText('実寸のデータなので、縮尺を合わせる必要はありません');
+    expect(await page.evaluate(() => document.getElementById('p2dModeDim').parentElement.hidden)).toBe(true);
+    await expect(page.locator('#p2dPresetHint')).toBeHidden();   // 縮んだPDFの話は DXF には出さない
+    // 1000×600mm が A3(図枠つきなので余白3mm)に収まる最小の分母 = 5。プルダウンに無い値でも選べるように足す
+    expect(await page.evaluate(() => window.__p2dTest.dxfIn().den)).toBe(5);
+    expect(await page.evaluate(() => document.getElementById('p2dPreset').value)).toBe('5');
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/5');
+    // 精度の目安は DXF 用の文(線の位置の丸めが無い)
+    await expect(page.locator('#p2dPrecision')).toContainText('DXFは実寸の図形データなので、線の位置の読み取り誤差はありません');
+    await expect(page.locator('#p2dPrecision2')).toContainText('曲線を円弧や折れ線に置き換えた分');
+    // Jw_cad が読めない曲線(自由曲線・楕円)は、細かい線に置き換わっている
+    const g = await page.evaluate(() => { const gg = window.__p2dState.pages[0].geom; return { lines: gg.lines.length, circles: gg.circles.length, arcs: gg.arcs.length, texts: gg.texts.length }; });
+    expect(g.lines).toBeGreaterThan(500);
+    expect(g.circles).toBe(1);
+    expect(g.arcs).toBe(1);
+    expect(g.texts).toBe(1);
+    const r = await page.evaluate(() => window.__p2dTest.dxfIn().report);
+    expect(r.curves).toBe(2);                       // SPLINE と ELLIPSE
+    expect(r.worstDeviation).toBeLessThan(0.006);   // 置き換えのズレは 0.006mm 未満
+    expect(Object.keys(r.skipped).length).toBe(0);
+    // 複数ページの操作は出さない(DXF は1枚)
+    await expect(page.locator('#p2dExportAllBtn')).toBeHidden();
+    await expect(page.locator('#p2dApplyAll')).toBeHidden();
+  });
+
+  test('DXF由来のJWW: 元のレイヤ名がそのまま入り、用紙A3・自動で決めた縮尺・線色1〜8になる', async ({ page }) => {
+    await openApp(page);
+    await loadDxfIn(page, makeDxf());
+    await saveAndGrab(page, 'jww');
+    const d = await jwwOf(page);
+    expect(d.version).toBe(700);
+    expect(d.trailing).toBe(0);
+    expect(d.paper).toBe(3);                      // A3
+    expect(d.scale).toBe(5);                      // 自動で決めた 1/5
+    expect(d.names).toEqual(['OUTER', 'HIDDEN', 'PARTS', 'MOJI']);   // 元の図面のレイヤ名を、出てきた順に
+    expect(Object.keys(d.pens).every((p) => Number(p) >= 1 && Number(p) <= 8)).toBe(true);
+    expect(d.pens['8']).toBeGreaterThan(0);       // 赤 → 線色8
+    expect(d.styles['3']).toBe(1);                // 破線 → 線種3
+    expect(d.kinds.text).toBe(1);
+    // 図寸: 1000mm ÷ 5 = 200mm。用紙(A3 = 420×297)の中に収まる
+    expect(d.lineBox[2] - d.lineBox[0]).toBeCloseTo(200, 1);
+    expect(d.lineBox[0]).toBeGreaterThanOrEqual(-210);
+    expect(d.lineBox[2]).toBeLessThanOrEqual(210);
+    expect(d.lineBox[1]).toBeGreaterThanOrEqual(-148.5);
+    expect(d.lineBox[3]).toBeLessThanOrEqual(148.5);
+    await expect(page.locator('#p2dExportNote')).toContainText('用紙 A3 ・ 縮尺 1/5 ・ レイヤは元の図面のレイヤ名のまま');
+    await expect(page.locator('#p2dExportNote')).toContainText('Jw_cad が読めない曲線');
+  });
+
+  test('DXF由来のDXF保存: 実寸のまま出て、Jw_cad が読めない曲線は線に置き換わっている', async ({ page }) => {
+    await openApp(page);
+    await loadDxfIn(page, makeDxf());
+    await saveAndGrab(page, 'dxf');
+    const r = await page.evaluate(() => {
+      const b = window.__lastJww;
+      let s = '';
+      for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+      const L = s.split(String.fromCharCode(13, 10));
+      const kinds = {};
+      for (let i = 0; i + 1 < L.length; i += 2) if (L[i].trim() === '0') kinds[L[i + 1]] = (kinds[L[i + 1]] || 0) + 1;
+      // 実寸のまま: 外形の右下の角(1000, 0)がそのまま入っている
+      return { kinds, hasSpline: /SPLINE/.test(s), hasEllipse: /ELLIPSE/.test(s), real: s.indexOf('1000.0') >= 0 || s.indexOf(String.fromCharCode(13, 10) + '1000' + String.fromCharCode(13, 10)) >= 0, size: b.length };
+    });
+    expect(r.hasSpline).toBe(false);     // 自由曲線は残さない(Jw_cad が黙って飛ばすため)
+    expect(r.hasEllipse).toBe(false);
+    expect(r.kinds.LINE).toBeGreaterThan(500);
+    expect(r.kinds.CIRCLE).toBe(1);
+    expect(r.kinds.ARC).toBe(1);
+    expect(r.kinds.TEXT).toBe(1);
+    expect(r.real).toBe(true);
+    await expect(page.locator('#p2dExportNote')).toContainText('実寸のまま、Jw_cad の「ファイル」→「DXFファイルを開く」で開けます');
+  });
+
+  test('縮尺を選び直すと、用紙の中の大きさが変わる(画面の表示と保存の中身がずれない)', async ({ page }) => {
+    await openApp(page);
+    await loadDxfIn(page, makeDxf());
+    await page.evaluate(() => {
+      document.getElementById('p2dPreset').value = '10';
+      document.getElementById('p2dApplyPreset').click();
+    });
+    await page.waitForFunction(() => window.__p2dTest.dxfIn().den === 10 && !window.__p2dState.rendering, null, { timeout: 30_000 });
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/10');
+    await saveAndGrab(page, 'jww');
+    const d = await jwwOf(page);
+    expect(d.scale).toBe(10);
+    expect(d.lineBox[2] - d.lineBox[0]).toBeCloseTo(100, 1);   // 1000mm ÷ 10 = 100mm
+  });
+
+  test('DXFでないファイル・壊れたDXFは、理由を表示して断る', async ({ page }) => {
+    await openApp(page);
+    await gotoTab(page, 'pdf2dxf');
+    await page.evaluate(() => {
+      const b = new Uint8Array([0x50, 0x4B, 0x03, 0x04, 0x00, 0x00]);   // ZIP の先頭(DXF ではない)
+      const inp = document.getElementById('p2dFileInput'), dt = new DataTransfer();
+      dt.items.add(new File([b], 'not-a-drawing.dxf', { type: 'application/octet-stream' }));
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect(page.locator('#p2dLoadMsg')).toContainText('DXFの読み込みに失敗しました');
+    await expect(page.locator('#p2dEditor')).not.toHaveClass(/active/);
+  });
+});

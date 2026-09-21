@@ -1089,14 +1089,14 @@
     </div>
   </div>
 
-  <!-- ============ 図面変換 (PDF→JWW/DXF) — v4.5.0 ============ -->
+  <!-- ============ 図面変換 (PDF/DXF→JWW/DXF) — v4.5.0 で追加、v4.6.0 で DXF 入力 ============ -->
   <div class="mode-panel" id="modePdf2Dxf">
     <header class="hero">
       <div class="hero-headline">
         <h1>PDFの図面を、<br><em>Jw_cad で開ける形に。</em></h1>
         <p class="hero-sub">
-          CADから出力したPDFの線・円・文字を取り出して、Jw_cad の図面ファイル(JWW)に変換します。<br>
-          図面の寸法を1か所指定するだけで実寸に合わせます ・ 線の色も線種も、お使いの設定どおりに。<br>
+          CADから出力したPDF、またはメーカー提供のDXFを、Jw_cad の図面ファイル(JWW)に変換します。<br>
+          PDFは寸法を1か所指定するだけで実寸に ・ DXFは途切れる線を直して実寸のまま ・ 線の色も線種もお使いの設定どおりに。<br>
           すべてブラウザ内で完結 ・ 通信ゼロ。
         </p>
       </div>
@@ -1111,9 +1111,9 @@
           <path d="M8.5 18v-4.5l3.5-2.5 3.5 2.5V18"/>
         </svg>
       </div>
-      <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
-      <div class="rz-sub">CADから出力した図面PDFを開きます ・ JWW / DXF で保存できます ・ スキャンした図面は変換できません ・ ファイルは外部送信されません</div>
-      <input type="file" id="p2dFileInput" accept="application/pdf" hidden>
+      <div class="rz-title">PDF または DXF をドロップ、またはクリックして選択</div>
+      <div class="rz-sub">CADから出力した図面PDF、またはメーカー提供の DXF を開きます ・ JWW / DXF で保存できます ・ スキャンした図面は変換できません ・ ファイルは外部送信されません</div>
+      <input type="file" id="p2dFileInput" accept="application/pdf,.dxf,.DXF" hidden>
     </div>
     <div class="p2d-loadmsg" id="p2dLoadMsg"></div>
 
@@ -1147,6 +1147,7 @@
           </div>
           <div class="p2d-caution" id="p2dShortWarn" hidden>短い寸法です。図面にもっと長い寸法があれば、そちらで合わせると誤差が小さくなります(このままでも合わせられます)。</div>
         </div>
+        <div class="redact-modehint" id="p2dDxfHint" hidden></div>
         <div id="p2dPresetBody" hidden>
           <div class="p2d-row">
             <select id="p2dPreset" aria-label="縮尺">
@@ -1157,7 +1158,7 @@
             </select>
             <button class="p2d-btn" id="p2dApplyPreset" type="button">この縮尺にする</button>
           </div>
-          <div class="redact-modehint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
+          <div class="redact-modehint" id="p2dPresetHint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
         </div>
         <div class="p2d-scale-status" id="p2dScaleStatus">縮尺: 未設定</div>
         <div class="p2d-caution" id="p2dCalNote"></div>

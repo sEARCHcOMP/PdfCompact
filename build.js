@@ -49,6 +49,15 @@ function build() {
   if (/<\/script>/i.test(app)) {
     throw new Error('src/app/*.js に </script> が含まれている(<script>が早期終了する)。エスケープが必要');
   }
+  // ガード: 制御文字(タブ・改行以外)の混入。HTML はスクリプト中の NUL を別の文字に置き換えるため、
+  //   正規表現などに NUL が入ると連結した1本のスクリプトごと読めなくなり、全機能が止まる(v4.5.0 開発中に実際に発生)。
+  for (let i = 0; i < html.length; i++) {
+    const c = html.charCodeAt(i);
+    if ((c < 0x20 && c !== 0x09 && c !== 0x0A && c !== 0x0D) || c === 0x7F) {
+      const line = html.slice(0, i).split(String.fromCharCode(10)).length;
+      throw new Error('制御文字 U+' + c.toString(16).padStart(4, '0') + ' が生成物の ' + line + ' 行目にある。文字コードの数値で書き直すこと');
+    }
+  }
   return html;
 }
 

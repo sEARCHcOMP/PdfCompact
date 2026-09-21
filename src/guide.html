@@ -1427,6 +1427,19 @@
         <div class="tool-desc">見せたくない所を本当に消す。塗りつぶしは黒/背景色を選択、出力前に消去を自動チェック。</div>
         <div class="tool-link">使い方を見る <span class="arr">→</span></div>
       </a>
+      <a href="#part-pdf2dxf" class="tool-card">
+        <div class="tool-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M5 21V9l7-5 7 5v12"/>
+            <path d="M9.5 21v-6h5v6"/>
+          </svg>
+        </div>
+        <div class="tool-label">PART 08</div>
+        <div class="tool-name">図面変換</div>
+        <div class="tool-desc">CADのPDF図面を、Jw_cad の図面ファイル(JWW)に。寸法1か所で実寸に合わせ、線の色も設定どおり。</div>
+        <div class="tool-link">使い方を見る <span class="arr">→</span></div>
+      </a>
     </div>
 
     <nav class="jumpnav">
@@ -1437,6 +1450,7 @@
       <a href="#part-edit">PDF編集</a>
       <a href="#part-imgplace">画像配置</a>
       <a href="#part-redact">塗りつぶし</a>
+      <a href="#part-pdf2dxf">図面変換</a>
       <a href="#filename">ファイル名</a>
       <a href="#scenarios">活用シーン</a>
       <a href="#faq">よくある質問</a>
@@ -2734,6 +2748,151 @@
 
 
   <!-- ==========================================================
+       PART 8: PDF TO DXF (図面変換)
+       ========================================================== -->
+  <section id="part-pdf2dxf" class="part-divider">
+    <div class="part-label-pill">PART 08 / PDF TO JWW</div>
+    <h1 class="part-title">図面変換<em>(PDF→JWW / DXF)</em>の使い方</h1>
+    <p class="part-lead">
+      CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します。線・円・円弧・文字を取り出し、図面の寸法を1か所指定するだけで実寸に合わせます。線の色と線種は Jw_cad の線色1〜8・線種1〜8に入るので、画面の色も印刷の太さも、お使いの設定どおりになります。DXF でも保存できます。すべてこのパソコンの中で処理され、外部には送信されません。
+    </p>
+  </section>
+
+  <section id="pdf2dxf-quickstart">
+    <div class="section-head">
+      <div class="section-num">STEP-BY-STEP</div>
+      <h2 class="section-title">3ステップで完了します</h2>
+      <p class="section-lead">PDFを入れる → 縮尺を合わせる → 確かめて保存。</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <div class="step-label">UPLOAD</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">PDFを入れる</h3>
+        <p class="step-text">「図面変換」タブに図面のPDFをドラッグ&amp;ドロップします。取り出せた線は青く表示されます。スキャンした図面(画像)は線のデータを持たないため、変換できません。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <div class="step-label">SCALE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l14-14 4 4-14 14H3z"/>
+            <path d="M7 13l2 2"/><path d="M10 10l2 2"/><path d="M13 7l2 2"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">縮尺を合わせる</h3>
+        <p class="step-text">図面の中でいちばん長い寸法(建物の端から端など)の両端を順にクリックし、実際の長さを入力して「この長さで合わせる」を押します(Enter キーでも確定できます)。カーソルのそばの拡大表示(ルーペ)で、線の端や交点に吸い付いたことを確かめられます。1/100 などの標準の縮尺と合っていれば、その縮尺ちょうどを採用します。縮尺が分かっている時は「縮尺を選ぶ」でも合わせられます。</p>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <div class="step-label">CHECK &amp; SAVE</div>
+        <div class="step-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h3 class="step-title-h">確かめて保存</h3>
+        <p class="step-text">別の寸法の両端をクリックすると、その間の実寸と誤差の目安(±○mm)が、縮尺の欄と図面の上に表示されます。図面に書いてある寸法を入力すると、合っているかどうかも判定します(入力を終えて少し待つか、Enter キーを押すと判定が出ます)。確かめてから「JWWに変換して保存」を押します。Jw_cad では「ファイル」→「開く」でそのまま開きます。</p>
+      </div>
+    </div>
+
+    <div class="heic-note">
+      <strong>精度の目安の見方</strong>:画面の「精度の目安」には、PDFに記録された線の位置の細かさ(線の位置が、実寸で何mmきざみに記録されているか)と、いまの縮尺で測った時の誤差の範囲が表示されます。プリンタを経由して作ったPDFは線の位置の記録が粗く、1/100の図面で数ミリずれることがあります。このずれは、縮尺を正しく合わせても残ります。斜めの線どうしの交点を取った時は、表示された誤差の目安より大きくずれることがあります。寸法や面積の根拠にする時は、必ず図面の寸法文字と突き合わせて確かめてください。
+    </div>
+    <div class="heic-note">
+      <strong>寸法が合わない時は</strong>:「確かめる」で図面に書いてある寸法を入力すると、合っているかどうかを判定します(入力している途中には判定しません。入力を終えて少し待つか、Enter キーを押してください)。合った時だけ緑で「一致しました」と表示し、合わない時は、図面の上の寸法の表示も注意の色に変わります。合わない時は、まずクリックした2点と入力した寸法をお確かめください。それでも合わない時は「この寸法で合わせ直す」で縮尺を取り直せます(合わせ直した後も、「前の縮尺に戻す」で元に戻せます)。印刷の時に「用紙に合わせる」で縮んだPDFは、「縮尺を選ぶ」ではなく「図面の寸法で合わせる」をお使いください。
+    </div>
+    <div class="heic-note">
+      <strong>Jw_cad での扱い</strong>:線の色と線種は引き継がれます(JWW では Jw_cad の線色1〜8・線種1〜8に入ります)。ただし、PDFから見分けられる線種は<strong>実線・破線・一点鎖線の3種類</strong>です。二点鎖線や点線は、いちばん近いこの3つのどれかになります。円と円弧は、元の曲線から用紙の上で0.05mm以内に収まる時だけ、円のデータとして入ります。中心はクロックメニューの「中心点・A点」で取れます。収まらない曲線(楕円や自由な曲線など)は、細かい折れ線になります。プリンタを経由した、線の位置の記録が粗いPDF(実寸で1mm以上のきざみ)では、円の中心と半径は目安です(画面でもお知らせします)。複数ページのPDFは、縮尺を合わせたページをまとめてZIPで保存できます。1ページで合わせた縮尺は、同じ用紙サイズのページにだけ使えます。
+    </div>
+    <div class="heic-note">
+      <strong>変換されないもの</strong>:寸法線は線と文字に分かれ、Jw_cad の寸法図形にはなりません。ハッチングは細かい線の集まりになります。文字を図形化(アウトライン化)したPDFでは、文字は変換されません。塗りつぶしの面、非表示に設定されたレイヤ、用紙の外や切り抜かれて見えていない部分は変換しません。PDFに貼り付けられた画像(写真・画面の切り抜き・スキャンした図)の中の線も変換できません。Excel や Word に図面の絵を貼って作ったPDFがこれに当たり、画面でお知らせします。見分け方:PDFを大きく拡大しても線がくっきりしていれば変換でき、ぼやけたりギザギザになれば画像です。Jw_cad で扱えない文字は「?」に置き換わり、その数を画面でお知らせします。
+    </div>
+  </section>
+
+  <section id="pdf2dxf-format">
+    <div class="section-head">
+      <div class="section-num">FORMAT</div>
+      <h2 class="section-title">保存する形式(JWW と DXF)</h2>
+      <p class="section-lead">Jw_cad でお使いなら JWW をおすすめします。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>JWW(おすすめ)</strong>:Jw_cad の図面ファイル(.jww)をそのまま作ります。線の色と線種が Jw_cad の<strong>線色1〜8・線種1〜8</strong>に入るので、画面の色も、線色ごとに決めてある印刷の太さも、お使いの設定どおりになります。「ファイル」→「開く」でそのまま開きます。</li>
+        <li><strong>DXF</strong>:ほかのCADにも読み込める形式です。ただし Jw_cad は DXF の色を必ず「SXF対応拡張線色」で読むため、線色1〜8にはならず、画面の色も印刷の太さも、お使いの設定には乗りません。Jw_cad 以外のソフトに渡す時にお使いください。</li>
+      </ul>
+    </div>
+
+    <div class="heic-note">
+      <strong>線の色</strong>:2種類から選べます。<strong>「白い画面で見やすい色」</strong>(既定)は、白い背景では読みにくい黄・緑・水色を、実線なら線色2(黒)、破線・鎖線なら線色5(灰)に置き換えます。赤・青・紫・橙はそのままの色みで入ります。元の図面の色をできるだけ残したい時は<strong>「元の図面に近い色」</strong>をお選びください。文字は、どちらでも線色2になります。選んだ色は次回も覚えています。
+    </div>
+    <div class="heic-note">
+      <strong>ひな形(ご自分の Jw_cad の設定を使う)</strong>:JWW ファイルは、図形のほかに「線色ごとの画面の色」「線種の間隔」「印刷の設定」などを持っています。標準では、当方で用意したひな形の設定で書き出します。ご自分の設定に合わせたい時は、Jw_cad で<strong>図形の無い図面を1つ保存</strong>して、「Jw_cad の設定を登録」からそのファイルを選んでください。<strong>図面の中身は取り込みません。</strong>設定の部分だけを取り出し、図面メモ・レイヤ名・レイヤグループ名は空にしたうえで、このパソコンのブラウザの中に保存します(外部には送信されません)。「標準の設定に戻す」でいつでも戻せます。Jw_cad Ver.7 より前の形式のファイルは、理由を表示してお断りします。
+    </div>
+    <div class="heic-note">
+      <strong>用紙とレイヤ</strong>:用紙は、PDFのページがそのまま入るいちばん小さい Jw_cad の用紙(A4〜A0)になります。Jw_cad の用紙は横置きしかないため、<strong>縦向きのページは一回り大きい用紙</strong>になります(A4縦なら A3)。縮尺は、合わせた縮尺がそのまま入ります。レイヤは「線」「円」「文字」の3つに分かれて入ります。書き出す前に必ずファイルを読み直して、図形の数・線色・線種・用紙からのはみ出しを検査しています。1つでも外れた時は保存せず、理由を表示します。
+    </div>
+  </section>
+
+  <section id="pdf2dxf-scale">
+    <div class="section-head">
+      <div class="section-num">SCALE</div>
+      <h2 class="section-title">縮尺を正確に合わせるには</h2>
+      <p class="section-lead">合わせる点の選び方と、縮尺の決まり方。</p>
+    </div>
+
+    <div class="heic-hero">
+      <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
+        <li><strong>ルーペで点を確かめる</strong>:図面全体を画面に収めて表示するため、画面の1ドットが実寸では数センチに当たります。カーソルのそばのルーペには、取り出した線が拡大して表示され、いま吸い付く点に輪と十字の印が付きます。タッチ操作では、押している間だけ指の上側にルーペが出て、指を離した時に点が決まります。ルーペが出るのは、縮尺を合わせている間と、縮尺が決まった後です(「縮尺を選ぶ」で縮尺をまだ決めていない間は、図面をクリックしても点は取れないため、ルーペも出ません)。</li>
+        <li><strong>近くに点が複数ある時</strong>:通り芯の交点と壁の角のように点が隣り合っている時は、拡大した小窓が開きます。合わせたい点を選んでください。Esc キー・小窓の外のクリック・右上の × で取り消せます。図面が小さく表示されている時は、ほとんどのクリックでこの小窓が開きます。右側の取説を × で閉じると図面が大きく表示され、小窓は開きにくくなります。</li>
+        <li><strong>標準の縮尺ちょうどを採用</strong>:寸法で合わせた結果が、標準の縮尺(1/50・1/100 など)と測り方の誤差の範囲で一致した時は、その縮尺ちょうどで変換します。長さに比例して増える誤差が無くなるため、長い距離を測っても誤差が大きくなりません。</li>
+        <li><strong>測った値に戻す</strong>:ふつうは押す必要はありませんが、測った値のまま使いたい時は、縮尺の表示の下にある「測った値(約 1/100.1)を使う」を押します。「標準の縮尺(1/100)を使う」を押すと、もう一度採用できます。測った値が標準の縮尺と同じ表示になる時(約 1/100.0)は、このリンクは出ません。</li>
+        <li><strong>「約 1/103.1」のように「約」が付いて表示された時</strong>:標準の縮尺ちょうどを採用しなかった時の表示です。標準の縮尺と一致しなかった場合と、判定できなかった場合があり、理由は縮尺の表示のすぐ下に出ます。一致しなかった時は、まず、クリックした2点と入力した寸法をお確かめください。どちらも正しければ、用紙に合わせて縮小されたPDFか、標準以外の縮尺(1/150 など)の図面と考えられます。測った値で実寸に合わせて変換しますので、そのままお使いいただけます。</li>
+        <li><strong>「短い寸法です」と表示された時</strong>:合わせる2点を取った時に、その寸法では縮尺の精度が落ちる場合にだけ表示されます(線の位置の記録が粗いPDFほど、長い寸法が必要になります)。図面にもっと長い寸法があれば、そちらをお使いください。無ければ、そのまま合わせられます。</li>
+        <li><strong>「判定できません」と表示された時</strong>:合わせた寸法が短い時や、線の端・交点に吸い付いていない点で合わせた時は、標準の縮尺かどうかを判定できません(線の途中をクリックして合わせた時は、どれだけ長い寸法でも判定しません)。もっと長い寸法を選び、線の端や交点をクリックして合わせ直してください。縮尺が分かっている時は、「縮尺を選ぶ」で指定することもできます。</li>
+        <li><strong>線の端や交点に吸い付いていない点で合わせた時</strong>:誤差が大きくなるため、その注意が縮尺の表示の下に出続け、保存した後の案内にも添えられます。</li>
+        <li><strong>「一致したかどうかは判定できません」と表示された時</strong>:線の位置の細かさを調べられないPDF(あとから縮小されたPDFや、線の少ないPDFなど)では、誤差の目安を計算できません。「確かめる」では、図面の寸法との差だけを表示します。差が明らかに大きい時だけ「合いません」とお知らせします。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="pdf2dxf-source">
+    <div class="section-head">
+      <div class="section-num">SOURCE PDF</div>
+      <h2 class="section-title">精度を上げるPDFのもらい方</h2>
+      <p class="section-lead">変換の正確さは、もとのPDFの作られ方でほぼ決まります。図面を受け取る時の目安にしてください。</p>
+    </div>
+
+    <div class="heic-hero">
+      <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
+        いちばん正確なのは、<strong>CADデータ(JWW・DXF)そのものをもらうこと</strong>です。PDFからの変換は、CADデータが手に入らない時の手段とお考えください。PDFでもらう時は、次の4点をお願いすると精度が上がります。
+      </p>
+      <ol style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2); margin-top:12px;">
+        <li><strong>CADから直接PDFに出力する</strong>:紙の図面をスキャンしたPDFは、線のデータを持たないため変換できません。</li>
+        <li><strong>縮小せず、原寸で出力する</strong>:印刷の倍率は100%にします。「用紙に合わせる」は使いません。</li>
+        <li><strong>解像度を選べる時は、1200dpi以上にする</strong>:数字が大きいほど、線の位置が細かく記録されます。</li>
+        <li><strong>文字は図形化(アウトライン化)しない</strong>:図形化すると、文字として取り出せなくなります。</li>
+      </ol>
+    </div>
+
+    <div class="heic-note">
+      <strong>Microsoft Print to PDF で作られたPDF</strong>:Windows に標準で入っているこの出力方法は、解像度が600dpiに固定されています。1/100の図面では、線の位置が実寸で約4mmきざみに記録されるため、寸法を1か所測るごとに最大で約4mmの読み取り誤差が出ます。この誤差は縮尺を正しく合わせても残りますので、画面の「精度の目安」でご確認ください。
+    </div>
+    <div class="heic-note">
+      <strong>縮尺は、いちばん長い寸法で合わせる</strong>:同じ読み取り誤差でも、長い寸法で合わせるほど縮尺のずれは小さくなります。建物の端から端までの通し寸法など、図面の中でいちばん長い寸法をお使いください。
+    </div>
+  </section>
+
+  <!-- ==========================================================
        SHARED: FILENAME & TIMESTAMP
        ========================================================== -->
   <section id="filename">
@@ -3360,6 +3519,25 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.5.0 (2026-09-21) — 📐 図面変換(PDF→JWW / DXF)</summary>
+        <div class="faq-body">
+          <p><strong>新しいタブ「図面変換」を追加しました。</strong>CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します(PART 08 参照)。DXF でも保存できます。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>図面の寸法を1か所クリックで指定するだけで、実寸(mm)に合わせて変換します</li>
+            <li>線・円・円弧・文字を取り出します。線の色と破線・一点鎖線も引き継ぎます</li>
+            <li><strong>JWW で保存すると、線の色と線種が Jw_cad の線色1〜8・線種1〜8に入ります。</strong>画面の色も、線色ごとに決めてある印刷の太さも、お使いの設定どおりになります(DXF では、Jw_cad の仕様上どうしても「SXF対応拡張線色」になります)</li>
+            <li>線の色は「白い画面で見やすい色」と「元の図面に近い色」の2種類から選べます</li>
+            <li>ご自分の Jw_cad の設定を使いたい時は、図形の無い図面を1つ保存して「ひな形」に登録できます(図面の中身は取り込みません)</li>
+            <li>寸法で合わせた縮尺が 1/100 などの標準の縮尺と一致した時は、標準の縮尺ちょうどを採用します(測った値に戻すこともできます)</li>
+            <li>クリックした点は、線の端や線どうしの交点に吸い付きます。カーソルのそばの拡大表示(ルーペ)で確かめられ、近くに点が複数ある時は拡大した小窓から選べます</li>
+            <li>縮尺を合わせた後、別の寸法を測って確かめられます。誤差の目安(±○mm)と、図面に書いてある寸法との一致・不一致を表示します</li>
+            <li>非表示に設定されたレイヤや、用紙の外・切り抜かれて見えていない部分は変換しません</li>
+            <li>PDFに記録された線の位置の細かさから「精度の目安」を表示します。寸法の根拠にする時の判断材料にしてください(精度を上げるPDFのもらい方も PART 08 に載せています)</li>
+            <li>スキャンした図面(画像)は変換できないため、理由を表示してお知らせします</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.4.0 (2026-08-03) — ✂️ 編集ロック付きPDFもPDF編集で扱えるように</summary>
         <div class="faq-body">
           <p><strong>「編集ロック」がかかっていて開けなかったPDFを、画像に変換して編集できるようになりました。</strong>点検報告書など、作成ソフトが自動でロックをかけたPDFが対象です。</p>

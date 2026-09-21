@@ -151,6 +151,14 @@
       </svg>
       <span>塗りつぶし</span>
     </button>
+    <button class="mode-tab" data-mode="pdf2dxf">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 21h18"/>
+        <path d="M5 21V9l7-5 7 5v12"/>
+        <path d="M9.5 21v-6h5v6"/>
+      </svg>
+      <span>図面変換</span>
+    </button>
   </div>
 
   <div class="mode-panel" id="modeCompress">
@@ -1077,6 +1085,149 @@
       <div class="hikari-card" id="hikariDoneCard" hidden>
         <div class="hikari-sec-head"><h3>受信済み</h3></div>
         <div class="hikari-list" id="hikariDoneList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 図面変換 (PDF→JWW/DXF) — v4.5.0 ============ -->
+  <div class="mode-panel" id="modePdf2Dxf">
+    <header class="hero">
+      <div class="hero-headline">
+        <h1>PDFの図面を、<br><em>Jw_cad で開ける形に。</em></h1>
+        <p class="hero-sub">
+          CADから出力したPDFの線・円・文字を取り出して、Jw_cad の図面ファイル(JWW)に変換します。<br>
+          図面の寸法を1か所指定するだけで実寸に合わせます ・ 線の色も線種も、お使いの設定どおりに。<br>
+          すべてブラウザ内で完結 ・ 通信ゼロ。
+        </p>
+      </div>
+    </header>
+
+    <div class="redact-uploadzone" id="p2dUpload">
+      <div class="rz-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <path d="M7.5 18h9"/>
+          <path d="M8.5 18v-4.5l3.5-2.5 3.5 2.5V18"/>
+        </svg>
+      </div>
+      <div class="rz-title">PDFをドロップ、またはクリックして選択</div>
+      <div class="rz-sub">CADから出力した図面PDFを開きます ・ JWW / DXF で保存できます ・ スキャンした図面は変換できません ・ ファイルは外部送信されません</div>
+      <input type="file" id="p2dFileInput" accept="application/pdf" hidden>
+    </div>
+    <div class="p2d-loadmsg" id="p2dLoadMsg"></div>
+
+    <div class="redact-editor" id="p2dEditor">
+      <div class="redact-toolbar">
+        <div class="redact-pagenav">
+          <button class="redact-navbtn" id="p2dPrev" title="前のページ" aria-label="前のページ">‹</button>
+          <span class="redact-pageinfo" id="p2dPageInfo">1 / 1</span>
+          <button class="redact-navbtn" id="p2dNext" title="次のページ" aria-label="次のページ">›</button>
+        </div>
+        <span class="p2d-summary" id="p2dSummary"></span>
+        <label class="p2d-showlines"><input type="checkbox" id="p2dShowLines" checked> 変換される線を青で表示</label>
+      </div>
+      <div class="redact-notext-banner" id="p2dBanner"></div>
+      <div class="p2d-info" id="p2dInfo"></div>
+
+      <div class="p2d-scale" id="p2dScaleBox">
+        <div class="p2d-scale-head">
+          <span class="p2d-step">1</span><span>縮尺を合わせる</span>
+          <div class="redact-modetoggle" role="group" aria-label="縮尺の合わせ方">
+            <button class="redact-modebtn active" id="p2dModeDim" type="button">図面の寸法で合わせる</button>
+            <button class="redact-modebtn" id="p2dModePreset" type="button">縮尺を選ぶ</button>
+          </div>
+        </div>
+        <div id="p2dDimBody">
+          <div class="redact-modehint" id="p2dDimHint">長さの分かっている線(通り芯の間隔や部屋の寸法など)の両端を、下の図面上で順にクリックしてください。線の端や、線どうしの交点に吸い付きます。図面の中で<b>いちばん長い寸法</b>(建物の端から端など)を使うと、誤差が小さくなります。</div>
+          <div class="p2d-row">
+            <span class="p2d-pickinfo" id="p2dPickInfo">1点目をクリックしてください</span>
+            <label class="p2d-lenlabel">実際の長さ <input type="number" id="p2dRealLen" min="0" step="any" inputmode="decimal" placeholder="例: 3640"> mm</label>
+            <button class="p2d-btn" id="p2dApplyDim" type="button" disabled>この長さで合わせる</button>
+          </div>
+          <div class="p2d-caution" id="p2dShortWarn" hidden>短い寸法です。図面にもっと長い寸法があれば、そちらで合わせると誤差が小さくなります(このままでも合わせられます)。</div>
+        </div>
+        <div id="p2dPresetBody" hidden>
+          <div class="p2d-row">
+            <select id="p2dPreset" aria-label="縮尺">
+              <option value="1">1/1</option><option value="10">1/10</option><option value="20">1/20</option>
+              <option value="30">1/30</option><option value="50">1/50</option><option value="100" selected>1/100</option>
+              <option value="200">1/200</option><option value="300">1/300</option><option value="500">1/500</option>
+              <option value="1000">1/1000</option>
+            </select>
+            <button class="p2d-btn" id="p2dApplyPreset" type="button">この縮尺にする</button>
+          </div>
+          <div class="redact-modehint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
+        </div>
+        <div class="p2d-scale-status" id="p2dScaleStatus">縮尺: 未設定</div>
+        <div class="p2d-caution" id="p2dCalNote"></div>
+        <button class="p2d-linkbtn" id="p2dCalToggle" type="button" hidden></button>
+        <button class="p2d-linkbtn" id="p2dRecalUndo" type="button" hidden></button>
+        <div class="p2d-check" id="p2dCheck" tabindex="-1" hidden>
+          <span class="p2d-step">2</span><span class="p2d-check-text"><strong>確かめる</strong>: 別の2点をクリックすると、その間の実寸と誤差の目安を表示します。</span>
+          <b id="p2dCheckResult"></b>
+          <div class="p2d-row p2d-checkrow">
+            <label class="p2d-lenlabel">図面に書いてある寸法(入力は任意) <input type="number" id="p2dCheckLen" min="0" step="any" inputmode="decimal" placeholder="例: 2730"> mm</label>
+            <span class="p2d-verdict" id="p2dCheckVerdict"></span>
+            <button class="p2d-btn ghost compact" id="p2dRecal" type="button" hidden>この寸法で合わせ直す</button>
+          </div>
+        </div>
+        <div class="p2d-precision" id="p2dPrecision"></div>
+        <div class="p2d-precision" id="p2dPrecision2"></div>
+        <div class="p2d-precision" id="p2dPrecision3"></div>
+        <button class="p2d-linkbtn" id="p2dApplyAll" type="button" hidden>この縮尺を、同じ用紙サイズで縮尺が未設定のページに使う</button>
+        <div class="p2d-scale-note" id="p2dScaleNote" role="status"></div>
+      </div>
+
+      <div class="redact-stage">
+        <div class="redact-canvas-wrap" id="p2dCanvasWrap">
+          <canvas id="p2dCanvas"></canvas>
+          <canvas class="p2d-layer vec" id="p2dVecLayer"></canvas>
+          <canvas class="p2d-layer pick" id="p2dPickLayer"></canvas>
+          <canvas class="p2d-loupe" id="p2dLoupe" width="168" height="168" aria-hidden="true"></canvas>
+          <div class="p2d-chooser" id="p2dChooser" role="dialog" aria-labelledby="p2dChooserTitle" tabindex="-1" hidden>
+            <div class="p2d-chooser-head">
+              <span class="p2d-chooser-title" id="p2dChooserTitle">近くに点が複数あります。合わせたい点を選んでください。</span>
+              <button class="p2d-chooser-close" id="p2dChooserClose" type="button" title="閉じる" aria-label="閉じる">×</button>
+            </div>
+            <canvas class="p2d-chooser-canvas" id="p2dChooserCanvas" width="320" height="320"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="redact-warn">
+        <b>変換の仕組みと限界:</b> 寸法線は「線と文字」に分かれ、Jw_cad の寸法図形にはなりません。ハッチングは細かい線の集まりになります。
+        文字を図形化(アウトライン化)したPDFでは、文字は変換されません。塗りつぶしの面は変換しません。円と円弧は円のデータとして入るので、中心はクロックメニューの「中心点・A点」で取れます。円に当てはまらない曲線(楕円など)は、細かい折れ線になります。
+      </div>
+
+      <div class="p2d-scale p2d-output" id="p2dOutput">
+        <div class="p2d-scale-head">
+          <span class="p2d-step">3</span><span>保存する形式</span>
+          <div class="redact-modetoggle" role="group" aria-label="保存する形式">
+            <button class="redact-modebtn active" id="p2dFmtJww" type="button">JWW(おすすめ)</button>
+            <button class="redact-modebtn" id="p2dFmtDxf" type="button">DXF</button>
+          </div>
+        </div>
+        <div class="redact-modehint" id="p2dFmtHint"></div>
+        <div class="p2d-row" id="p2dJwwOpts">
+          <label class="p2d-lenlabel">線の色
+            <select id="p2dColorMode" aria-label="線の色">
+              <option value="white" selected>白い画面で見やすい色</option>
+              <option value="original">元の図面に近い色</option>
+            </select>
+          </label>
+          <button class="p2d-btn ghost compact" id="p2dTmplPick" type="button">Jw_cad の設定を登録</button>
+          <button class="p2d-linkbtn" id="p2dTmplClear" type="button" hidden>標準の設定に戻す</button>
+          <input type="file" id="p2dTmplInput" accept=".jww" hidden>
+        </div>
+        <div class="p2d-precision" id="p2dTmplState"></div>
+      </div>
+
+      <div class="redact-actions">
+        <button class="redact-export-btn" id="p2dExportBtn" type="button" disabled>DXFに変換して保存</button>
+        <button class="p2d-btn ghost" id="p2dExportAllBtn" type="button" hidden>縮尺を合わせた全ページを保存(ZIP)</button>
+        <span class="redact-export-note" id="p2dExportNote">縮尺を合わせると保存できます。</span>
+        <button class="redact-reset-btn" id="p2dResetBtn" type="button">別のPDFを開く</button>
       </div>
     </div>
   </div>

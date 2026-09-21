@@ -4169,3 +4169,143 @@
   @media (max-width: 720px) {
     .hikari-connect { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   }
+
+  /* ============================================================ */
+  /* 図面変換 (PDF→DXF) v4.5.0 — .p2d-* 接頭辞で隔離                */
+  /* アップロード枠・ツールバー・ステージ・出力欄は redact-* を流用     */
+  /* ============================================================ */
+  #modePdf2Dxf [hidden] { display: none !important; }
+  /* 図面はいつも図面欄の幅に収めて表示するので、横スクロールは要らない。共有の .redact-stage は overflow-x: auto のため縦も auto になり、
+     用紙より背の高い「選び直しの小窓」(横向きの図面を狭い窓で開いた時)の下が切れていた。このタブの中だけ切らないようにする(共有の定義は変えない) */
+  #modePdf2Dxf .redact-stage { overflow: visible; }
+  /* PDFを読み込んだ時に、操作欄(ページ送り)を画面の上端へ動かす。端に張り付かないよう、少し余白を取って止める(共有の .redact-toolbar の定義は変えない) */
+  #modePdf2Dxf .redact-toolbar { scroll-margin-top: 16px; }
+  .p2d-loadmsg { text-align: center; font-size: 13px; font-weight: 600; color: var(--accent); min-height: 18px; margin-top: 12px; }
+  .p2d-loadmsg.error { color: var(--warn); }
+  .p2d-info { margin: 0 0 12px; padding: 9px 13px; border-radius: var(--r-md, 10px); background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font-size: 12.5px; line-height: 1.6; }
+  .p2d-info:empty { display: none; }
+  .p2d-summary { flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-muted); }
+  .p2d-showlines { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-muted); cursor: pointer; user-select: none; }
+  .p2d-scale {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md, 10px);
+  }
+  .p2d-scale-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .p2d-scale-head .redact-modetoggle { margin-left: 6px; }
+  .p2d-step {
+    width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto;
+    display: inline-grid; place-items: center;
+    background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  }
+  /* scroll-margin: 画面の外にあった行を見える所へ動かす時(70-pdf2dxf.js の bringIntoView)、画面の端に張り付けず 16px の余白を取って止める */
+  .p2d-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--ink); scroll-margin: 16px; }
+  .p2d-pickinfo { font-weight: 600; min-width: 14em; }
+  .p2d-pickinfo.muted { font-weight: 400; font-size: 12px; color: var(--ink-muted); min-width: 0; }
+  .p2d-lenlabel { display: inline-flex; align-items: center; gap: 6px; }
+  .p2d-row input, .p2d-row select {
+    padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 14px; font-family: inherit; background: var(--surface-2); color: var(--ink);
+  }
+  .p2d-row input { width: 8em; text-align: right; }
+  .p2d-row input:focus, .p2d-row select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .p2d-btn {
+    padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; font-family: inherit;
+    transition: background-color .15s ease, transform .1s ease, opacity .15s ease;
+  }
+  .p2d-btn:hover:not(:disabled) { background: var(--accent-deep); }
+  .p2d-btn:active:not(:disabled) { transform: scale(0.97); }
+  .p2d-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .p2d-btn.ghost { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); padding: 12px 18px; }
+  .p2d-btn.ghost:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); }
+  .p2d-btn.ghost.compact { padding: 7px 14px; }   /* 文の横に置く副ボタン(注意の文より目立たせない) */
+  .p2d-scale-status { font-size: 13px; font-weight: 700; color: var(--warn); scroll-margin: 16px; }
+  .p2d-scale-status.set { color: var(--success); }
+  .p2d-check { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink); }
+  /* 説明文は番号の丸の右で折り返す(狭い幅で、文だけが次の行へ落ちて丸が1行に取り残されていた)。見出しの語は、手順1の「縮尺を合わせる」と同じ太さ・大きさ */
+  .p2d-check-text { flex: 1 1 0; min-width: 0; line-height: 1.7; }
+  .p2d-check-text strong { font-size: 14px; font-weight: 700; }
+  /* 確かめた結果は、説明文の下の行に(説明文と左をそろえる)。色はふつうの文字色: 測った値そのものは「合っている」とは言っていない。
+     成功の色(緑)にしていた時は、図面の寸法と合わない時も緑で、合っているように見えた。緑は「一致しました」の判定(.p2d-verdict.ok)だけに使う */
+  .p2d-check b { flex: 1 1 100%; padding-left: 30px; color: var(--ink); font-size: 14px; }
+  .p2d-check b:empty { display: none; }
+  .p2d-check:focus { outline: none; }   /* 縮尺を確定した後のフォーカスの受け皿(見た目は変えない) */
+  .p2d-precision { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+  .p2d-precision:empty { display: none; }
+  .p2d-precision.caution { color: #8a3a16; }
+  .p2d-precision + .p2d-precision { margin-top: -6px; }
+  .p2d-caution { font-size: 12.5px; line-height: 1.6; color: #8a3a16; }
+  .p2d-caution:empty { display: none; }
+  .p2d-checkrow { flex: 1 1 100%; padding-left: 30px; }
+  .p2d-verdict { font-size: 13px; font-weight: 600; line-height: 1.6; }
+  .p2d-verdict:empty { display: none; }
+  .p2d-verdict.ok { color: var(--success); }
+  .p2d-verdict.ng { color: #8a3a16; }
+  .p2d-verdict.na { color: var(--ink-muted); }   /* 一致とも不一致とも言えない時(座標の細かさが分からないPDF) */
+  #p2dShortWarn { margin-top: 6px; }   /* 狭い幅ではボタンが単独の行に折り返す。その下に詰まって見えないように */
+  /* 縮尺の欄と図面の上の操作の結果・エラー(操作した場所のそばに出す) */
+  .p2d-scale-note { font-size: 12.5px; font-weight: 600; line-height: 1.6; color: var(--ink); scroll-margin: 16px; }
+  .p2d-scale-note:empty { display: none; }
+  .p2d-scale-note.done { color: var(--success); }
+  .p2d-scale-note.error { color: var(--warn); }
+  /* 注意・判定の文は、現れる時だけ静かにフェードインする(文言の書き換えでは再生されない) */
+  @keyframes p2dFadeIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+  .p2d-caution, .p2d-verdict, .p2d-scale-note, #p2dCalToggle, #p2dRecalUndo, #p2dRecal { animation: p2dFadeIn .18s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .p2d-caution, .p2d-verdict, .p2d-scale-note, #p2dCalToggle, #p2dRecalUndo, #p2dRecal { animation: none; }
+    .p2d-btn { transition: none; }
+  }
+  @media (max-width: 720px) { .p2d-checkrow, .p2d-check b { padding-left: 0; } }
+  .p2d-linkbtn {
+    align-self: flex-start; padding: 6px 0; min-height: 32px; border: none; background: none; cursor: pointer;
+    color: var(--accent); font-size: 12.5px; font-weight: 600; font-family: inherit; text-decoration: underline; text-align: left;
+  }
+  .p2d-layer { position: absolute; left: 0; top: 0; }
+  .p2d-layer.vec { pointer-events: none; }
+  .p2d-layer.pick { cursor: crosshair; touch-action: none; }
+  /* ルーペ: カーソルの近くに出す拡大表示(取り出した線データを描く)。ポインタの操作は下の層へ通す。位置は JS が transform で動かす */
+  .p2d-loupe {
+    position: absolute; left: 0; top: 0; z-index: 3; width: 168px; height: 168px;
+    border-radius: 14px; background: #fff; pointer-events: none;
+    box-shadow: 0 0 0 1px rgba(10, 12, 18, .26), 0 10px 28px rgba(10, 12, 18, .2), 0 2px 6px rgba(10, 12, 18, .1);
+    opacity: 0; visibility: hidden;
+    transition: opacity .12s ease, visibility 0s linear .12s;
+  }
+  .p2d-loupe.show { opacity: 1; visibility: visible; transition-delay: 0s; }
+  /* 選び直しの小窓: 近くに候補点が複数ある時だけ、図面の上に重ねて開く。開閉は 120ms のフェード */
+  .p2d-chooser {
+    position: absolute; left: 0; top: 0; z-index: 4; width: 320px;
+    border-radius: 14px; overflow: hidden; background: #fff; color: #1c1f26; text-align: left;
+    box-shadow: 0 0 0 1px rgba(10, 12, 18, .2), 0 18px 48px rgba(10, 12, 18, .26), 0 4px 12px rgba(10, 12, 18, .1);
+    opacity: 0; pointer-events: none;
+    transition: opacity .12s ease;
+  }
+  .p2d-chooser.show { opacity: 1; pointer-events: auto; }
+  .p2d-chooser:focus { outline: none; }
+  .p2d-chooser-head {
+    display: flex; align-items: flex-start; gap: 6px; padding: 12px 8px 10px 16px;
+    border-bottom: 1px solid rgba(10, 12, 18, .1);
+  }
+  .p2d-chooser-title { flex: 1 1 auto; font-size: 13px; font-weight: 700; line-height: 1.6; }
+  .p2d-chooser-close {
+    flex: 0 0 auto; width: 36px; height: 36px; margin-top: -3px; border: none; border-radius: 50%;
+    background: none; color: #5b6470; font-size: 22px; line-height: 1; font-family: inherit; cursor: pointer;
+    transition: background-color .15s ease, transform .1s ease;
+  }
+  .p2d-chooser-close:hover { background: rgba(10, 12, 18, .07); }
+  .p2d-chooser-close:active { transform: scale(0.94); }
+  .p2d-chooser-close:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .p2d-chooser-canvas { width: 320px; height: 320px; touch-action: none; }
+  .p2d-chooser-canvas.hit { cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) {
+    .p2d-loupe, .p2d-loupe.show, .p2d-chooser, .p2d-chooser-close { transition: none; }
+  }
+  .p2d-note.done { color: var(--success); font-weight: 600; }
+  .p2d-note.error { color: var(--warn); font-weight: 600; }
+  .p2d-note-caution { display: block; margin-top: 4px; color: #8a3a16; }   /* 保存の結果に添える注意(成功の文の末尾に続けず、別の行にする) */
+  /* 指で操作する端末では、押せるものの高さ・幅を 44px 以上にする(文字だけのリンク・小さいボタン・小窓の ×)。上の定義(min-height: 32px など)より後ろに置く */
+  @media (pointer: coarse) {
+    .p2d-linkbtn, .p2d-btn, .p2d-chooser-close { min-height: 44px; }
+    .p2d-chooser-close { min-width: 44px; }
+  }

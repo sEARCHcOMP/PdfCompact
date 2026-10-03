@@ -29,11 +29,16 @@
     const dimHint = $('p2dDimHint');
     const realLen = $('p2dRealLen');
     const applyDimBtn = $('p2dApplyDim');
-    const presetSel = $('p2dPreset');
+    const presetSel = $('p2dPreset');   // 「よく使う縮尺」の近道。標準の縮尺の一覧(ルールR)もここから取る
+    const denInput = $('p2dDen');       // 縮尺の分母。自分で打てる(1/150・1/60 など)。こちらが本当の値
+    const denWarn = $('p2dDenWarn');
     const applyPresetBtn = $('p2dApplyPreset');
     const dxfHint = $('p2dDxfHint');
     const presetHint = $('p2dPresetHint');
     const scaleStatus = $('p2dScaleStatus');
+    const dimNote = $('p2dDimNote');
+    const dimText = $('p2dDimText');
+    const dimBtn = $('p2dDimBtn');
     const checkBox = $('p2dCheck');
     const checkResult = $('p2dCheckResult');
     const precisionEl = $('p2dPrecision');
@@ -72,7 +77,7 @@
     const resetBtn = $('p2dResetBtn');
     if (!panel || !upload || !canvas || !vecLayer || !pickLayer || !exportBtn || !checkLen || !calToggle || !recalBtn ||
       !loupe || !chooser || !chooserCanvas || !chooserClose || !scaleNoteEl || !recalUndoBtn || !scaleBox ||
-      !fmtJwwBtn || !fmtDxfBtn || !jwwOpts || !colorSel || !tmplPickBtn || !tmplInput || !tmplState) return;
+      !fmtJwwBtn || !fmtDxfBtn || !jwwOpts || !colorSel || !tmplPickBtn || !tmplInput || !tmplState || !denInput) return;
 
     const PT2MM = 25.4 / 72;            // 1pt = 0.3528mm(用紙上)
     const FLAT_TOL = 0.05 / PT2MM;      // 円弧にならない曲線を折れ線にする時の許容誤差: 用紙上0.05mm
@@ -863,6 +868,7 @@
       // JWW 書き出し(第2段)。テストからは、保存せずに中身だけを取り出せるようにする
       buildJww: () => buildJww(curPg()), primsOf: (g, u) => primsOf(g, u), paperFor: (g, p, u) => paperFor(g, p, u), denOf: (pg, sc) => denOf(pg, sc),
       dxfIn: () => dxfIn, geomFromPrims: (d, n) => geomFromPrims(d, n), autoDen: (d) => autoDen(d),
+      readDimScale: (g, u) => readDimScale(g || curPg().geom, u === undefined ? unitOf(curPg()) : u), dimScaleOf: () => dimScaleOf(curPg()),
       snapCandidates: (p, rad) => snapCandidates(curPg(), p, rad),
       // 連続するベジェ曲線の列を、円・円弧・折れ線にした結果(切り抜きなし)。q = 座標の刻み(pt)。乱数の総当たりの確認用
       fitCurves: (run, q) => {
@@ -934,6 +940,16 @@
     // いまの縮尺に残っている相対誤差。標準の縮尺ちょうどを採用中・プルダウンで選んだ時は 0、測った値を使っている時は合わせた時の u
     const relScaleOf = (pg) => (pg && pg.cal && !pg.cal.preset && !pg.cal.adopted && pg.cal.u > 0 ? pg.cal.u : 0);
     const nominalList = () => Array.from(presetSel.options).map((o) => parseFloat(o.value)).filter((v) => v > 0);
+    // 打ち込まれた縮尺の分母。受け付けるのは 0.01〜100000 の有限の数だけ(0・負・桁外れの値で図面が消えるのを防ぐ)
+    const DEN_MIN = 0.01, DEN_MAX = 100000;
+    function readDen() {
+      const v = parseFloat(denInput.value);
+      if (!isFinite(v) || v <= 0) return { ok: false, why: '縮尺の分母を入れてください(1/100 なら「100」)。' };
+      if (v < DEN_MIN || v > DEN_MAX) return { ok: false, why: '縮尺の分母は ' + DEN_MIN + ' から ' + fmtInt(DEN_MAX) + ' までの数にしてください。' };
+      return { ok: true, den: v };
+    }
+    // 分母を画面の文にする(100 → 「1/100」、103.14 → 「1/103.14」)
+    const denText = (d) => '1/' + (Math.abs(d - Math.round(d)) < 1e-9 ? String(Math.round(d)) : String(d));
     // 誤差の表示: 0.5mm 未満は「±1mm未満」
     const errText = (mm) => (mm < 0.5 ? '±1mm未満' : '±' + (mm < 10 ? mm.toFixed(1) : String(Math.round(mm))) + 'mm');
     const fmtGap = (mm) => (mm < 10 ? Math.round(mm * 10) / 10 : Math.round(mm)).toLocaleString('ja-JP');
@@ -1087,7 +1103,7 @@
       // DXF は実寸のデータなので、縮尺を合わせる手順は出さない(用紙に収める縮尺を選ぶだけ)
       if (dxfHint) {
         dxfHint.hidden = !isDxf();
-        if (isDxf()) dxfHint.textContent = 'この DXF は実寸のデータなので、縮尺を合わせる必要はありません。A3 の用紙に収まる縮尺(1/' + dxfIn.den + ')を選びました。変えたい時は下から選んで「この縮尺にする」を押してください。';
+        if (isDxf()) dxfHint.textContent = 'この DXF は実寸のデータなので、縮尺を合わせる必要はありません。A3 の用紙に収まる縮尺(1/' + dxfIn.den + ')を選びました。変えたい時は、下の欄に分母を打つか「よく使う縮尺」から選んでください。';
       }
       const dimToggle = modeDimBtn.parentElement;
       if (dimToggle) dimToggle.hidden = isDxf();
@@ -1158,6 +1174,16 @@
         precision2El.classList.toggle('caution', pi.caution2);
       }
       if (precision3El) precision3El.textContent = pi.text3;
+      // 図面に書いてある寸法から読んだ縮尺(提案・食い違いの注意・答え合わせ)
+      const dn = dimNoteInfo(pg);
+      dimNote.hidden = !dn;
+      if (dn) {
+        dimText.textContent = dn.text;
+        dimNote.classList.toggle('caution', dn.caution);
+        dimBtn.hidden = !dn.btn;
+        dimBtn.textContent = dn.btn;
+        dimBtn.dataset.den = dn.den ? String(dn.den) : '';
+      }
       applyAllBtn.hidden = !(pg.k && st.numPages > 1);
       scaleNoteEl.textContent = st.scaleNote ? st.scaleNote.text : '';
       scaleNoteEl.className = 'p2d-scale-note' + (st.scaleNote && st.scaleNote.type ? ' ' + st.scaleNote.type : '');
@@ -1703,7 +1729,15 @@
       refreshUI(); drawPicks();
     }
     modeDimBtn.addEventListener('click', () => setMode('dim'));
-    modePresetBtn.addEventListener('click', () => setMode('preset'));
+    modePresetBtn.addEventListener('click', () => {
+      // いまの縮尺を入力欄に出しておく(打ち直しの手間を減らす)。まだ決まっていない時は 1/100 を置く
+      //   (プルダウンだけだった頃の既定が 1/100 で、切り替えてすぐ押せば 1/100 になっていた。その手数を保つ)
+      const pg = curPg();
+      if (pg && pg.k) denInput.value = String(Math.round(denOf(pg, PT2MM * unitOf(pg)) * 1000) / 1000);
+      else if (!denInput.value) denInput.value = '100';
+      denWarn.hidden = true;
+      setMode('preset');
+    });
     realLen.addEventListener('input', refreshUI);
     realLen.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !applyDimBtn.disabled) applyDimBtn.click(); });
     applyDimBtn.addEventListener('click', () => {
@@ -1783,11 +1817,14 @@
       try { checkBox.focus({ preventScroll: true }); } catch (_) { /* 無視 */ }
       bringIntoView(scaleStatus);   // 「戻しました」の文より、縮尺の行(いまの状態)が見えることを優先する
     });
-    applyPresetBtn.addEventListener('click', () => {
+    // fromDims = 図面に書いてある寸法から読んだ値を使う時(画面の表示を「指定した」と言い分ける)
+    function applyDen(fromDims) {
+      const r = readDen();
+      denWarn.hidden = r.ok;
+      if (!r.ok) { denWarn.textContent = r.why; return; }
+      const den = r.den;
       // DXF は、縮尺で用紙の中の大きさが変わるので、図面データごと作り直す(画面の表示と保存の中身をずらさないため)
       if (isDxf()) {
-        const den = parseFloat(presetSel.value);
-        if (!(den > 0)) return;
         clearNotes();
         applyDxfScale(den);
         dropPicks();
@@ -1797,16 +1834,33 @@
       }
       const pg = curPg();
       if (!pg) return;
-      const den = parseFloat(presetSel.value);
-      if (!(den > 0)) return;
       pg.k = PT2MM * unitOf(pg) * den; pg.kFrom = null;
-      pg.cal = { preset: true, nominal: den };
-      pg.kLabel = '1/' + den + '(選んだ縮尺)';
+      pg.cal = { preset: true, nominal: den, fromDims: !!fromDims };
+      pg.kLabel = denText(den) + (fromDims ? '(図面の寸法から)' : '(指定した縮尺)');
       pg.prev = null;
       st.calibrating = false; dropPicks(); clearNotes();
       refreshUI(); drawPicks();
       bringIntoView(scaleStatus);
+    }
+    applyPresetBtn.addEventListener('click', () => applyDen(false));   // click の引数をそのまま渡さない(真になってしまう)
+    // 「1/50 で合わせる」: 読み取った縮尺をそのまま使う(勝手には変えない。押された時だけ)
+    dimBtn.addEventListener('click', () => {
+      const den = parseFloat(dimBtn.dataset.den);
+      if (!(den > 0)) return;
+      denInput.value = String(den);
+      denWarn.hidden = true;
+      applyDen(true);
     });
+    // プルダウンは入力欄への近道。選んだらそのまま確定する(2手かかるのを避ける)
+    presetSel.addEventListener('change', () => {
+      const v = parseFloat(presetSel.value);
+      if (!(v > 0)) return;
+      denInput.value = String(v);
+      presetSel.value = '';
+      applyDen();
+    });
+    denInput.addEventListener('input', () => { if (!denWarn.hidden && readDen().ok) denWarn.hidden = true; });
+    denInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); applyDen(); } });
     const pageList = (a) => (a.length > 10 ? a.slice(0, 10).join('・') + ' ほか' : a.join('・')) + ' ページ目';
     applyAllBtn.addEventListener('click', async () => {
       const cur = curPg();
@@ -2003,6 +2057,149 @@
       refreshOutputUI();
     });
 
+    // ===================== 3.7 図面に書いてある寸法から縮尺を読む =====================
+    // 図面の寸法文字(「3,640」など)と、その寸法線の長さを突き合わせると、この図面が本来何分の1かが分かる。
+    // 使い道は3つ: ①読み込んだ直後に縮尺を提案する ②合わせた縮尺が図面と食い違う時に知らせる ③変換の答え合わせを数で出す。
+    // いちばん怖いのは「違います」と誤って言うことなので、確かなことが言えない時は黙る(下の DIM_MIN_PAIRS と ばらつきの関門)
+    const DIM_NEAR_PT = 30;        // 寸法文字から寸法線までの距離(用紙上pt)。これより遠い線はその文字の寸法線ではない
+    const DIM_MIN_MM = 100, DIM_MAX_MM = 30000;   // 寸法らしい値の範囲(部屋名や面積・縮尺の表記を拾わないため)
+    const DIM_TOL_REL = 0.03, DIM_TOL_MM = 30;    // 2回目の対応付けで「その寸法線」と認める許容
+    const DIM_MIN_PAIRS = 5;       // 対にできた寸法がこれ未満なら、何も言わない
+    const DIM_MAX_LINES = 300000;  // 線が多すぎる図面では諦める(画面が固まらないように)
+    const DIM_BUCKET_PT = 64;      // 線を置き場所で仕分ける升目の大きさ
+
+    // 数字だけの文字を拾う。文字の中心をだいたいの位置として持つ(x,y は書き始めの位置なので、そのままだと左に寄る)
+    function dimTexts(g) {
+      const out = [];
+      for (const t of g.texts) {
+        const raw = String(t.s === undefined || t.s === null ? '' : t.s).trim();
+        if (!/^[0-9][0-9,]*$/.test(raw)) continue;
+        const v = parseFloat(raw.split(',').join(''));
+        if (!(v >= DIM_MIN_MM && v <= DIM_MAX_MM)) continue;
+        const w = raw.length * (t.h || 0) * 0.5;        // 数字の幅のおおよそ(高さの半分 × 文字数)
+        const rot = ((t.rot || 0) % 360 + 360) % 360;
+        const horiz = rot < 45 || rot > 315;
+        const rad = rot * Math.PI / 180;
+        out.push({ v, horiz, x: t.x + Math.cos(rad) * w / 2, y: t.y + Math.sin(rad) * w / 2 });
+      }
+      return out;
+    }
+    // 縦横の線を、置き場所の升目に仕分ける(文字の近くの線だけを見るため)
+    function dimLineIndex(g) {
+      const idx = { H: new Map(), V: new Map() };
+      const put = (m, l, len, mx, my) => {
+        const key = Math.round(mx / DIM_BUCKET_PT) + ':' + Math.round(my / DIM_BUCKET_PT);
+        let a = m.get(key);
+        if (!a) { a = []; m.set(key, a); }
+        a.push({ len, mx, my });
+      };
+      for (const l of g.lines) {
+        const dx = Math.abs(l.x2 - l.x1), dy = Math.abs(l.y2 - l.y1);
+        if (dy < 0.01 && dx >= 3) put(idx.H, l, dx, (l.x1 + l.x2) / 2, l.y1);
+        else if (dx < 0.01 && dy >= 3) put(idx.V, l, dy, l.x1, (l.y1 + l.y2) / 2);
+      }
+      return idx;
+    }
+    // ある文字の近くにある線を集める(升目の周り1つぶんだけ見る)
+    function dimNear(idx, t) {
+      const m = t.horiz ? idx.H : idx.V, out = [];
+      const cx = Math.round(t.x / DIM_BUCKET_PT), cy = Math.round(t.y / DIM_BUCKET_PT);
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const a = m.get((cx + i) + ':' + (cy + j));
+          if (!a) continue;
+          for (const l of a) { const d = Math.hypot(l.mx - t.x, l.my - t.y); if (d <= DIM_NEAR_PT) out.push({ len: l.len, d }); }
+        }
+      }
+      return out;
+    }
+    // 図面の寸法から縮尺を読む。読めなければ null(何も言わない)
+    //   返り値: { den, k, pairs, median, p95, worst, texts } — den は分母、median などは「図面の寸法と何mm違うか」
+    function readDimScale(g, unit) {
+      if (!g || !g.lines || g.lines.length > DIM_MAX_LINES) return null;
+      const ts = dimTexts(g);
+      if (ts.length < DIM_MIN_PAIRS) return null;
+      const idx = dimLineIndex(g);
+      // 1回目: 文字1つにつき、いちばん近い線1本だけで比をとり、その中央値をだいたいの縮尺にする
+      //   (近くの線を全部入れると、短い補助線の比が混ざって中央値が壊れる)
+      const rough = [];
+      for (const t of ts) {
+        let best = null;
+        for (const l of dimNear(idx, t)) if (!best || l.d < best.d) best = l;
+        if (best && best.len > 0) rough.push(t.v / best.len);
+      }
+      if (rough.length < DIM_MIN_PAIRS) return null;
+      rough.sort((a, b) => a - b);
+      const k0 = rough[Math.floor(rough.length / 2)];
+      if (!(k0 > 0 && isFinite(k0))) return null;
+      // 2回目: だいたいの縮尺で長さが合う線だけを「その文字の寸法線」と認める
+      const pairs = [];
+      for (const t of ts) {
+        let best = null;
+        for (const l of dimNear(idx, t)) {
+          if (Math.abs(l.len * k0 - t.v) > Math.max(DIM_TOL_MM, t.v * DIM_TOL_REL)) continue;
+          if (!best || l.d < best.d) best = l;
+        }
+        if (best) pairs.push({ v: t.v, len: best.len });
+      }
+      if (pairs.length < DIM_MIN_PAIRS) return null;
+      // 比例の当てはめ(最小二乗)。長い寸法ほど効くので、縮尺は長い寸法で決まる
+      let sxy = 0, sxx = 0;
+      for (const p of pairs) { sxy += p.len * p.v; sxx += p.len * p.len; }
+      if (!(sxx > 0)) return null;
+      const k = sxy / sxx, den = k / (PT2MM * (unit || 1));
+      if (!(den > 0 && isFinite(den))) return null;
+      const abs = pairs.map((p) => Math.abs(p.len * k - p.v)).sort((a, b) => a - b);
+      const at = (f) => abs[Math.min(abs.length - 1, Math.floor(abs.length * f))];
+      return { den, k, pairs: pairs.length, texts: ts.length, median: at(0.5), p95: at(0.95), worst: at(1) };
+    }
+    // 読み取った縮尺を信用してよいか。ばらつきが大きい時は使わない(誤警告を出さないための関門)
+    //   目安は「座標の刻み2つぶん」と「寸法の 1%」の大きいほう。刻みが分からない図面では 1% だけで見る
+    function dimScaleTrusted(r, g, unit) {
+      if (!r || r.pairs < DIM_MIN_PAIRS) return false;
+      const gridMm = (g.quantum && g.quantum.q ? g.quantum.q : 0) * r.k;
+      const typical = r.k * 100;   // 用紙上100pt ぶんの実寸。寸法の大きさのおおよそ
+      return r.median <= Math.max(gridMm * 2, typical * 0.01);
+    }
+    // ページごとに1回だけ計算して覚えておく
+    function dimScaleOf(pg) {
+      if (!pg || !pg.geom) return null;
+      if (pg.dimScale === undefined) {
+        let r = null;
+        try { r = readDimScale(pg.geom, unitOf(pg)); } catch (e) { console.error('[p2d] dim scale failed', e); r = null; }
+        pg.dimScale = r && dimScaleTrusted(r, pg.geom, unitOf(pg)) ? r : null;
+      }
+      return pg.dimScale;
+    }
+    // 読み取った分母を、画面に出す値にする。標準の縮尺に 1% 以内で寄っていれば、その切りのよい値にする
+    //   (1/50.01 を「1/50.01」と出しても現場では使いにくい。丸めるのは表示と提案だけで、判定は生の値で行う)
+    function dimNominal(den) {
+      let best = null, rel = Infinity;
+      for (const n of nominalList()) { const r = Math.abs(den / n - 1); if (r < rel) { rel = r; best = n; } }
+      if (best !== null && rel <= 0.01) return best;
+      return Math.round(den * 100) / 100;
+    }
+    // 図面の寸法から読んだ縮尺の行。3つの顔を持つ:
+    //   縮尺が未設定 → 提案(ボタンで一発で合わせられる) / 合っている → 答え合わせの数 / 食い違う → 注意とボタン
+    //   確かなことが言えない図面(寸法文字が無い・ばらつきが大きい)では、この行ごと出さない
+    function dimNoteInfo(pg) {
+      const r = dimScaleOf(pg);
+      if (!r) return null;
+      const want = dimNominal(r.den);
+      const shown = '1/' + want;
+      const where = '(図面の寸法 ' + fmtInt(r.pairs) + ' か所で確認)';
+      if (!pg.k) {
+        return { text: '図面に書いてある寸法から、この図面の縮尺は ' + shown + ' と読み取れました' + where + '。', btn: shown + ' で合わせる', den: want, caution: false };
+      }
+      const now = denOf(pg, PT2MM * unitOf(pg));
+      const off = Math.abs(now / r.den - 1);
+      if (off > 0.02) {
+        return { text: 'いまの縮尺(' + denText(now) + ')は、図面に書いてある寸法と合いません。この図面の寸法からは ' + shown + ' と読み取れます' + where + '。',
+          btn: shown + ' にする', den: want, caution: true };
+      }
+      return { text: '図面に書いてある寸法 ' + fmtInt(r.pairs) + ' か所と突き合わせました。95% が ' + errText(r.p95) + ' 以内で合っています。', btn: '', den: 0, caution: false };
+    }
+
     // ===================== 4. DXF を入力にする(第3段) =====================
     // メーカー提供の DXF は SPLINE(自由曲線)・ELLIPSE(楕円)などを含み、Jw_cad はそれを黙って飛ばすので外形が途切れて見える。
     // ここで分解して、円弧にできるものは円弧に・できないものは細かい折れ線にしてから渡す(分解そのものは 71-dxf-flatten.js)。
@@ -2048,14 +2245,7 @@
       const pg = { geom: geomFromPrims(dxfIn.primsDoc, den), k: PT2MM * den, kLabel: '1/' + den, kFrom: null,
         cal: { preset: true, nominal: den }, prev: null, index: null };
       st.pages = { 0: pg };
-      // プルダウンに無い分母(1/2・1/5 など)は、その場で足して選ばせる
-      if (!Array.from(presetSel.options).some((o) => parseFloat(o.value) === den)) {
-        const op = document.createElement('option');
-        op.value = String(den); op.textContent = '1/' + den;
-        const at = Array.from(presetSel.options).find((o) => parseFloat(o.value) > den);
-        presetSel.insertBefore(op, at || null);
-      }
-      presetSel.value = String(den);
+      denInput.value = String(den);   // プルダウンには足さない(足すと、次に PDF を開いた時の「標準の縮尺」の一覧が汚れる)
     }
     // 保存した後の文(DXF 由来)。分解で何が起きたかを数で知らせる
     function dxfNotes() {

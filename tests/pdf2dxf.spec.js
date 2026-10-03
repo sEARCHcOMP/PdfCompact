@@ -52,7 +52,7 @@ async function waitReady(page) {
 async function setPreset(page, den) {
   await page.evaluate((d) => {
     document.getElementById('p2dModePreset').click();
-    document.getElementById('p2dPreset').value = String(d);
+    document.getElementById('p2dDen').value = String(d);   // 縮尺の分母は自分で打てる欄が本体(プルダウンは近道)
     document.getElementById('p2dApplyPreset').click();
   }, den);
 }
@@ -1062,7 +1062,7 @@ test.describe('図面変換(PDF→DXF)', () => {
     await gotoTab(page, 'pdf2dxf');
     const r = await page.evaluate(() => {
       const T = window.__p2dTest, PT2MM = 25.4 / 72;
-      const nominals = Array.from(document.getElementById('p2dPreset').options).map((o) => parseFloat(o.value));
+      const nominals = Array.from(document.getElementById('p2dPreset').options).map((o) => parseFloat(o.value)).filter((v) => v > 0);   // 先頭は「よく使う縮尺」の見出し
       let seed = 20260920;
       const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
       const out = { nominals: nominals.length, judged: 0, tooShort: 0, shortNotRefused: 0, missed: 0, falseAdopt: 0, overErr: 0, worst: 0 };
@@ -2598,7 +2598,7 @@ test.describe('図面変換: DXF の読み込み', () => {
     await expect(page.locator('#p2dPresetHint')).toBeHidden();   // 縮んだPDFの話は DXF には出さない
     // 1000×600mm が A3(図枠つきなので余白3mm)に収まる最小の分母 = 5。プルダウンに無い値でも選べるように足す
     expect(await page.evaluate(() => window.__p2dTest.dxfIn().den)).toBe(5);
-    expect(await page.evaluate(() => document.getElementById('p2dPreset').value)).toBe('5');
+    expect(await page.evaluate(() => document.getElementById('p2dDen').value)).toBe('5');
     await expect(page.locator('#p2dScaleStatus')).toContainText('1/5');
     // 精度の目安は DXF 用の文(線の位置の丸めが無い)
     await expect(page.locator('#p2dPrecision')).toContainText('DXFは実寸の図形データなので、線の位置の読み取り誤差はありません');
@@ -2670,7 +2670,7 @@ test.describe('図面変換: DXF の読み込み', () => {
     await openApp(page);
     await loadDxfIn(page, makeDxf());
     await page.evaluate(() => {
-      document.getElementById('p2dPreset').value = '10';
+      document.getElementById('p2dDen').value = '10';
       document.getElementById('p2dApplyPreset').click();
     });
     await page.waitForFunction(() => window.__p2dTest.dxfIn().den === 10 && !window.__p2dState.rendering, null, { timeout: 30_000 });
@@ -2693,5 +2693,266 @@ test.describe('図面変換: DXF の読み込み', () => {
     });
     await expect(page.locator('#p2dLoadMsg')).toContainText('DXFの読み込みに失敗しました');
     await expect(page.locator('#p2dEditor')).not.toHaveClass(/active/);
+  });
+});
+
+// ---- 縮尺の分母を自分で打つ(1/150・1/60 など、プルダウンに無い縮尺) ----
+test.describe('図面変換: 縮尺を自分で打つ', () => {
+  const plan = `
+    const p = doc.addPage([1191, 842]);
+    const g = (n) => Math.round(n / 0.12) * 0.12;
+    const L = (x1, y1, x2, y2) => p.drawLine({ start: { x: g(x1), y: g(y1) }, end: { x: g(x2), y: g(y2) }, thickness: 0.3, color: PL.rgb(0, 0, 0) });
+    L(120, 120, 403.44, 120); L(120, 120, 120, 346.8); L(403.44, 120, 403.44, 346.8); L(120, 346.8, 403.44, 346.8);
+    L(180, 120, 180, 346.8); L(260, 120, 260, 346.8);
+    L(120, 180, 403.44, 180); L(120, 260, 403.44, 260);
+    for (let i = 1; i < 9; i++) L(120 + i * 30, 120, 120 + i * 30, 132);
+    for (let i = 1; i < 7; i++) L(120, 120 + i * 30, 132, 120 + i * 30);
+  `;   // 座標の刻みを推定できるだけの線の数(22本)にしておく
+  const denOf = (page) => page.evaluate(() => {
+    const st = window.__p2dState, pg = st.pages[st.pageIndex];
+    return { k: pg.k, cal: pg.cal, den: window.__p2dTest.denOf(pg, 25.4 / 72 * (pg.geom.unit || 1)) };
+  });
+  const typeDen = async (page, v) => {
+    await page.evaluate(() => document.getElementById('p2dModePreset').click());
+    await page.fill('#p2dDen', String(v));
+    await page.click('#p2dApplyPreset');
+  };
+
+  test('プルダウンに無い縮尺(1/150・1/60・小数)を自分で打って合わせられる', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, plan);
+    await typeDen(page, 150);
+    let s = await denOf(page);
+    expect(s.cal.preset).toBe(true);
+    expect(s.cal.nominal).toBe(150);
+    expect(s.k).toBeCloseTo(25.4 / 72 * 150, 12);
+    expect(s.den).toBe(150);                       // ヘッダに書く分母も 150 ちょうど
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/150');
+    await expect(page.locator('#p2dDenWarn')).toBeHidden();
+
+    await typeDen(page, 60);
+    s = await denOf(page);
+    expect(s.cal.nominal).toBe(60);
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/60');
+
+    // 小数もそのまま使える(PDF2JWW のように「測った値」を手で入れたい時)
+    await typeDen(page, 103.14);
+    s = await denOf(page);
+    expect(s.cal.nominal).toBeCloseTo(103.14, 10);
+    expect(s.den).toBeCloseTo(103.14, 10);
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/103.14');
+  });
+
+  test('打った縮尺は、JWWのヘッダにもその値ちょうどで入る', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, plan);
+    await typeDen(page, 150);
+    await page.evaluate(() => document.getElementById('p2dFmtJww').click());
+    const scale = await page.evaluate(() => {
+      const r = window.__p2dTest.buildJww();
+      return window.P2D.jwwWriter.parseJww(r.bytes).header.index.get('scale_0').vals[0];
+    });
+    expect(scale).toBe(150);
+  });
+
+  test('0・負・桁外れ・空欄は理由を表示して受け付けない(いまの縮尺は変えない)', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, plan);
+    await typeDen(page, 100);
+    const before = (await denOf(page)).k;
+    for (const c of [['0', '入れてください'], ['-50', '入れてください'], ['', '入れてください'],
+      ['0.001', '0.01 から 100,000 までの数'], ['200000', '0.01 から 100,000 までの数']]) {
+      await page.fill('#p2dDen', c[0]);
+      await page.click('#p2dApplyPreset');
+      await expect(page.locator('#p2dDenWarn')).toBeVisible();
+      await expect(page.locator('#p2dDenWarn')).toContainText(c[1]);
+      expect((await denOf(page)).k).toBeCloseTo(before, 12);   // いまの縮尺は壊さない
+    }
+    // 正しい値を打ち直せば、注意は消えて確定する
+    await page.fill('#p2dDen', '50');
+    await expect(page.locator('#p2dDenWarn')).toBeHidden();
+    await page.click('#p2dApplyPreset');
+    expect((await denOf(page)).cal.nominal).toBe(50);
+  });
+
+  test('よく使う縮尺のプルダウンは入力欄への近道。選んだだけで確定し、見出しは標準の縮尺に数えない', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, plan);
+    await page.evaluate(() => document.getElementById('p2dModePreset').click());
+    await page.selectOption('#p2dPreset', '200');
+    expect(await page.inputValue('#p2dDen')).toBe('200');
+    expect((await denOf(page)).cal.nominal).toBe(200);
+    expect(await page.inputValue('#p2dPreset')).toBe('');   // 選んだ後は見出しに戻る(次も選べる)
+    // 標準の縮尺の一覧(ルールRの判定に使う)に、見出しの空欄は入らない
+    const nominals = await page.evaluate(() => Array.from(document.getElementById('p2dPreset').options).map((o) => parseFloat(o.value)).filter((v) => v > 0));
+    expect(nominals).toEqual([1, 10, 20, 30, 50, 100, 200, 300, 500, 1000]);
+  });
+
+  test('「縮尺を選ぶ」に切り替えると、いまの縮尺が入力欄に出る(未設定なら 1/100)', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, plan);
+    // まだ縮尺が無い時は 1/100(プルダウンだけだった頃の既定と同じ手数)
+    await page.evaluate(() => document.getElementById('p2dModePreset').click());
+    expect(await page.inputValue('#p2dDen')).toBe('100');
+    // 寸法で合わせた後に切り替えると、その縮尺が出る
+    await page.evaluate(() => document.getElementById('p2dModeDim').click());
+    await calibrateBy(page, [{ x: 120, y: 120 }, { x: 403.44, y: 120 }], 10000);
+    await page.evaluate(() => document.getElementById('p2dModePreset').click());
+    expect(await page.inputValue('#p2dDen')).toBe('100');
+    // 「測った値を使う」に戻してから切り替えると、測った分母(小数)が出る
+    await page.evaluate(() => document.getElementById('p2dModeDim').click());
+    await page.evaluate(() => document.getElementById('p2dCalToggle').click());
+    await page.evaluate(() => document.getElementById('p2dModePreset').click());
+    const v = parseFloat(await page.inputValue('#p2dDen'));
+    expect(v).toBeGreaterThan(100);
+    expect(v).toBeLessThan(100.1);
+  });
+});
+
+// ---- 図面に書いてある寸法から縮尺を読む(提案・食い違いの注意・答え合わせ) ----
+test.describe('図面変換: 図面の寸法から縮尺を読む', () => {
+  /**
+   * 1/50 の図面を作る。下側に寸法線(目盛り付き)を引き、各区間の真ん中の上に寸法文字を置く。
+   * den = 縮尺の分母、segs = 各区間の実寸mm、withText = 寸法文字を書くか
+   */
+  const dimDrawing = (den, segs, withText) => `
+    const p = doc.addPage([1191, 842]);
+    const K = 25.4 / 72 * ${den};               // 実寸mm / pt
+    const g = (n) => Math.round(n / 0.12) * 0.12;   // 600dpi の格子
+    const L = (x1, y1, x2, y2) => p.drawLine({ start: { x: g(x1), y: g(y1) }, end: { x: g(x2), y: g(y2) }, thickness: 0.3, color: PL.rgb(0, 0, 0) });
+    const segs = ${JSON.stringify(segs)};
+    const X0 = 140, Y0 = 200, YD = 150;         // 図形の起点と、寸法線の高さ
+    let x = X0;
+    const xs = [X0];
+    for (const mm of segs) { x += mm / K; xs.push(x); }
+    // 建物の外形(上側)
+    L(X0, Y0, x, Y0); L(X0, Y0 + 300, x, Y0 + 300); L(X0, Y0, X0, Y0 + 300); L(x, Y0, x, Y0 + 300);
+    for (let i = 1; i < xs.length - 1; i++) L(xs[i], Y0, xs[i], Y0 + 300);
+    // 寸法線と目盛り。寸法線は区間ごとに別の線で引く(実際のCADと同じ。通しの1本だと、文字と対になる線が無くなる)
+    for (let i = 0; i < xs.length - 1; i++) L(xs[i], YD, xs[i + 1], YD);
+    for (const v of xs) L(v, YD - 5, v, YD + 5);
+    ${withText ? `
+    const H = 5;
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i].toLocaleString('en-US');
+      const mid = (xs[i] + xs[i + 1]) / 2;
+      p.drawText(s, { x: g(mid - s.length * H * 0.25), y: g(YD + 8), size: H, font, color: PL.rgb(0, 0, 0) });
+    }` : ''}
+  `;
+  const S8 = [910, 910, 910, 1820, 910, 1820, 910, 910];   // 合計 9,100mm
+
+  const dimState = (page) => page.evaluate(() => {
+    const el = document.getElementById('p2dDimNote'), b = document.getElementById('p2dDimBtn');
+    return {
+      shown: el.offsetParent !== null,
+      text: el.offsetParent !== null ? document.getElementById('p2dDimText').textContent.trim() : '',
+      caution: el.classList.contains('caution'),
+      btn: b.offsetParent !== null ? b.textContent.trim() : null,
+      read: window.__p2dTest.dimScaleOf(),
+    };
+  });
+
+  test('寸法文字のある図面は、縮尺を読み取って提案する。ボタン1つで合い、その後は答え合わせの数を出す', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, S8, true));
+    let s = await dimState(page);
+    expect(s.shown).toBe(true);
+    expect(s.caution).toBe(false);
+    expect(s.text).toContain('図面に書いてある寸法から');
+    expect(s.text).toContain('1/50');
+    expect(s.btn).toBe('1/50 で合わせる');
+    expect(Math.abs(s.read.den - 50)).toBeLessThan(0.5);
+    expect(s.read.pairs).toBe(S8.length);
+    // 押すと、その縮尺で決まる
+    await page.evaluate(() => document.getElementById('p2dDimBtn').click());
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/50(図面の寸法から)');
+    const cal = await page.evaluate(() => window.__p2dState.pages[0].cal);
+    expect(cal.nominal).toBe(50);
+    expect(cal.fromDims).toBe(true);
+    // 合った後は、答え合わせの数に変わる(注意色にしない)
+    s = await dimState(page);
+    expect(s.caution).toBe(false);
+    expect(s.text).toContain('突き合わせました');
+    expect(s.text).toContain('以内で合っています');
+    expect(s.btn).toBe(null);
+    // 出した JWW のヘッダにも 1/50 ちょうどが入る
+    await page.evaluate(() => document.getElementById('p2dFmtJww').click());
+    const scale = await page.evaluate(() => {
+      const r = window.__p2dTest.buildJww();
+      return window.P2D.jwwWriter.parseJww(r.bytes).header.index.get('scale_0').vals[0];
+    });
+    expect(scale).toBe(50);
+  });
+
+  test('縮尺を取り違えた時(1/50 の図面に 1/100)は注意を出し、ボタンで直せる', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, S8, true));
+    await setPreset(page, 100);
+    let s = await dimState(page);
+    expect(s.shown).toBe(true);
+    expect(s.caution).toBe(true);                       // 注意色
+    expect(s.text).toContain('図面に書いてある寸法と合いません');
+    expect(s.text).toContain('1/50');
+    expect(s.btn).toBe('1/50 にする');
+    await page.evaluate(() => document.getElementById('p2dDimBtn').click());
+    await expect(page.locator('#p2dScaleStatus')).toContainText('1/50');
+    s = await dimState(page);
+    expect(s.caution).toBe(false);
+    expect(s.text).toContain('突き合わせました');
+  });
+
+  test('少しの違い(2%以内)では注意しない。大きく違う時だけ知らせる', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, S8, true));
+    await setPreset(page, 50.5);                        // 1% の違い → 注意しない
+    expect((await dimState(page)).caution).toBe(false);
+    await setPreset(page, 53);                          // 6% の違い → 注意する
+    expect((await dimState(page)).caution).toBe(true);
+  });
+
+  test('寸法文字の無い図面では、何も言わない(見当で警告を出さない)', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, S8, false));      // 同じ図形で、寸法文字だけ無し
+    expect((await dimState(page)).shown).toBe(false);
+    expect(await page.evaluate(() => window.__p2dTest.dimScaleOf())).toBe(null);
+    // 縮尺を決めた後も、黙ったまま
+    await setPreset(page, 100);
+    expect((await dimState(page)).shown).toBe(false);
+  });
+
+  test('寸法文字が少ない図面(5か所未満)でも、何も言わない', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, [910, 1820, 910], true));   // 3か所だけ
+    expect((await dimState(page)).shown).toBe(false);
+  });
+
+  test('1/100 の図面なら 1/100 と読む(縮尺によらず当たる)', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(100, [1820, 1820, 3640, 1820, 1820, 910, 910], true));
+    const s = await dimState(page);
+    expect(s.shown).toBe(true);
+    expect(s.text).toContain('1/100');
+    expect(Math.abs(s.read.den - 100)).toBeLessThan(1);
+  });
+
+  test('線が多い図面でも、読み取りは1コマぶん(50ms)以内で終わる', async ({ page }) => {
+    await openApp(page);
+    await loadP2d(page, dimDrawing(50, S8, true));
+    const ms = await page.evaluate(() => {
+      const st = window.__p2dState, g = st.pages[0].geom;
+      // 図形を差し替えて線を増やす(PDF から作ると時間が掛かるため)
+      let seed = 20260922;
+      const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+      const extra = [];
+      for (let i = 0; i < 60000; i++) {
+        const x = rnd() * 1100, y = rnd() * 800, h = rnd() < 0.5;
+        extra.push({ x1: x, y1: y, x2: h ? x + 5 + rnd() * 30 : x, y2: h ? y : y + 5 + rnd() * 30, col: 7, lt: 'CONTINUOUS' });
+      }
+      g.lines = g.lines.concat(extra);
+      const t0 = performance.now();
+      window.__p2dTest.readDimScale(g, 1);
+      return performance.now() - t0;
+    });
+    expect(ms).toBeLessThan(50);
   });
 });

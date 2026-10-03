@@ -1150,17 +1150,21 @@
         <div class="redact-modehint" id="p2dDxfHint" hidden></div>
         <div id="p2dPresetBody" hidden>
           <div class="p2d-row">
-            <select id="p2dPreset" aria-label="縮尺">
+            <label class="p2d-lenlabel">縮尺 1/ <input type="number" id="p2dDen" min="0.01" step="any" inputmode="decimal" placeholder="例: 100"></label>
+            <select id="p2dPreset" aria-label="よく使う縮尺から選ぶ">
+              <option value="">よく使う縮尺</option>
               <option value="1">1/1</option><option value="10">1/10</option><option value="20">1/20</option>
-              <option value="30">1/30</option><option value="50">1/50</option><option value="100" selected>1/100</option>
+              <option value="30">1/30</option><option value="50">1/50</option><option value="100">1/100</option>
               <option value="200">1/200</option><option value="300">1/300</option><option value="500">1/500</option>
               <option value="1000">1/1000</option>
             </select>
             <button class="p2d-btn" id="p2dApplyPreset" type="button">この縮尺にする</button>
           </div>
+          <div class="p2d-caution" id="p2dDenWarn" hidden></div>
           <div class="redact-modehint" id="p2dPresetHint">印刷の時に「用紙に合わせる」で縮んだPDFは、縮尺が合いません。その場合は「図面の寸法で合わせる」をお使いください。</div>
         </div>
         <div class="p2d-scale-status" id="p2dScaleStatus">縮尺: 未設定</div>
+        <div class="p2d-precision" id="p2dDimNote" hidden><span id="p2dDimText"></span> <button class="p2d-linkbtn" id="p2dDimBtn" type="button" hidden></button></div>
         <div class="p2d-caution" id="p2dCalNote"></div>
         <button class="p2d-linkbtn" id="p2dCalToggle" type="button" hidden></button>
         <button class="p2d-linkbtn" id="p2dRecalUndo" type="button" hidden></button>

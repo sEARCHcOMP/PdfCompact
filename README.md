@@ -408,9 +408,9 @@ v3.4.0 で先送りした残バグを処理:
 
 ## ⚖️ 著作権
 
-© 2026 sEARCHcOMP. All rights reserved.
+© 2026 Tsuyoshi Kitano. All rights reserved.
 
-本ソフトウェアの著作権は sEARCHcOMP に帰属します。
+本ソフトウェアの著作権は Tsuyoshi Kitano に帰属します。
 著作権者の許可なく、複製・改変・再配布・販売することを禁じます。
 詳細は [LICENSE](LICENSE) を参照してください。
 

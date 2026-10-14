@@ -1017,6 +1017,12 @@
     letter-spacing: 0.04em;
     line-height: 1.9;
   }
+  .footer-copyright {
+    margin-top: 14px;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
 
   /* ============ RESPONSIVE ============ */
   @media (max-width: 720px) {

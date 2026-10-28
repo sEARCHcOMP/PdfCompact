@@ -197,7 +197,7 @@
       if (lineDetectionEnabled && lineDetectBtn) {
         lineDetectionEnabled = false;
         lineDetectBtn.dataset.active = 'off';
-        lineDetectBtn.textContent = '📐 罫線スナップ OFF';
+        lineDetectBtn.setAttribute('aria-checked', 'false');
       }
       // カスタムセル + ハイライト + アライメントガイドもリセット
       customCellsByPage = {};
@@ -218,7 +218,7 @@
       if (customCellModeOn && customCellBtn) {
         customCellModeOn = false;
         customCellBtn.dataset.active = 'off';
-        customCellBtn.textContent = '✏️ カスタムセル OFF';
+        customCellBtn.setAttribute('aria-checked', 'false');
         if (customCellLayer) customCellLayer.classList.remove('active');
       }
       setStatus('');

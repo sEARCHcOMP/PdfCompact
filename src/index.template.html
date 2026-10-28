@@ -40,7 +40,6 @@
 <!-- 新バージョン通知バナー (起動時チェック → 新版あれば右上に表示) -->
 <div id="updateBanner" class="update-banner" style="display:none;" role="alert">
   <div class="update-banner-content">
-    <span class="update-banner-icon">🆙</span>
     <span class="update-banner-text">
       新バージョン <span class="update-banner-version" id="updateVersionLabel"></span> が公開されました
       <span class="update-banner-notes" id="updateNotes"></span>
@@ -82,7 +81,7 @@
         </button>
         <div class="settings-coachmark" id="settingsCoachmark" role="status">
           <button class="cm-close" type="button" id="settingsCoachClose" aria-label="閉じる">×</button>
-          <div class="cm-title">⚙️ 設定が増えました</div>
+          <div class="cm-title">設定が増えました</div>
           <div class="cm-sub">出力するPDFの<b>メタデータ除去</b>や<b>透かし(社外秘など)</b>をここで設定できます。</div>
         </div>
         <div class="status-pill">
@@ -693,11 +692,11 @@
       </p>
       <div class="hero-stats">
         <div class="hero-stat">
-          <div class="hero-stat-num">✎</div>
+          <div class="hero-stat-num hero-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
           <div class="hero-stat-label">EDIT PAGES</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num">✂</div>
+          <div class="hero-stat-num hero-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/></svg></div>
           <div class="hero-stat-label">SPLIT</div>
         </div>
         <div class="hero-stat">
@@ -726,7 +725,7 @@
         <span class="step-num">01</span>
         <div>
           <h2 class="step-title">ページ編集</h2>
-          <p class="step-desc">削除・ドラッグ並び替え・回転 · ページ間の<strong style="color:var(--accent);">✂ボタン</strong>で分割ポイント追加</p>
+          <p class="step-desc">削除・ドラッグ並び替え・回転 · ページ間の<strong style="color:var(--accent);">はさみのボタン</strong>で分割ポイント追加</p>
         </div>
       </div>
       <div class="edit-toolbar">
@@ -851,7 +850,7 @@
       <div id="imgPlacePdfStatus" class="imgplace-status" style="display:none;"></div>
       <!-- プロジェクト読込（PDF未読込時でも使える） -->
       <div class="imgplace-load-project-row">
-        <button type="button" class="btn btn-ghost" id="imgPlaceLoadProjectBtn">📂 プロジェクト読込 (.lpw)</button>
+        <button type="button" class="btn btn-ghost" id="imgPlaceLoadProjectBtn">プロジェクト読込 (.lpw)</button>
         <input type="file" id="imgPlaceLoadProjectInput" accept=".lpw,.json,application/json,application/octet-stream" style="display:none;">
       </div>
     </div>
@@ -910,7 +909,7 @@
     </div>
 
     <div class="filename-bar" id="imgPlaceFilenameBar" style="display:none;">
-      <button class="btn btn-small" id="imgPlaceFilenameTs" type="button">📅 日付</button>
+      <button class="btn btn-small" id="imgPlaceFilenameTs" type="button">日付</button>
       <input id="imgPlaceFilenameInput" placeholder="出力ファイル名（省略可）">
       <span id="imgPlaceFilenameTsPreview" class="filename-ts-preview"></span>
     </div>
@@ -930,18 +929,16 @@
           <option value="system-ui, sans-serif">システムデフォルト</option>
           <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
         </select>
-        <button class="btn btn-ghost" id="imgPlaceSnapBtn" type="button" title="他画像のエッジ・中心線・ページ中央にスナップ" data-snap="on">
-          <span id="imgPlaceSnapLabel">スナップ ON</span>
-        </button>
-        <button class="btn btn-ghost" id="imgPlaceLineDetectBtn" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off">📐 罫線スナップ OFF</button>
-        <button class="btn btn-ghost" id="imgPlaceCustomCellBtn" title="ON中はドラッグで自分用のセルを追加 / クリックで削除" data-active="off">✏️ カスタムセル OFF</button>
-        <button class="btn btn-ghost" id="imgPlaceSizeCapBtn" title="配置時に画像サイズをページの1/3まで自動圧縮（OFFで原寸換算）" data-active="on">📏 1/3制限 ON</button>
-        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">🎯 順次配置</button>
-        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">📄+ PDF追加</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceSnapBtn" type="button" role="switch" aria-checked="true" title="他画像のエッジ・中心線・ページ中央にスナップ" data-snap="on"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>スナップ</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceLineDetectBtn" type="button" role="switch" aria-checked="false" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>罫線スナップ</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceCustomCellBtn" type="button" role="switch" aria-checked="false" title="ドラッグで自分用のセルを追加 / クリックで削除" data-active="off"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>カスタムセル</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceSizeCapBtn" type="button" role="switch" aria-checked="true" title="配置時に画像サイズをページの1/3まで自動圧縮(切ると原寸換算)" data-active="on"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>1/3に縮小</button>
+        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">順次配置</button>
+        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">PDF追加</button>
         <input type="file" id="imgPlaceAddPdfInput" accept="application/pdf" style="display:none;">
         <button class="btn btn-ghost" id="imgPlaceClearBtn">クリア</button>
-        <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">💾 プロジェクト保存</button>
-        <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">📄 PDFとして出力</button>
+        <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">プロジェクト保存</button>
+        <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">PDFとして出力</button>
       </div>
     </div>
 
@@ -992,17 +989,17 @@
           <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
         <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの方法">
-          <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
-          <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
+          <button class="redact-modebtn active" id="redactModeText" type="button">文字を選ぶ</button>
+          <button class="redact-modebtn" id="redactModeRect" type="button">自由に四角</button>
         </div>
         <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの色">
-          <button class="redact-modebtn active" id="redactFillBlack" type="button">🖤 黒で塗る</button>
-          <button class="redact-modebtn" id="redactFillPaper" type="button">⬜ 背景色で消す</button>
+          <button class="redact-modebtn active" id="redactFillBlack" type="button"><span class="rd-dot rd-dot-black" aria-hidden="true"></span>黒で塗る</button>
+          <button class="redact-modebtn" id="redactFillPaper" type="button"><span class="rd-dot rd-dot-paper" aria-hidden="true"></span>背景色で消す</button>
         </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
       <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
-      <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
+      <div class="redact-notext-banner" id="redactNoTextBanner">このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
 
       <div class="redact-stage">
         <div class="redact-canvas-wrap mode-text" id="redactCanvasWrap">
@@ -1019,7 +1016,7 @@
       </div>
 
       <div class="redact-actions">
-        <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
+        <button class="redact-export-btn" id="redactExportBtn" type="button">黒塗りして出力</button>
         <span class="redact-export-note" id="redactExportNote">塗りつぶした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
       </div>
@@ -1042,7 +1039,6 @@
     <div class="hikari-loading" id="hikariLoading">接続の準備をしています…</div>
 
     <div class="hikari-offline" id="hikariOffline" hidden>
-      <div class="hikari-offline-icon">📡</div>
       <div class="hikari-offline-title">インターネット接続が必要です</div>
       <div class="hikari-offline-sub">スマホ転送はオンライン専用の機能です。ほかのタブはオフラインのまま使えます。<br>接続を確認して、ページを再読み込みしてください。</div>
     </div>
@@ -1125,7 +1121,7 @@
           <button class="redact-navbtn" id="p2dNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
         <span class="p2d-summary" id="p2dSummary"></span>
-        <label class="p2d-showlines"><input type="checkbox" id="p2dShowLines" checked> 変換される線を青で表示</label>
+        <label class="p2d-showlines toggle-row"><input type="checkbox" id="p2dShowLines" role="switch" checked><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">変換される線を青で表示</span></label>
       </div>
       <div class="redact-notext-banner" id="p2dBanner"></div>
       <div class="p2d-info" id="p2dInfo"></div>

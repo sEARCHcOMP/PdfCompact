@@ -143,8 +143,8 @@
       if (_bn){
         // 読取失敗時は「ありません」と断定しない文言へ(毎頁で再設定するので前頁の文言を引きずらない)
         _bn.textContent = st.textFetchFailed
-          ? '⬚ このページの文字データを読み取れませんでした。「自由に四角」で隠したい所を囲ってください。'
-          : '⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。';
+          ? 'このページの文字データを読み取れませんでした。「自由に四角」で隠したい所を囲ってください。'
+          : 'このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。';
         _bn.classList.toggle('show', !st.pageHasText);
       }
       // 希望モードを再適用(文字有りページなら text に復帰、無ければ rect 矯正)
@@ -536,7 +536,7 @@
         rdStatus('本当に消えたか検証中…');
         var v = await verifyRedaction(gen.outBytes, gen.affected);
         if (!v.ok){
-          rdStatus('❌ ページ' + v.page + ' に文字が残っていました。安全のため出力を中止しました(不具合報告をお願いします)。', true);
+          rdStatus('⚠ ページ' + v.page + ' に文字が残っていました。安全のため出力を中止しました(不具合報告をお願いします)。', true);
           if (btn) btn.disabled = false;
           return;
         }
@@ -550,7 +550,7 @@
       } catch(e){
         console.error('redact export failed', e);
         var enc = e && /encrypt/i.test(String(e.message || e));
-        rdStatus('❌ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
+        rdStatus('⚠ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
                               : '出力に失敗しました: ' + (e && e.message ? e.message : e)), true);
         if (btn) btn.disabled = false;
         return;
@@ -578,7 +578,7 @@
       var wrap = document.getElementById('redactCanvasWrap');
       if (wrap) wrap.classList.toggle('fill-paper', paper);   // 仮表示セルの見た目を追随
       var btn = document.getElementById('redactExportBtn');
-      if (btn) btn.textContent = paper ? '⬜ 背景色で消して出力' : '🖤 黒塗りして出力';
+      if (btn) btn.textContent = paper ? '背景色で消して出力' : '黒塗りして出力';
     }
     if (_rdFillBlack && _rdFillPaper){
       _rdFillBlack.addEventListener('click', function(){

@@ -420,7 +420,7 @@
             // 「3分割のつもりが1本の結合PDF」事故になるので、消した時だけ告知する
             const hadSplits = splits.size > 0;
             splits.clear();
-            if (hadSplits) setStatus('並び替えたため、分割ポイント(✂)を解除しました。必要なら付け直してください', 'info');
+            if (hadSplits) setStatus('並び替えたため、分割ポイントを解除しました。必要なら付け直してください', 'info');
             render();
           }
         });

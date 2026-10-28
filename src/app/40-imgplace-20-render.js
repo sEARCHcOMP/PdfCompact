@@ -333,7 +333,7 @@
     function updateSnapBtn() {
       if (!snapBtn) return;
       snapBtn.dataset.snap = snapEnabled ? 'on' : 'off';
-      if (snapLabel) snapLabel.textContent = snapEnabled ? 'スナップ ON' : 'スナップ OFF';
+      if (snapBtn) snapBtn.setAttribute('aria-checked', snapEnabled ? 'true' : 'false');   // 文字は「スナップ」で固定。入/切はスイッチのつまみで示す
     }
 
     // ----- 選択ヘルパー -----

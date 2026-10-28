@@ -224,7 +224,7 @@
           metaHtml += `<span class="meta-tag mode-tag">${modeLabel}モード</span>`;
         }
         if (f.ocrApplied) {
-          metaHtml += `<span class="meta-tag ocr-tag">🔍 OCR済</span>`;
+          metaHtml += `<span class="meta-tag ocr-tag">OCR済</span>`;
         }
         const noteStr = f.note ? ` (${f.note})` : '';
         statusHtml = `<div class="status done">✓ 完了${noteStr}</div>`;

@@ -234,11 +234,11 @@
       const btn = document.getElementById('imgPlacePlaceQueueBtn');
       if (!btn) return;
       if (placeQueueMode) {
-        btn.textContent = '⏹ 順次配置中止 (残り' + placeQueue.length + ')';
+        btn.textContent = '順次配置を中止 (残り' + placeQueue.length + ')';
         btn.dataset.active = 'on';
         btn.style.display = '';
       } else if (libSelectedIds.length > 0) {
-        btn.textContent = '🎯 順次配置 (' + libSelectedIds.length + '枚)';
+        btn.textContent = '順次配置 (' + libSelectedIds.length + '枚)';
         btn.dataset.active = 'off';
         btn.style.display = '';
       } else {
@@ -621,7 +621,7 @@
       lineDetectBtn.addEventListener('click', async () => {
         lineDetectionEnabled = !lineDetectionEnabled;
         lineDetectBtn.dataset.active = lineDetectionEnabled ? 'on' : 'off';
-        lineDetectBtn.textContent = lineDetectionEnabled ? '📐 罫線スナップ ON' : '📐 罫線スナップ OFF';
+        lineDetectBtn.setAttribute('aria-checked', lineDetectionEnabled ? 'true' : 'false');
         if (linesOverlay) linesOverlay.classList.toggle('visible', lineDetectionEnabled);
         // 即時に現ページを再解析
         if (lineDetectionEnabled && pdfjsDoc) {
@@ -645,12 +645,12 @@
       });
     }
 
-    // ----- 1/3 サイズ制限トグルボタン -----
+    // ----- 「1/3に縮小」のスイッチ -----
     const sizeCapBtn = document.getElementById('imgPlaceSizeCapBtn');
     function applySizeCapBtnState() {
       if (!sizeCapBtn) return;
       sizeCapBtn.dataset.active = sizeCapEnabled ? 'on' : 'off';
-      sizeCapBtn.textContent = sizeCapEnabled ? '📏 1/3制限 ON' : '📏 1/3制限 OFF';
+      sizeCapBtn.setAttribute('aria-checked', sizeCapEnabled ? 'true' : 'false');
     }
     applySizeCapBtnState();
     if (sizeCapBtn) {
@@ -845,7 +845,7 @@
       customCellBtn.addEventListener('click', () => {
         customCellModeOn = !customCellModeOn;
         customCellBtn.dataset.active = customCellModeOn ? 'on' : 'off';
-        customCellBtn.textContent = customCellModeOn ? '✏️ カスタムセル ON' : '✏️ カスタムセル OFF';
+        customCellBtn.setAttribute('aria-checked', customCellModeOn ? 'true' : 'false');
         customCellLayer.classList.toggle('active', customCellModeOn);
         // ON 直後に既存セルを再描画（hover/title が変わる）
         renderCustomCells();

@@ -2980,6 +2980,31 @@
     color: white;
     border-color: var(--accent);
   }
+  /* 塗りの色は小さな点で示す(絵文字の代わり。黒か紙色かが一目で分かればよい) */
+  #modeRedact .rd-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px;
+    vertical-align: -1px; flex: 0 0 auto; }
+  #modeRedact .rd-dot-black { background: #1a1d21; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+  #modeRedact .rd-dot-paper { background: #f3f1ec; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
+  /* ヒーローの印は、線の太さをそろえたアイコンにする(絵文字をやめた) */
+  .hero-stat-icon { display: flex; align-items: center; justify-content: center; }
+  .hero-stat-icon svg { width: 22px; height: 22px; }
+  /* 切り替えボタンのスイッチ表示。状態は既存の data-active / data-snap のまま使い、見た目だけを足す
+     (ON/OFF の文字を出し分ける代わりに、つまみの位置で示す。文字が動かないので押し間違えにくい) */
+  #modeImgPlace .ip-toggle { display: inline-flex; align-items: center; gap: 8px; }
+  #modeImgPlace .ip-switch { display: block; flex: 0 0 auto; width: 30px; height: 18px; border-radius: 100px;
+    background: #cfd3dc; transition: background 0.22s cubic-bezier(.2,.8,.2,1); }
+  #modeImgPlace .ip-switch-thumb { display: block; width: 14px; height: 14px; margin: 2px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transform: translateX(0);
+    transition: transform 0.24s cubic-bezier(.34,1.4,.64,1); }
+  #modeImgPlace .ip-toggle[data-active="on"] .ip-switch,
+  #modeImgPlace .ip-toggle[data-snap="on"] .ip-switch { background: rgba(255, 255, 255, 0.45); }
+  #modeImgPlace .ip-toggle[data-active="on"] .ip-switch-thumb,
+  #modeImgPlace .ip-toggle[data-snap="on"] .ip-switch-thumb { transform: translateX(12px); }
+  @media (prefers-reduced-motion: reduce) {
+    #modeImgPlace .ip-switch, #modeImgPlace .ip-switch-thumb { transition: none; }
+  }
+  /* スナップは入(ON)が既定なので、入の時に色を付ける(切の時に薄くする従来の見せ方をやめる) */
+  #modeImgPlace #imgPlaceSnapBtn[data-snap="on"] { background: var(--accent); color: #fff; border-color: var(--accent); }
   /* 右サイドバー上下スプリッター (props ↔ library) */
   #modeImgPlace .imgplace-sidebar-splitter {
     flex: 0 0 6px;
@@ -3384,11 +3409,7 @@
     height: 1px;
     margin-top: -0.5px;
   }
-  /* スナップトグルボタン OFF 状態 */
-  #imgPlaceSnapBtn[data-snap="off"] {
-    opacity: 0.55;
-    filter: grayscale(0.7);
-  }
+  /* スナップの切/入はスイッチのつまみで示す(以前は切の時に全体を薄くしていた) */
   #modeImgPlace .imgplace-placement {
     position: absolute;
     pointer-events: auto;
@@ -4212,7 +4233,13 @@
   .p2d-info { margin: 0 0 12px; padding: 9px 13px; border-radius: var(--r-md, 10px); background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font-size: 12.5px; line-height: 1.6; }
   .p2d-info:empty { display: none; }
   .p2d-summary { flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-muted); }
-  .p2d-showlines { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-muted); cursor: pointer; user-select: none; }
+  /* 「変換される線を青で表示」は入/切の切り替えなので、共通のスイッチ(.toggle-row)を使う。
+     ここでは道具並びに収まるよう、ひとまわり小さくする */
+  .p2d-showlines { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-muted); cursor: pointer; user-select: none; }
+  .p2d-showlines .toggle-track { width: 34px; height: 20px; }
+  .p2d-showlines .toggle-thumb { width: 16px; height: 16px; }
+  .p2d-showlines input:checked + .toggle-track .toggle-thumb { transform: translateX(14px); }
+  .p2d-showlines .toggle-text { font-size: 12.5px; font-weight: 500; color: var(--ink-muted); }
   .p2d-scale {
     display: flex; flex-direction: column; gap: 10px;
     padding: 14px 16px; margin-bottom: 14px;
@@ -4351,7 +4378,6 @@
 <!-- 新バージョン通知バナー (起動時チェック → 新版あれば右上に表示) -->
 <div id="updateBanner" class="update-banner" style="display:none;" role="alert">
   <div class="update-banner-content">
-    <span class="update-banner-icon">🆙</span>
     <span class="update-banner-text">
       新バージョン <span class="update-banner-version" id="updateVersionLabel"></span> が公開されました
       <span class="update-banner-notes" id="updateNotes"></span>
@@ -4393,7 +4419,7 @@
         </button>
         <div class="settings-coachmark" id="settingsCoachmark" role="status">
           <button class="cm-close" type="button" id="settingsCoachClose" aria-label="閉じる">×</button>
-          <div class="cm-title">⚙️ 設定が増えました</div>
+          <div class="cm-title">設定が増えました</div>
           <div class="cm-sub">出力するPDFの<b>メタデータ除去</b>や<b>透かし(社外秘など)</b>をここで設定できます。</div>
         </div>
         <div class="status-pill">
@@ -5004,11 +5030,11 @@
       </p>
       <div class="hero-stats">
         <div class="hero-stat">
-          <div class="hero-stat-num">✎</div>
+          <div class="hero-stat-num hero-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
           <div class="hero-stat-label">EDIT PAGES</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num">✂</div>
+          <div class="hero-stat-num hero-stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/></svg></div>
           <div class="hero-stat-label">SPLIT</div>
         </div>
         <div class="hero-stat">
@@ -5037,7 +5063,7 @@
         <span class="step-num">01</span>
         <div>
           <h2 class="step-title">ページ編集</h2>
-          <p class="step-desc">削除・ドラッグ並び替え・回転 · ページ間の<strong style="color:var(--accent);">✂ボタン</strong>で分割ポイント追加</p>
+          <p class="step-desc">削除・ドラッグ並び替え・回転 · ページ間の<strong style="color:var(--accent);">はさみのボタン</strong>で分割ポイント追加</p>
         </div>
       </div>
       <div class="edit-toolbar">
@@ -5162,7 +5188,7 @@
       <div id="imgPlacePdfStatus" class="imgplace-status" style="display:none;"></div>
       <!-- プロジェクト読込（PDF未読込時でも使える） -->
       <div class="imgplace-load-project-row">
-        <button type="button" class="btn btn-ghost" id="imgPlaceLoadProjectBtn">📂 プロジェクト読込 (.lpw)</button>
+        <button type="button" class="btn btn-ghost" id="imgPlaceLoadProjectBtn">プロジェクト読込 (.lpw)</button>
         <input type="file" id="imgPlaceLoadProjectInput" accept=".lpw,.json,application/json,application/octet-stream" style="display:none;">
       </div>
     </div>
@@ -5221,7 +5247,7 @@
     </div>
 
     <div class="filename-bar" id="imgPlaceFilenameBar" style="display:none;">
-      <button class="btn btn-small" id="imgPlaceFilenameTs" type="button">📅 日付</button>
+      <button class="btn btn-small" id="imgPlaceFilenameTs" type="button">日付</button>
       <input id="imgPlaceFilenameInput" placeholder="出力ファイル名（省略可）">
       <span id="imgPlaceFilenameTsPreview" class="filename-ts-preview"></span>
     </div>
@@ -5241,18 +5267,16 @@
           <option value="system-ui, sans-serif">システムデフォルト</option>
           <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
         </select>
-        <button class="btn btn-ghost" id="imgPlaceSnapBtn" type="button" title="他画像のエッジ・中心線・ページ中央にスナップ" data-snap="on">
-          <span id="imgPlaceSnapLabel">スナップ ON</span>
-        </button>
-        <button class="btn btn-ghost" id="imgPlaceLineDetectBtn" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off">📐 罫線スナップ OFF</button>
-        <button class="btn btn-ghost" id="imgPlaceCustomCellBtn" title="ON中はドラッグで自分用のセルを追加 / クリックで削除" data-active="off">✏️ カスタムセル OFF</button>
-        <button class="btn btn-ghost" id="imgPlaceSizeCapBtn" title="配置時に画像サイズをページの1/3まで自動圧縮（OFFで原寸換算）" data-active="on">📏 1/3制限 ON</button>
-        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">🎯 順次配置</button>
-        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">📄+ PDF追加</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceSnapBtn" type="button" role="switch" aria-checked="true" title="他画像のエッジ・中心線・ページ中央にスナップ" data-snap="on"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>スナップ</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceLineDetectBtn" type="button" role="switch" aria-checked="false" title="ベースPDFの罫線を検出 → 可視化 + スナップ対象に追加" data-active="off"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>罫線スナップ</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceCustomCellBtn" type="button" role="switch" aria-checked="false" title="ドラッグで自分用のセルを追加 / クリックで削除" data-active="off"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>カスタムセル</button>
+        <button class="btn btn-ghost ip-toggle" id="imgPlaceSizeCapBtn" type="button" role="switch" aria-checked="true" title="配置時に画像サイズをページの1/3まで自動圧縮(切ると原寸換算)" data-active="on"><span class="ip-switch" aria-hidden="true"><span class="ip-switch-thumb"></span></span>1/3に縮小</button>
+        <button class="btn btn-ghost" id="imgPlacePlaceQueueBtn" style="display:none;" title="選択画像を順番にクリックで配置 / Esc でキャンセル">順次配置</button>
+        <button class="btn btn-ghost" id="imgPlaceAddPdfBtn" title="末尾にページ追加 (別PDFをマージ)">PDF追加</button>
         <input type="file" id="imgPlaceAddPdfInput" accept="application/pdf" style="display:none;">
         <button class="btn btn-ghost" id="imgPlaceClearBtn">クリア</button>
-        <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">💾 プロジェクト保存</button>
-        <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">📄 PDFとして出力</button>
+        <button class="btn btn-ghost" id="imgPlaceSaveProjectBtn" title=".lpw ファイルとして保存">プロジェクト保存</button>
+        <button class="btn btn-primary" id="imgPlaceExportPdfBtn" title="ベースPDFに画像とキャプションを焼き込んで出力">PDFとして出力</button>
       </div>
     </div>
 
@@ -5303,17 +5327,17 @@
           <button class="redact-navbtn" id="redactNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
         <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの方法">
-          <button class="redact-modebtn active" id="redactModeText" type="button">📝 文字を選ぶ</button>
-          <button class="redact-modebtn" id="redactModeRect" type="button">⬚ 自由に四角</button>
+          <button class="redact-modebtn active" id="redactModeText" type="button">文字を選ぶ</button>
+          <button class="redact-modebtn" id="redactModeRect" type="button">自由に四角</button>
         </div>
         <div class="redact-modetoggle" role="group" aria-label="塗りつぶしの色">
-          <button class="redact-modebtn active" id="redactFillBlack" type="button">🖤 黒で塗る</button>
-          <button class="redact-modebtn" id="redactFillPaper" type="button">⬜ 背景色で消す</button>
+          <button class="redact-modebtn active" id="redactFillBlack" type="button"><span class="rd-dot rd-dot-black" aria-hidden="true"></span>黒で塗る</button>
+          <button class="redact-modebtn" id="redactFillPaper" type="button"><span class="rd-dot rd-dot-paper" aria-hidden="true"></span>背景色で消す</button>
         </div>
         <button class="redact-clearbtn" id="redactClearPage" type="button">このページを全消去</button>
       </div>
       <div class="redact-modehint" id="redactModeHint">文字をクリック、またはなぞって選ぶと、その文字の上に塗りつぶしが付きます(タブレットはタップか長押し。重なりは自動でまとめます)。</div>
-      <div class="redact-notext-banner" id="redactNoTextBanner">⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
+      <div class="redact-notext-banner" id="redactNoTextBanner">このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。</div>
 
       <div class="redact-stage">
         <div class="redact-canvas-wrap mode-text" id="redactCanvasWrap">
@@ -5330,7 +5354,7 @@
       </div>
 
       <div class="redact-actions">
-        <button class="redact-export-btn" id="redactExportBtn" type="button">🖤 黒塗りして出力</button>
+        <button class="redact-export-btn" id="redactExportBtn" type="button">黒塗りして出力</button>
         <span class="redact-export-note" id="redactExportNote">塗りつぶした所が画像化され、下の文字が物理的に消えます(コピー不可)。</span>
         <button class="redact-reset-btn" id="redactResetBtn" type="button">別のPDFを開く</button>
       </div>
@@ -5353,7 +5377,6 @@
     <div class="hikari-loading" id="hikariLoading">接続の準備をしています…</div>
 
     <div class="hikari-offline" id="hikariOffline" hidden>
-      <div class="hikari-offline-icon">📡</div>
       <div class="hikari-offline-title">インターネット接続が必要です</div>
       <div class="hikari-offline-sub">スマホ転送はオンライン専用の機能です。ほかのタブはオフラインのまま使えます。<br>接続を確認して、ページを再読み込みしてください。</div>
     </div>
@@ -5436,7 +5459,7 @@
           <button class="redact-navbtn" id="p2dNext" title="次のページ" aria-label="次のページ">›</button>
         </div>
         <span class="p2d-summary" id="p2dSummary"></span>
-        <label class="p2d-showlines"><input type="checkbox" id="p2dShowLines" checked> 変換される線を青で表示</label>
+        <label class="p2d-showlines toggle-row"><input type="checkbox" id="p2dShowLines" role="switch" checked><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">変換される線を青で表示</span></label>
       </div>
       <div class="redact-notext-banner" id="p2dBanner"></div>
       <div class="p2d-info" id="p2dInfo"></div>
@@ -7586,7 +7609,7 @@
         <p class="fit-card-desc">
           画像の比率を保ったまま用紙内に収めます。余白はできますが、<strong style="color:var(--ink);">画像は一切切れません</strong>。
         </p>
-        <div class="fit-card-use">📋 書類・図面・スクショ向け</div>
+        <div class="fit-card-use">書類・図面・スクショ向け</div>
       </div>
       <div class="fit-card">
         <div class="fit-card-label">OPTION B</div>
@@ -7597,7 +7620,7 @@
         <p class="fit-card-desc">
           用紙を画像で埋め尽くします。<strong style="color:var(--ink);">画像の端はトリミング</strong>されますが、余白がなく見栄えが良い。
         </p>
-        <div class="fit-card-use">📷 写真アルバム・記念PDF向け</div>
+        <div class="fit-card-use">写真アルバム・記念PDF向け</div>
       </div>
     </div>
   </section>
@@ -7875,7 +7898,7 @@
         <p class="fit-card-desc">
           ファイルが<strong style="color:var(--ink);">1つずつ順番にDL</strong>されます。ブラウザによっては複数DLの許可を求めるダイアログが出ることも。
         </p>
-        <div class="fit-card-use">📄 少数(5枚以下)の変換向け</div>
+        <div class="fit-card-use">少数(5枚以下)の変換向け</div>
       </div>
       <div class="fit-card">
         <div class="fit-card-label">OPTION B</div>
@@ -7890,7 +7913,7 @@
         <p class="fit-card-desc">
           変換結果を<strong style="color:var(--ink);">1つのZIPファイル</strong>にまとめてDL。フォルダに展開すれば全ファイルが整理された状態で取り出せます。
         </p>
-        <div class="fit-card-use">📦 大量(10枚以上)の変換に最適</div>
+        <div class="fit-card-use">大量(10枚以上)の変換に最適</div>
       </div>
     </div>
   </section>
@@ -7986,7 +8009,7 @@
           </svg>
         </div>
         <h3 class="step-title-h">ページを編集</h3>
-        <p class="step-text">ドラッグで並び替え、✕で削除、↻で回転、✂で分割ポイント追加。番号をタップで複数選択も可能。</p>
+        <p class="step-text">ドラッグで並び替え、✕で削除、↻で回転、はさみのボタンで分割ポイント追加。番号をタップで複数選択も可能。</p>
       </div>
       <div class="step-card">
         <div class="step-badge">03</div>
@@ -8016,7 +8039,7 @@
           <span class="on"></span><span class="on"></span><span></span><span></span>
         </div>
         <div>
-          <div class="quality-name">☑ 選択</div>
+          <div class="quality-name">選択</div>
           <div class="quality-spec">ページ右上のチェックボックス</div>
           <p class="quality-use">各ページの右上にチェックボックスがあります。タップで選択 → ツールバーの「選択を〇〇」ボタンで一括操作できます。</p>
         </div>
@@ -8026,7 +8049,7 @@
           <span class="on"></span><span class="on"></span><span></span><span></span>
         </div>
         <div>
-          <div class="quality-name">🗑️ 削除</div>
+          <div class="quality-name">削除</div>
           <div class="quality-spec">ページカードの✕ボタン</div>
           <p class="quality-use">個別削除は✕ボタン。複数選択した後「選択を削除」でまとめて削除も可能。</p>
         </div>
@@ -8036,7 +8059,7 @@
           <span class="on"></span><span class="on"></span><span class="on"></span><span></span>
         </div>
         <div>
-          <div class="quality-name">🔀 並び替え</div>
+          <div class="quality-name">並び替え</div>
           <div class="quality-spec">ドラッグ&ドロップ</div>
           <p class="quality-use">ページカードをドラッグして順序を入れ替え。複数PDFをまたいでの並び替えもOK。</p>
         </div>
@@ -8046,7 +8069,7 @@
           <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
         </div>
         <div>
-          <div class="quality-name">🔄 回転</div>
+          <div class="quality-name">回転</div>
           <div class="quality-spec">90°ずつ右回転</div>
           <p class="quality-use">スキャナで傾いて取り込まれたページや、横向きスキャンを補正。選択して一括回転も可能。</p>
         </div>
@@ -8056,9 +8079,9 @@
           <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
         </div>
         <div>
-          <div class="quality-name">✂ 分割</div>
+          <div class="quality-name">分割</div>
           <div class="quality-spec">ページ間の分割ボタン</div>
-          <p class="quality-use">ページとページの間にある<strong>✂チップ</strong>をクリックで分割ポイント追加。複数PDFに切り分けて出力されます。</p>
+          <p class="quality-use">ページとページの間にある<strong>はさみ</strong>をクリックで分割ポイント追加。複数PDFに切り分けて出力されます。</p>
         </div>
       </div>
       <div class="quality-card">
@@ -8066,7 +8089,7 @@
           <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
         </div>
         <div>
-          <div class="quality-name">📤 抽出</div>
+          <div class="quality-name">抽出</div>
           <div class="quality-spec">選択を取り出し</div>
           <p class="quality-use">必要なページだけチェックして「選択を取り出し」。分割や削除せず、元を保ったまま必要分だけ切り出せます。</p>
         </div>
@@ -8082,7 +8105,7 @@
     </div>
     <div class="heic-hero">
       <div class="ocr-topline">
-        <span class="ocr-pill">ページ間の✂チップをクリック</span>
+        <span class="ocr-pill">ページ間のはさみをクリック</span>
         <span class="ocr-pill">ZIPで自動出力</span>
         <span class="ocr-pill">品質劣化ゼロ</span>
       </div>
@@ -8091,7 +8114,7 @@
       </p>
       <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
         <strong style="color:var(--ink);">入力</strong>: 20ページのPDF<br>
-        <span style="color:var(--accent); font-weight:700;">ページ5と12の後ろに✂分割ポイント追加</span> →<br>
+        <span style="color:var(--accent); font-weight:700;">ページ5と12の後ろに分割ポイント追加</span> →<br>
         <strong style="color:var(--success);">出力</strong>: <br>
         &nbsp;&nbsp;part1.pdf (1〜5ページ)<br>
         &nbsp;&nbsp;part2.pdf (6〜12ページ)<br>
@@ -8143,7 +8166,7 @@
         <p class="fit-card-desc">
           50ページの報告書から<strong style="color:var(--ink);">必要な3ページだけ</strong>抜き出して、元請けに送る。元のPDFには手を加えず、抽出したPDFだけダウンロード。
         </p>
-        <div class="fit-card-use">📄 元データはそのまま · 必要な分だけ切り出し</div>
+        <div class="fit-card-use">元データはそのまま · 必要な分だけ切り出し</div>
       </div>
       <div class="fit-card">
         <div class="fit-card-label">USE CASE B</div>
@@ -8158,7 +8181,7 @@
         <p class="fit-card-desc">
           複数のPDFを投入して、<strong style="color:var(--ink);">各PDFから必要なページだけ</strong>選んで1冊にまとめる。施主提出用の抜粋資料づくりに最適。
         </p>
-        <div class="fit-card-use">📦 複数ソース横断抽出</div>
+        <div class="fit-card-use">複数ソース横断抽出</div>
       </div>
     </div>
   </section>
@@ -8270,14 +8293,14 @@
 
     <div class="heic-hero">
       <div class="ocr-topline">
-        <span class="ocr-pill">📐 罫線スナップ</span>
+        <span class="ocr-pill">罫線スナップ</span>
         <span class="ocr-pill">セル中心XY同時吸付</span>
         <span class="ocr-pill">緑外枠ハイライト</span>
         <span class="ocr-pill">扁平率フィルタ</span>
       </div>
 
       <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:8px;">
-        アクションバーの <strong>📐 罫線スナップ</strong> ボタンを押すと、ベースPDFの罫線(直線・矩形)を自動検出して、枠で囲まれたセル中心が <span style="color:#00cc44; font-weight:700;">緑の +</span> マーカーで可視化されます。画像をドラッグするとそのセル中心にXY同時にピタッと吸い付き、対象セルが <span style="color:#00cc44; font-weight:700;">緑の外枠ハイライト</span> で確認できます。
+        アクションバーの <strong>罫線スナップ</strong> のスイッチを入れると、ベースPDFの罫線(直線・矩形)を自動検出して、枠で囲まれたセル中心が <span style="color:#00cc44; font-weight:700;">緑の +</span> マーカーで可視化されます。画像をドラッグするとそのセル中心にXY同時にピタッと吸い付き、対象セルが <span style="color:#00cc44; font-weight:700;">緑の外枠ハイライト</span> で確認できます。
       </p>
 
       <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:16px 20px; margin-top:16px; font-family:'JetBrains Mono', monospace; font-size:12.5px; line-height:1.9;">
@@ -8289,7 +8312,7 @@
       </div>
 
       <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:16px;">
-        自動検出されない枠があったり、独自に範囲を決めたい場合は <strong>✏️ カスタムセル</strong> ボタン。ONにして枠内をドラッグすれば自分用の矩形を追加できます。4隅ハンドルでリサイズ、本体ドラッグで移動、× で削除、+ で複製。罫線スナップONなら既存罫線にも吸い付きながら描画できます。
+        自動検出されない枠があったり、独自に範囲を決めたい場合は <strong>カスタムセル</strong> のスイッチ。入にして枠内をドラッグすれば自分用の矩形を追加できます。4隅ハンドルでリサイズ、本体ドラッグで移動、× で削除、+ で複製。罫線スナップONなら既存罫線にも吸い付きながら描画できます。
       </p>
     </div>
   </section>
@@ -8317,9 +8340,9 @@
           <span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span>
         </div>
         <div>
-          <div class="quality-name">🎯 順次配置</div>
+          <div class="quality-name">順次配置</div>
           <div class="quality-spec">クリックで1枚ずつ順番配置</div>
-          <p class="quality-use">複数選択した状態でアクションバーの <strong>🎯 順次配置</strong> ボタン → canvas が照準モード → クリックで Queue 先頭から順番に配置。カーソル追従で次に置く画像のサムネ+ファイル名が表示。罫線スナップと組合せると セル芯に1枚ずつ ピタッと配置できる。</p>
+          <p class="quality-use">複数選択した状態でアクションバーの <strong>順次配置</strong> ボタン → canvas が照準モード → クリックで Queue 先頭から順番に配置。カーソル追従で次に置く画像のサムネ+ファイル名が表示。罫線スナップと組合せると セル芯に1枚ずつ ピタッと配置できる。</p>
         </div>
       </div>
     </div>
@@ -8338,7 +8361,7 @@
 
     <div class="heic-hero">
       <ul style="margin-left:1.5em;line-height:2; font-size:14px; color:var(--ink-2);">
-        <li><strong>追加PDF</strong>: アクションバーの「📄+ PDF追加」ボタン、または canvas 領域にPDFをドラッグ&ドロップ。末尾にページが連結。</li>
+        <li><strong>追加PDF</strong>: アクションバーの「PDF追加」ボタン、または canvas 領域にPDFをドラッグ&ドロップ。末尾にページが連結。</li>
         <li><strong>ページ削除</strong>: 左サムネにマウスホバー → 右上の赤い × ボタン。配置済画像/カスタムセルも自動で一緒に削除。</li>
         <li><strong>ページ複数選択</strong>: Ctrl+クリック / Shift+クリック / 空きエリアからドラッグでラバーバンド選択。橙枠でハイライト。</li>
         <li><strong>一括削除</strong>: 複数ページ選択中に × ボタンで選択中の全ページを一括削除。</li>
@@ -8360,7 +8383,7 @@
         <li><strong>列幅ドラッグ</strong>: 左ペインと中央、中央と右ペインの間の縦バーをドラッグで列幅変更。設定は localStorage に保存。</li>
         <li><strong>右ペイン内 上下スプリッター</strong>: プロパティ枠と画像ライブラリの境界もドラッグで上下調整。</li>
         <li><strong>列数自動増減</strong>: 右画像ライブラリは幅に応じて 2→3→4列に自動増減 (auto-fill)。</li>
-        <li><strong>1/3 サイズ制限 📏</strong>: 画像配置時の初期サイズをページの1/3 までに自動圧縮 (ON/OFF切替)。</li>
+        <li><strong>1/3に縮小</strong>: 画像を置く時の大きさを、ページの 1/3 までに自動で縮めます(切ると原寸換算)。</li>
       </ul>
     </div>
   </section>
@@ -8374,10 +8397,10 @@
 
     <div class="heic-hero">
       <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85;">
-        アクションバーの <strong>💾 プロジェクト保存</strong> でベースPDF + 配置画像 + カスタムセル + キャプション すべて含む <code>.lpw</code> ファイル(JSON形式)を出力。「名前を付けて保存」ダイアログで保存先を選べる(Chrome/Edge)。
+        アクションバーの <strong>プロジェクト保存</strong> でベースPDF + 配置画像 + カスタムセル + キャプション すべて含む <code>.lpw</code> ファイル(JSON形式)を出力。「名前を付けて保存」ダイアログで保存先を選べる(Chrome/Edge)。
       </p>
       <p style="font-size:14.5px; color:var(--ink-muted); line-height:1.85; margin-top:12px;">
-        ベースPDF読込前の画面にある <strong>📂 プロジェクト読込</strong> から復元。さらに <strong>autosave</strong> 機能でブラウザの IndexedDB に5秒debounceで自動保存、同じPDFを開き直すと「前回の状態を復元しますか?」とダイアログ提案。
+        ベースPDF読込前の画面にある <strong>プロジェクト読込</strong> から復元。さらに <strong>autosave</strong> 機能でブラウザの IndexedDB に5秒debounceで自動保存、同じPDFを開き直すと「前回の状態を復元しますか?」とダイアログ提案。
       </p>
     </div>
   </section>
@@ -9118,7 +9141,7 @@
       <details class="faq-item">
         <summary class="faq-summary">分割ポイントはどう追加する?</summary>
         <div class="faq-body">
-          <p>ページとページの間、ページカードの<strong>右端</strong>に小さな「✂チップ」ボタンがあります。クリックすると青く点灯し、そのページの後ろで分割されます。</p>
+          <p>ページとページの間、ページカードの<strong>右端</strong>に小さな「はさみ」のボタンがあります。クリックすると青く点灯し、そのページの後ろで分割されます。</p>
           <p>分割ポイントが追加されると、ページ間に<strong>青い点線バー</strong>と「<strong>PART 2 START</strong>」などのタグが表示され、どこで分割されるかが一目で分かります。</p>
         </div>
       </details>
@@ -9126,7 +9149,7 @@
         <summary class="faq-summary">分割と抽出の違いは?</summary>
         <div class="faq-body">
           <p>似てますが用途が違います:</p>
-          <p><strong>分割(✂)</strong>: すべてのページを使って、境界で区切って複数PDFに。20ページを5,5,10で3分割 → 合計20ページ全部が3つのPDFに入る<br>
+          <p><strong>分割</strong>: すべてのページを使って、境界で区切って複数PDFに。20ページを5,5,10で3分割 → 合計20ページ全部が3つのPDFに入る<br>
           <strong>抽出(選択を取り出し)</strong>: 選んだページ<strong>だけ</strong>を1つのPDFに。20ページから3ページ選択 → 3ページだけのPDFが出る(残り17ページは使われない)</p>
         </div>
       </details>
@@ -9259,7 +9282,22 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
-        <summary class="faq-summary">v4.7.0 (2026-10-03) — 📐 図面の寸法から縮尺を読み取るように</summary>
+        <summary class="faq-summary">v4.8.0 (2026-10-28) — 画面を整理しました</summary>
+        <div class="faq-body">
+          <p><strong>画面の飾りを減らして、中身が読みやすくなりました。</strong>機能と数値は何も変わっていません。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>ボタンに付いていた絵文字をやめました。文字だけになり、何のボタンかが読みやすくなります</li>
+            <li><strong>入/切の切り替えはスイッチになりました</strong>(画像配置の「スナップ」「罫線スナップ」「カスタムセル」「1/3に縮小」、図面変換の「変換される線を青で表示」)。
+            以前は押すたびに文字が「ON」「OFF」と入れ替わってボタンの幅が動いていましたが、文字が固定になったので押し間違えにくくなります</li>
+            <li>塗りつぶしの「黒で塗る」「背景色で消す」は、小さな色の点でどちらの色かが分かるようにしました</li>
+            <li>「1/3制限」は「<strong>1/3に縮小</strong>」に名前を変えました(何が起きるかが分かるように)</li>
+            <li>警告の印を ⚠ に統一しました。完了の ✓ と警告の ⚠ だけを残し、ほかの飾りの記号はやめています</li>
+            <li>この取説も、実際のボタンの名前に合わせて17か所を書き直しました</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-summary">v4.7.0 (2026-10-03) — 図面の寸法から縮尺を読み取るように</summary>
         <div class="faq-body">
           <p><strong>図面に書いてある寸法の文字から、その図面が本来何分の1かを自動で読み取るようにしました。</strong>縮尺の取り違えを防ぎ、変換の答え合わせも自動で出します(PART 08 参照)。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9272,7 +9310,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.6.0 (2026-09-21) — 📐 図面変換でメーカーのDXFも読めるように</summary>
+        <summary class="faq-summary">v4.6.0 (2026-09-21) — 図面変換でメーカーのDXFも読めるように</summary>
         <div class="faq-body">
           <p><strong>「図面変換」タブに、メーカーからもらった DXF もそのまま入れられるようになりました。</strong>Jw_cad で開くと外形が途切れてしまう DXF を、開ける形に直します(PART 08 参照)。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9285,7 +9323,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.5.0 (2026-09-21) — 📐 図面変換(PDF→JWW / DXF)</summary>
+        <summary class="faq-summary">v4.5.0 (2026-09-21) — 図面変換(PDF→JWW / DXF)</summary>
         <div class="faq-body">
           <p><strong>新しいタブ「図面変換」を追加しました。</strong>CADから出力したPDFの図面を、Jw_cad の図面ファイル(JWW)に変換します(PART 08 参照)。DXF でも保存できます。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9304,7 +9342,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.4.0 (2026-08-03) — ✂️ 編集ロック付きPDFもPDF編集で扱えるように</summary>
+        <summary class="faq-summary">v4.4.0 (2026-08-03) — 編集ロック付きPDFもPDF編集で扱えるように</summary>
         <div class="faq-body">
           <p><strong>「編集ロック」がかかっていて開けなかったPDFを、画像に変換して編集できるようになりました。</strong>点検報告書など、作成ソフトが自動でロックをかけたPDFが対象です。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9315,13 +9353,13 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.3.1 (2026-07-10) — 📖 取説の章順をタブ順に統一</summary>
+        <summary class="faq-summary">v4.3.1 (2026-07-10) — 取説の章順をタブ順に統一</summary>
         <div class="faq-body">
           <p>スマホ転送がいちばん左のタブになったのに合わせて、取扱説明書の章順も「スマホ転送」を PART 01 に変更しました(以降の章は番号を振り直し)。内容・機能に変更はありません。</p>
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.3.0 (2026-07-07) — 📲 スマホ転送が最初の画面になりました</summary>
+        <summary class="faq-summary">v4.3.0 (2026-07-07) — スマホ転送が最初の画面になりました</summary>
         <div class="faq-body">
           <p><strong>アプリを開くと最初に「スマホ転送」が表示されるようになりました(上部タブの一番左)。</strong>QRコードがすぐ出るので、現場写真の取り込みが速くなります。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9332,7 +9370,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.2.0 (2026-07-07) — 🖼 iPhoneのHDR写真(HEIC)が読めるように</summary>
+        <summary class="faq-summary">v4.2.0 (2026-07-07) — iPhoneのHDR写真(HEIC)が読めるように</summary>
         <div class="faq-body">
           <p><strong>これまで「画像→PDF」で読み込めなかった一部のHEIC写真(iPhoneのHDR写真など)が読み込めるようになりました。</strong></p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9342,19 +9380,19 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.1.2 (2026-07-06) — 📖 タブ名を「塗りつぶし」に変更</summary>
+        <summary class="faq-summary">v4.1.2 (2026-07-06) — タブ名を「塗りつぶし」に変更</summary>
         <div class="faq-body">
           <p>上部タブの「黒塗り」を<strong>「塗りつぶし」</strong>に変更しました(取扱説明書の章名も同様)。黒と背景色のどちらでも塗れる機能になったためです。機能・操作に変更はありません。</p>
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.1.1 (2026-07-06) — 📖 文言の手直し(機能変更なし)</summary>
+        <summary class="faq-summary">v4.1.1 (2026-07-06) — 文言の手直し(機能変更なし)</summary>
         <div class="faq-body">
           <p>「背景色で消す」の追加(v4.1.0)に合わせて、画面と取扱説明書の文言を整理しました。黒を前提にした説明を「塗りつぶし」に統一し、<strong>背景色で消した場合の出力ファイル名を「修正_日付.pdf」に変更</strong>(ファイル名でも消した痕跡を出しません。黒は従来どおり「墨消し_日付.pdf」)。機能・操作に変更はありません。</p>
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.1.0 (2026-07-06) — ⬜ 黒塗りに「背景色で消す」を追加</summary>
+        <summary class="faq-summary">v4.1.0 (2026-07-06) — 黒塗りに「背景色で消す」を追加</summary>
         <div class="faq-body">
           <p><strong>黒い帯ではなく、周囲の紙の色で塗りつぶせるようになりました。</strong>図面から名前を消しても、消した痕が目立ちません。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9365,7 +9403,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v4.0.0 (2026-07-02) — 🎉 メジャーアップデート(2GB対応)</summary>
+        <summary class="faq-summary">v4.0.0 (2026-07-02) — メジャーアップデート(2GB対応)</summary>
         <div class="faq-body">
           <p><strong>スマホ転送で 1ファイル 2GB まで送れるようになりました。</strong>現場の動画もそのまま送れます。あわせて、7つの道具(軽量化・画像→PDF・変換・PDF編集・画像配置・黒塗り・スマホ転送)が揃った節目として v4.0 になりました。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9376,7 +9414,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.12.0 (2026-07-02) — 📲 スマホ転送がパソコン→スマホにも対応</summary>
+        <summary class="faq-summary">v3.12.0 (2026-07-02) — スマホ転送がパソコン→スマホにも対応</summary>
         <div class="faq-body">
           <p><strong>スマホ転送が双方向になりました。</strong>「スマートフォンへ送る」からファイルを選ぶ(またはドラッグ&amp;ドロップ)と、スマートフォン側に「保存」ボタン付きで届きます。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9387,7 +9425,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.11.0 (2026-07-02) — 📲 スマホ転送</summary>
+        <summary class="faq-summary">v3.11.0 (2026-07-02) — スマホ転送</summary>
         <div class="faq-body">
           <p><strong>新しいタブ「スマホ転送」を追加。</strong>QRコードを読み取るだけで、スマートフォンの写真・ファイルをこのパソコンで受け取れます(「スマホ転送」の章参照)。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9398,13 +9436,13 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.10.0 (2026-07-02) — 🚚 配布サーバ移転</summary>
+        <summary class="faq-summary">v3.10.0 (2026-07-02) — 配布サーバ移転</summary>
         <div class="faq-body">
           <p>アプリの配布と自動更新の取得先を新しいサーバへ移転しました。<strong>機能・操作に変更はありません。</strong>あわせて取扱説明書に「黒塗り」の章を追加しました。</p>
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.9.0 (2026-06-29) — 🔄 軽量化の自動フォールバック</summary>
+        <summary class="faq-summary">v3.9.0 (2026-06-29) — 軽量化の自動フォールバック</summary>
         <div class="faq-body">
           <p><strong>「圧縮しても元のまま」だったPDFを、自動で画像化して確実に縮めます。</strong></p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9416,7 +9454,7 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.8.0 (2026-06-11) — 🖤 黒塗り(墨消し)</summary>
+        <summary class="faq-summary">v3.8.0 (2026-06-11) — 黒塗り(墨消し)</summary>
         <div class="faq-body">
           <p><strong>新モード「黒塗り」を追加。</strong>見せたくない情報を、本当に消します(「塗りつぶし(墨消し)」の章参照)。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
@@ -9427,9 +9465,9 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.7.0 (2026-06-02) — 🔏 透かし (ウォーターマーク)</summary>
+        <summary class="faq-summary">v3.7.0 (2026-06-02) — 透かし (ウォーターマーク)</summary>
         <div class="faq-body">
-          <p><strong>「社外秘」などの薄い文字を全ページに斜めに重ねる機能。</strong>右上の⚙️設定で ON/OFF(既定オフ)。</p>
+          <p><strong>「社外秘」などの薄い文字を全ページに斜めに重ねる機能。</strong>右上の「設定」で入/切(既定は切)。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
             <li>「社外秘 / 複製禁止 / DRAFT」をワンタップで選択。自由入力もOK</li>
             <li>全ページ中央に45度・薄いグレーで1個。もし流出してもどこ由来か分かるように</li>
@@ -9440,9 +9478,9 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary class="faq-summary">v3.6.0 (2026-06-02) — 🛡 配布前サニタイズ (メタデータ除去)</summary>
+        <summary class="faq-summary">v3.6.0 (2026-06-02) — 配布前サニタイズ (メタデータ除去)</summary>
         <div class="faq-body">
-          <p><strong>出力するPDFから「隠れた個人情報」を自動で消す機能。</strong>右上の⚙️設定で ON/OFF。</p>
+          <p><strong>出力するPDFから「隠れた個人情報」を自動で消す機能。</strong>右上の「設定」で入/切。</p>
           <ul style="margin-left:1.5em;line-height:1.9;">
             <li>作成者・タイトル・作成日・使用ソフト名などのメタデータを、PDF出力時に自動でクリア(デフォルトON)</li>
             <li>「前の客先名が作成者欄に残ってた」「社内テンプレ流用がバレる」といった<strong>うっかり情報漏洩を防止</strong></li>
@@ -9543,7 +9581,7 @@
             <li><strong>ページ削除 × ボタン</strong> — サムネホバーで出現、配置画像も同時に整理</li>
             <li><strong>画像ライブラリも複数選択</strong> (Ctrl/Shift/ラバーバンド)</li>
             <li><strong>選択した複数画像を一括ドラッグ配置</strong> — オフセット並べ</li>
-            <li><strong>順次配置モード(🎯)</strong> — クリックで1枚ずつ順番配置 + 次に置く画像のサムネ+ファイル名がカーソル追従</li>
+            <li><strong>順次配置モード</strong> — クリックで1枚ずつ順番配置 + 次に置く画像のサムネ+ファイル名がカーソル追従</li>
             <li><strong>配置画像も複数選択 → 画面下ゴミ箱で一括削除</strong></li>
             <li><strong>画像ドロップゾーン上でホイール</strong>でライブラリ内スクロール</li>
             <li><strong>PDFドロップ時に枠外オレンジ表示</strong></li>
@@ -9561,7 +9599,7 @@
             <li><strong>カスタムセル編集</strong> — 4隅ハンドルでリサイズ / 本体ドラッグで移動 / × で削除 / + で複製</li>
             <li><strong>平行アライメントガイド</strong> — 他セルと整列時に橙色ガイド線</li>
             <li><strong>Shift+ドラッグで水平/垂直拘束</strong></li>
-            <li><strong>画像配置サイズ 1/3 制限トグル</strong> — 配置時にページ1/3まで自動圧縮 (📏)</li>
+            <li><strong>1/3に縮小</strong> — 画像を置く時にページ 1/3 まで自動で縮める</li>
             <li><strong>起動時自動アップデートチェック</strong> + .exe / .vbs ランチャー(ZIP配布)</li>
             <li><strong>プロジェクト保存に「名前を付けて保存」ダイアログ</strong></li>
           </ul>
@@ -9628,7 +9666,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.7.0';
+  const APP_VERSION = '4.8.0';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -10696,7 +10734,7 @@ window.PdfSanitize = (function () {
           metaHtml += `<span class="meta-tag mode-tag">${modeLabel}モード</span>`;
         }
         if (f.ocrApplied) {
-          metaHtml += `<span class="meta-tag ocr-tag">🔍 OCR済</span>`;
+          metaHtml += `<span class="meta-tag ocr-tag">OCR済</span>`;
         }
         const noteStr = f.note ? ` (${f.note})` : '';
         statusHtml = `<div class="status done">✓ 完了${noteStr}</div>`;
@@ -13449,7 +13487,7 @@ window.PdfSanitize = (function () {
             // 「3分割のつもりが1本の結合PDF」事故になるので、消した時だけ告知する
             const hadSplits = splits.size > 0;
             splits.clear();
-            if (hadSplits) setStatus('並び替えたため、分割ポイント(✂)を解除しました。必要なら付け直してください', 'info');
+            if (hadSplits) setStatus('並び替えたため、分割ポイントを解除しました。必要なら付け直してください', 'info');
             render();
           }
         });
@@ -13971,7 +14009,7 @@ window.PdfSanitize = (function () {
       if (lineDetectionEnabled && lineDetectBtn) {
         lineDetectionEnabled = false;
         lineDetectBtn.dataset.active = 'off';
-        lineDetectBtn.textContent = '📐 罫線スナップ OFF';
+        lineDetectBtn.setAttribute('aria-checked', 'false');
       }
       // カスタムセル + ハイライト + アライメントガイドもリセット
       customCellsByPage = {};
@@ -13992,7 +14030,7 @@ window.PdfSanitize = (function () {
       if (customCellModeOn && customCellBtn) {
         customCellModeOn = false;
         customCellBtn.dataset.active = 'off';
-        customCellBtn.textContent = '✏️ カスタムセル OFF';
+        customCellBtn.setAttribute('aria-checked', 'false');
         if (customCellLayer) customCellLayer.classList.remove('active');
       }
       setStatus('');
@@ -15314,7 +15352,7 @@ window.PdfSanitize = (function () {
     function updateSnapBtn() {
       if (!snapBtn) return;
       snapBtn.dataset.snap = snapEnabled ? 'on' : 'off';
-      if (snapLabel) snapLabel.textContent = snapEnabled ? 'スナップ ON' : 'スナップ OFF';
+      if (snapBtn) snapBtn.setAttribute('aria-checked', snapEnabled ? 'true' : 'false');   // 文字は「スナップ」で固定。入/切はスイッチのつまみで示す
     }
 
     // ----- 選択ヘルパー -----
@@ -17156,11 +17194,11 @@ window.PdfSanitize = (function () {
       const btn = document.getElementById('imgPlacePlaceQueueBtn');
       if (!btn) return;
       if (placeQueueMode) {
-        btn.textContent = '⏹ 順次配置中止 (残り' + placeQueue.length + ')';
+        btn.textContent = '順次配置を中止 (残り' + placeQueue.length + ')';
         btn.dataset.active = 'on';
         btn.style.display = '';
       } else if (libSelectedIds.length > 0) {
-        btn.textContent = '🎯 順次配置 (' + libSelectedIds.length + '枚)';
+        btn.textContent = '順次配置 (' + libSelectedIds.length + '枚)';
         btn.dataset.active = 'off';
         btn.style.display = '';
       } else {
@@ -17543,7 +17581,7 @@ window.PdfSanitize = (function () {
       lineDetectBtn.addEventListener('click', async () => {
         lineDetectionEnabled = !lineDetectionEnabled;
         lineDetectBtn.dataset.active = lineDetectionEnabled ? 'on' : 'off';
-        lineDetectBtn.textContent = lineDetectionEnabled ? '📐 罫線スナップ ON' : '📐 罫線スナップ OFF';
+        lineDetectBtn.setAttribute('aria-checked', lineDetectionEnabled ? 'true' : 'false');
         if (linesOverlay) linesOverlay.classList.toggle('visible', lineDetectionEnabled);
         // 即時に現ページを再解析
         if (lineDetectionEnabled && pdfjsDoc) {
@@ -17567,12 +17605,12 @@ window.PdfSanitize = (function () {
       });
     }
 
-    // ----- 1/3 サイズ制限トグルボタン -----
+    // ----- 「1/3に縮小」のスイッチ -----
     const sizeCapBtn = document.getElementById('imgPlaceSizeCapBtn');
     function applySizeCapBtnState() {
       if (!sizeCapBtn) return;
       sizeCapBtn.dataset.active = sizeCapEnabled ? 'on' : 'off';
-      sizeCapBtn.textContent = sizeCapEnabled ? '📏 1/3制限 ON' : '📏 1/3制限 OFF';
+      sizeCapBtn.setAttribute('aria-checked', sizeCapEnabled ? 'true' : 'false');
     }
     applySizeCapBtnState();
     if (sizeCapBtn) {
@@ -17767,7 +17805,7 @@ window.PdfSanitize = (function () {
       customCellBtn.addEventListener('click', () => {
         customCellModeOn = !customCellModeOn;
         customCellBtn.dataset.active = customCellModeOn ? 'on' : 'off';
-        customCellBtn.textContent = customCellModeOn ? '✏️ カスタムセル ON' : '✏️ カスタムセル OFF';
+        customCellBtn.setAttribute('aria-checked', customCellModeOn ? 'true' : 'false');
         customCellLayer.classList.toggle('active', customCellModeOn);
         // ON 直後に既存セルを再描画（hover/title が変わる）
         renderCustomCells();
@@ -18688,8 +18726,8 @@ window.PdfSanitize = (function () {
       if (_bn){
         // 読取失敗時は「ありません」と断定しない文言へ(毎頁で再設定するので前頁の文言を引きずらない)
         _bn.textContent = st.textFetchFailed
-          ? '⬚ このページの文字データを読み取れませんでした。「自由に四角」で隠したい所を囲ってください。'
-          : '⬚ このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。';
+          ? 'このページの文字データを読み取れませんでした。「自由に四角」で隠したい所を囲ってください。'
+          : 'このページは文字データがありません(スキャン画像/CAD出力など)。「自由に四角」で隠したい所を囲ってください。';
         _bn.classList.toggle('show', !st.pageHasText);
       }
       // 希望モードを再適用(文字有りページなら text に復帰、無ければ rect 矯正)
@@ -19081,7 +19119,7 @@ window.PdfSanitize = (function () {
         rdStatus('本当に消えたか検証中…');
         var v = await verifyRedaction(gen.outBytes, gen.affected);
         if (!v.ok){
-          rdStatus('❌ ページ' + v.page + ' に文字が残っていました。安全のため出力を中止しました(不具合報告をお願いします)。', true);
+          rdStatus('⚠ ページ' + v.page + ' に文字が残っていました。安全のため出力を中止しました(不具合報告をお願いします)。', true);
           if (btn) btn.disabled = false;
           return;
         }
@@ -19095,7 +19133,7 @@ window.PdfSanitize = (function () {
       } catch(e){
         console.error('redact export failed', e);
         var enc = e && /encrypt/i.test(String(e.message || e));
-        rdStatus('❌ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
+        rdStatus('⚠ ' + (enc ? '暗号化されたPDFは塗りつぶしできません(パスワードを解除してから読み込んでください)。'
                               : '出力に失敗しました: ' + (e && e.message ? e.message : e)), true);
         if (btn) btn.disabled = false;
         return;
@@ -19123,7 +19161,7 @@ window.PdfSanitize = (function () {
       var wrap = document.getElementById('redactCanvasWrap');
       if (wrap) wrap.classList.toggle('fill-paper', paper);   // 仮表示セルの見た目を追随
       var btn = document.getElementById('redactExportBtn');
-      if (btn) btn.textContent = paper ? '⬜ 背景色で消して出力' : '🖤 黒塗りして出力';
+      if (btn) btn.textContent = paper ? '背景色で消して出力' : '黒塗りして出力';
     }
     if (_rdFillBlack && _rdFillPaper){
       _rdFillBlack.addEventListener('click', function(){
@@ -19240,7 +19278,11 @@ window.PdfSanitize = (function () {
       elLoading.hidden = false;
       if (!navigator.onLine){ showOffline(); return; }
       loadScript(SDK_APP)
-        .then(function(){ return loadScript(SDK_DB); })
+        .then(function(){
+  // 一覧の種類の印。絵文字をやめ、線の太さをそろえたアイコンにする
+  var HIKARI_ICON_IMAGE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+  var HIKARI_ICON_DOC = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+ return loadScript(SDK_DB); })
         .then(function(){ return loadScript(QR_LIB); })
         .then(start)
         .catch(function(e){
@@ -19314,7 +19356,7 @@ window.PdfSanitize = (function () {
       var row = document.createElement('div');
       row.className = 'hikari-row';
       row.innerHTML =
-        '<div class="hikari-row-thumb">' + (isImage ? '🖼' : '📄') + '</div>' +
+        '<div class="hikari-row-thumb">' + (isImage ? HIKARI_ICON_IMAGE : HIKARI_ICON_DOC) + '</div>' +
         '<div class="hikari-row-body">' +
           '<div class="hikari-row-name">' + escapeHtml(meta.name || 'ファイル') + '</div>' +
           '<div class="hikari-row-size">' + formatBytes(meta.size || 0) + '</div>' +
@@ -19379,7 +19421,7 @@ window.PdfSanitize = (function () {
       var row = document.createElement('div');
       row.className = 'hikari-row done';
       row.innerHTML =
-        '<div class="hikari-row-thumb">' + (isImage ? '🖼' : '📄') + '</div>' +
+        '<div class="hikari-row-thumb">' + (isImage ? HIKARI_ICON_IMAGE : HIKARI_ICON_DOC) + '</div>' +
         '<div class="hikari-row-body">' +
           '<div class="hikari-row-name">' + escapeHtml(meta.name || 'ファイル') + '</div>' +
           '<div class="hikari-row-size">' + formatBytes(meta.size || 0) + '</div>' +

@@ -18,11 +18,28 @@ const OUT = path.join(ROOT, 'index.html');
 // アプリJS は src/app/*.js をファイル名のソート順に連結して1つの payload にする。
 //   00-core / 10-img2pdf / 20-convert / 30-pdfedit / 40-imgplace / 50-redact / 90-settings
 //   連番プレフィックスで順序を固定(連結のみ・区切り文字なし=byte一致)。
+// ガード: src の改行コードの混在。1行だけ LF の行が混ざると、Git の改行変換(core.autocrlf)で
+//   チェックアウトのたびに bundle が1バイトずれ、--check が永久に通らなくなる(2026-10-28 に実際に発生)。
+//   このリポジトリの原本はすべて CRLF。裸の LF・裸の CR を見つけたら、どのファイルの何行目かを出して止める。
+function assertCrlf(file, text) {
+  const marked = text.split(String.fromCharCode(13) + String.fromCharCode(10)).join(String.fromCharCode(1));
+  for (const ch of [String.fromCharCode(10), String.fromCharCode(13)]) {
+    const at = marked.indexOf(ch);
+    if (at < 0) continue;
+    const line = marked.slice(0, at).split(String.fromCharCode(1)).length;
+    const what = ch === String.fromCharCode(10) ? 'LF' : 'CR';
+    throw new Error(file + ' の ' + line + ' 行目が裸の ' + what + ' で終わっている。このリポジトリの原本は CRLF で揃える');
+  }
+}
 function buildAppPayload() {
   const dir = path.join(ROOT, 'src', 'app');
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort();
   if (files.length === 0) throw new Error('src/app/ に .js が無い');
-  return files.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('');
+  return files.map(f => {
+    const text = fs.readFileSync(path.join(dir, f), 'utf8');
+    assertCrlf('src/app/' + f, text);
+    return text;
+  }).join('');
 }
 
 // sentinel → 差し込むペイロード。各 sentinel はテンプレート内にちょうど1回出現する。

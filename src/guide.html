@@ -3555,6 +3555,18 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.8.1 (2026-10-29) — スマホ転送の受信が動かない不具合を直しました</summary>
+        <div class="faq-body">
+          <p><strong>v4.8.0 で、スマートフォンから送った写真がパソコン側に出てこなくなっていました。</strong>この版で直っています。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>症状: スマートフォンで送信しても、パソコンの「受信待ち」に写真の行が出ず、「受信」ボタンを押せませんでした</li>
+            <li>原因: v4.8.0 で一覧の印を絵文字からアイコンに変えた際、その定義を書く場所を誤っていました</li>
+            <li><strong>パソコンからスマートフォンへの送信、および他の6つの機能には影響していません</strong></li>
+          </ul>
+          <p>お手数をおかけしました。同じ不具合が二度起きないよう、受信の流れを通して確かめる自動テストを追加しています。</p>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.8.0 (2026-10-28) — 画面を整理しました</summary>
         <div class="faq-body">
           <p><strong>画面の飾りを減らして、中身が読みやすくなりました。</strong>機能と数値は何も変わっていません。</p>

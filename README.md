@@ -1,9 +1,9 @@
 # PDF Compact
 
-> **Version 4.8.0** · 2026-10-28
+> **Version 4.8.1** · 2026-10-29
 > ブラウザ完結型・サーバー不要・100% LOCAL の PDF ツールキット
 
-[![download](https://img.shields.io/badge/download-ZIP%20(4.8.0)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
+[![download](https://img.shields.io/badge/download-ZIP%20(4.8.1)-1a85ff?style=for-the-badge)](https://pdfcompact.pages.dev/PDF_Compact.zip)
 
 ---
 
@@ -47,6 +47,13 @@
 ---
 
 ## 📋 更新履歴
+
+### v4.8.1 (2026-10-29) — Patch (スマホ転送の受信が動かない不具合の修正)
+- **症状**: スマホから送っても PC の「受信待ち」に行が出ず、承認ボタンが出ない(枠だけ出て中身が空)。v4.8.0 で持ち込んだ回帰
+- **原因**: `HIKARI_ICON_IMAGE` / `HIKARI_ICON_DOC` の宣言が `init()` 内の `.then(function(){ ... })` に紛れ込んでいた。`var` は関数スコープなので兄弟関数から見えず、`addPendingRow` / `addDoneRow` が `ReferenceError` で落ちる。例外の直前に `pendingCard.hidden = false` を通るため「枠だけ出る」症状になっていた
+- **影響範囲**: スマホ→PC の受信のみ。PC→スマホ送信と他6モードは無影響。本体アプリ「PC便利ツール集」の Hikari は Electron 側の別実装なので無影響
+- **直し**: 宣言をモジュール直下(他の定数の隣)へ移動
+- **番犬**: Firebase SDK と QR ライブラリを `page.route` で差し替え、**受信の筋を実際に通す**回帰テストを2本追加。壊れた v4.8.0 の版では `ReferenceError: HIKARI_ICON_IMAGE is not defined` で落ちることを確認済み。既存3本はタブ切替・SDK遅延ロード・送信UIしか見ておらず、受信経路が素通しだったのが見逃しの理由
 
 ### v4.8.0 (2026-10-28) — Minor (画面から AI っぽさを抜く)
 - 基準は `~/.claude/docs/ui-feel.md` §7。**色味は変えず**、部品の形・配置・盛った飾りだけを直す

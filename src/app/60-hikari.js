@@ -22,6 +22,10 @@
     var SDK_DB  = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js';
     var QR_LIB  = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
+    // 一覧の種類の印。絵文字をやめ、線の太さをそろえたアイコンにする
+    var HIKARI_ICON_IMAGE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+    var HIKARI_ICON_DOC = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+
     var tab = document.querySelector('.mode-tab[data-mode="hikari"]');
     var elLoading = document.getElementById('hikariLoading');
     var elOffline = document.getElementById('hikariOffline');
@@ -98,11 +102,7 @@
       elLoading.hidden = false;
       if (!navigator.onLine){ showOffline(); return; }
       loadScript(SDK_APP)
-        .then(function(){
-  // 一覧の種類の印。絵文字をやめ、線の太さをそろえたアイコンにする
-  var HIKARI_ICON_IMAGE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-  var HIKARI_ICON_DOC = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
- return loadScript(SDK_DB); })
+        .then(function(){ return loadScript(SDK_DB); })
         .then(function(){ return loadScript(QR_LIB); })
         .then(start)
         .catch(function(e){

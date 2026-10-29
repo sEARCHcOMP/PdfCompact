@@ -70,6 +70,7 @@ pwsh build/release.ps1 -Version x.y.z -Notes "利用者向けの日本語説明"
 | **PDF編集** | `pdf-lib` は暗号化PDFを復号できない。編集ロック付きは `ignoreEncryption:true` で強行すると**壊れたPDFを無言で出力**する。v4.4.0 以降は確認のうえ画像化して非保護PDFに変換してから通常フローへ流す |
 | **PDF分割** | `copyPages()` は未使用リソースを剪定しきれずサイズ爆発。戦略A(`removePage`)/B(`copyPages`)を自動切替済 |
 | **jsPDF** | CDN落ち防御で `const jsPDF = (window.jspdf && window.jspdf.jsPDF) \|\| null;` を維持 |
+| **スマホ転送(Hikari)** | 行の見た目だけを触る時も、受信の筋(`addPendingRow` / `addDoneRow`)を `tests/hikari.spec.js` の差し替えテスト(Firebase SDK と QR を `page.route` で偽物にして通知を人の手で起こす)で**必ず通す**。**定数を足す時は宣言行のインデントを見る**: v4.8.0 で `HIKARI_ICON_IMAGE` / `HIKARI_ICON_DOC` の宣言が `init()` 内のコールバックに紛れ込み、関数スコープのため使用側から見えず `ReferenceError` で受信が丸ごと止まった(構文エラーにならないのでビルドも `--check` も素通りする。例外の直前に `pendingCard.hidden = false` を通るため「受信待ちの枠だけ出て中身が空」という分かりにくい症状になる) |
 | **取説** | `src/guide.html` が正。bundle 内に埋め込まれるので**取説を直したら必ず再ビルド**。章の id(`part-hikari` 等)はタブ連動スクロールのキーなので改名しない |
 | **リリース履歴の日付** | セッションが日を跨ぐと手書き日付が古いままになる事故が2回。**書く直前に実日付を確認**し、release.ps1 が打つREADMEバッジと突き合わせる |
 | **逆スラッシュの表記** | Claude がツール経由でファイルを書くと、`\u0000` や `\n` などの表記が本物の文字(NUL・改行)に化けることがある。NUL が正規表現に入った結果、連結スクリプトごと読めず**全機能が停止**した(v4.5.0 開発中、テストで検出)。**ソースには文字コードの数値で書く**(`String.fromCharCode(10)`、`c >= 0x20` 等)。build.js が制御文字を検出したら止まる |

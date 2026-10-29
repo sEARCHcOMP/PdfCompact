@@ -9282,6 +9282,18 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
+        <summary class="faq-summary">v4.8.1 (2026-10-29) — スマホ転送の受信が動かない不具合を直しました</summary>
+        <div class="faq-body">
+          <p><strong>v4.8.0 で、スマートフォンから送った写真がパソコン側に出てこなくなっていました。</strong>この版で直っています。</p>
+          <ul style="margin-left:1.5em;line-height:1.9;">
+            <li>症状: スマートフォンで送信しても、パソコンの「受信待ち」に写真の行が出ず、「受信」ボタンを押せませんでした</li>
+            <li>原因: v4.8.0 で一覧の印を絵文字からアイコンに変えた際、その定義を書く場所を誤っていました</li>
+            <li><strong>パソコンからスマートフォンへの送信、および他の6つの機能には影響していません</strong></li>
+          </ul>
+          <p>お手数をおかけしました。同じ不具合が二度起きないよう、受信の流れを通して確かめる自動テストを追加しています。</p>
+        </div>
+      </details>
+      <details class="faq-item">
         <summary class="faq-summary">v4.8.0 (2026-10-28) — 画面を整理しました</summary>
         <div class="faq-body">
           <p><strong>画面の飾りを減らして、中身が読みやすくなりました。</strong>機能と数値は何も変わっていません。</p>
@@ -9666,7 +9678,7 @@
   //   - DL は fetch → Blob → <a download> で起動、アドレスバーに raw URL 出ない
   //   * DevTools のネットワークタブを開かれたら見える (完全秘匿は不可)
   // ===================================================================
-  const APP_VERSION = '4.8.0';
+  const APP_VERSION = '4.8.1';
   // base64(raw配布URL)。平文URLをコメントに書くと隠蔽が無意味になるため書かない(更新時は btoa() の結果だけ貼る)
   const _BASE_B64 = 'aHR0cHM6Ly9wZGZjb21wYWN0LnBhZ2VzLmRldi8=';
   function _decodeBase() {
@@ -19202,6 +19214,10 @@ window.PdfSanitize = (function () {
     var SDK_DB  = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js';
     var QR_LIB  = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 
+    // 一覧の種類の印。絵文字をやめ、線の太さをそろえたアイコンにする
+    var HIKARI_ICON_IMAGE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+    var HIKARI_ICON_DOC = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+
     var tab = document.querySelector('.mode-tab[data-mode="hikari"]');
     var elLoading = document.getElementById('hikariLoading');
     var elOffline = document.getElementById('hikariOffline');
@@ -19278,11 +19294,7 @@ window.PdfSanitize = (function () {
       elLoading.hidden = false;
       if (!navigator.onLine){ showOffline(); return; }
       loadScript(SDK_APP)
-        .then(function(){
-  // 一覧の種類の印。絵文字をやめ、線の太さをそろえたアイコンにする
-  var HIKARI_ICON_IMAGE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-  var HIKARI_ICON_DOC = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
- return loadScript(SDK_DB); })
+        .then(function(){ return loadScript(SDK_DB); })
         .then(function(){ return loadScript(QR_LIB); })
         .then(start)
         .catch(function(e){
